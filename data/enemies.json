@@ -1,0 +1,18 @@
+{
+  "ashCrawler": {
+    "name": "재먹이 기어다니는 것",
+    "level": 1,
+    "hp": 30,
+    "atk": 6,
+    "def": 2,
+    "exp": 12,
+    "gold": [1, 4],
+    "moveSpeed": 2.6,
+    "aggroRange": 9,
+    "attackRange": 1.4,
+    "attackCooldown": 1.6,
+    "color": "#3a3342",
+    "eyeColor": "#b46cff",
+    "size": 0.7
+  }
+}

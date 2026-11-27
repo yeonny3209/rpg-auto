@@ -1,0 +1,23 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1218; font-family: system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; color: #f3e9d8; }
+#app canvas { display: block; }
+#hud { position: fixed; inset: 0; pointer-events: none; }
+.row.top { position: absolute; top: 16px; left: 16px; display: flex; align-items: center; gap: 12px; }
+.lvl { font-size: 22px; font-weight: 700; color: #ffb347; text-shadow: 0 0 8px #ff8a2a88; min-width: 64px; }
+.bars { display: flex; flex-direction: column; gap: 6px; }
+.bar { position: relative; width: 280px; height: 16px; background: #1c222c; border: 1px solid #3a4352; border-radius: 4px; overflow: hidden; }
+.bar.exp { height: 8px; }
+.bar > div { height: 100%; transition: width 0.15s; }
+.bar.hp > div { background: linear-gradient(90deg, #b8332b, #e2553c); }
+.bar.exp > div { background: linear-gradient(90deg, #d98a1f, #ffcc66); }
+.bar span { position: absolute; inset: 0; font-size: 11px; line-height: 16px; text-align: center; color: #fff; text-shadow: 0 1px 2px #000; }
+.bar.exp span { display: none; }
+.gold { font-size: 16px; color: #ffd27a; margin-left: 8px; }
+#toast { position: absolute; top: 22%; width: 100%; text-align: center; font-size: 34px; font-weight: 800; color: #ffcc66; text-shadow: 0 0 16px #ff8a2a; opacity: 0; transition: opacity 0.3s; }
+#toast.show { opacity: 1; }
+#help { position: absolute; bottom: 14px; width: 100%; text-align: center; font-size: 13px; color: #a8b0bd; }
+#floaters { position: fixed; inset: 0; pointer-events: none; }
+.dmg { position: absolute; font-weight: 800; font-size: 18px; color: #fff; text-shadow: 0 0 4px #000, 0 1px 2px #000; transform: translate(-50%, -50%); white-space: nowrap; }
+.dmg.crit { color: #ffcc33; font-size: 24px; }
+.dmg.hurt { color: #ff6a5a; }
+.dmg.exp { color: #ffd27a; font-size: 14px; }

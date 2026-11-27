@@ -1,0 +1,9 @@
+{
+  "maxLevel": 40,
+  "expBase": 20,
+  "expExponent": 1.6,
+  "statPointsPerLevel": 3,
+  "hpPerLevel": 8,
+  "staminaPerLevel": 2,
+  "base": { "hp": 100, "stamina": 100, "atk": 12, "def": 5, "moveSpeed": 6 }
+}
