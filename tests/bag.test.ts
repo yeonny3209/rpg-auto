@@ -103,5 +103,6 @@ describe("저장 v5 → v6", () => {
     const { deserialize } = await import("../src/logic/save");
     const v5 = JSON.stringify({ version: 5, level: 3, exp: 1, statPoints: 0, attrs: { str: 1, agi: 0, wis: 0, vit: 0 }, gold: 5, inventory: [], equipment: {}, embers: { held: 0, banked: 0 }, litBeacons: [], respawnBeacon: "lastLight", trace: null, classId: null, quests: { active: {}, done: [] }, savedAt: 1 });
     expect(deserialize(v5)!.bag).toEqual({});
+    expect(deserialize(v5)!.skillLv).toEqual({});
   });
 });

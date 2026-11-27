@@ -390,6 +390,20 @@ try {
   console.log("potion:", JSON.stringify({ hpBefore, potion, secondDrinkBlockedByCd: potion2.potions === potion.potions }));
   await page.evaluate(() => { const p = window.__game.player; p.hp = p.maxHp; });
 
+  // 스킬 수련: 사제 → 수련 → 첫 스킬 두 번
+  await page.evaluate(() => { const p = window.__game.player; p.bag = { skillBook: 5 }; p.gold = 1000; });
+  await near("priest");
+  await page.waitForTimeout(400);
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(300);
+  await page.click('#dialog button[data-act="train"]');
+  await page.waitForTimeout(300);
+  await page.click('#dialog .shop-row >> nth=0'); await page.waitForTimeout(150);
+  await page.click('#dialog .shop-row >> nth=0'); await page.waitForTimeout(150);
+  await shot(page, "28-train.png");
+  console.log("train:", JSON.stringify(await page.evaluate(() => ({ lv: window.__game.player.skillLv, bag: window.__game.player.bag, gold: window.__game.player.gold, bar: document.querySelector("#skillbar .lv")?.textContent }))));
+  await page.keyboard.press("Escape");
+
   // 어둠: 마을에서는 0, 먼 곳(남서쪽)에서는 올라감
   const darkHome = await page.evaluate(() => { const g = window.__game; g.player.pos.set(0, 0, 3); return g.env ? g.env.dark : null; });
   await page.evaluate(() => { const g = window.__game; g.player.pos.set(-30, 0, -30); g.player.hp = g.player.maxHp = 500; g.enemies.forEach((e) => (e.attackCd = 99)); });

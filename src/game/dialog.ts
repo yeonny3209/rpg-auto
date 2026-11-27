@@ -4,6 +4,8 @@ import { enhanceCost, tryEnhance, canEnhance, successChanceOf, plusOf, ENH } fro
 import { SLOT_IDS, type Item, type SlotId } from "../logic/items";
 import { applyDerived } from "./core";
 import { renderCharPanel } from "./panels";
+import { scaledSkill, levelOf, upgradeCost, upgradeSkill, SL } from "../logic/skillLevel";
+import { skillsFor } from "../logic/skills";
 import { bagAdd, bagTake, countOf, MATS, type MatId } from "../logic/bag";
 import { RECIPES, craft, shortfall } from "../logic/crafting";
 import { buyPrice, sellPrice, makeStock, tryBuy, trySell } from "../logic/shop";
@@ -20,6 +22,7 @@ let current: Npc | null = null;
 let shopMode = false;
 let enhMode = false;
 let craftMode = false;
+let trainMode = false;
 let shopLevel = 1;
 export const dialogOpen = () => $("dialog").classList.contains("open");
 
@@ -144,8 +147,36 @@ function renderCraft() {
   $("dialog").querySelector<HTMLElement>('[data-act="back"]')!.addEventListener("click", () => { craftMode = false; render(); });
 }
 
+function renderTrain() {
+  const list = skillsFor(player.cls);
+  const books = countOf(player.bag, "skillBook");
+  const rows = list.map((sk, i) => {
+    const lv = levelOf(player.skillLv, sk.id), cost = upgradeCost(lv);
+    const now = scaledSkill(sk, lv), nxt = cost ? scaledSkill(sk, lv + 1) : null;
+    const eff = (s: typeof sk) => [s.mul ? `피해 ×${s.mul}` : "", s.heal ? `회복 ${Math.round(s.heal * 100)}%` : "", s.atkMul && s.atkMul > 1 ? `공격력 +${Math.round((s.atkMul - 1) * 100)}%` : "", `대기 ${s.cooldown}초`].filter(Boolean).join(" · ");
+    const info = cost ? `비급 ${books}/${cost.books} · ◆ ${cost.gold}` : "최대";
+    return `<div class="shop-row" data-i="${i}" style="border-color:${sk.color}"><span><b style="color:${sk.color}">${sk.name}</b> Lv${lv}<br><span class="craft-need">${eff(now)}${nxt ? ` → ${eff(nxt)}` : ""}</span></span><span class="sp">${info}</span></div>`;
+  });
+  $("dialog").innerHTML = `<div class="dn">${current!.def.name} <span class="dr">수련 · 불씨 비급 ${books} · ◆ ${player.gold}</span></div>
+    <div class="shop-h">불씨 비급과 골드로 스킬을 수련한다. 최대 Lv${SL.maxLevel}: 효과 증가, 재사용 대기 감소.</div>
+    <div class="shop-cols" style="grid-template-columns:1fr">${rows.join("") || '<div class="shop-empty">클래스를 먼저 고르자</div>'}</div>
+    <div class="db"><button data-act="back">돌아가기 <kbd>Esc</kbd></button></div>`;
+  $("dialog").querySelectorAll<HTMLElement>(".shop-row").forEach((el) => {
+    el.addEventListener("click", () => {
+      const sk = list[Number(el.dataset.i)];
+      const r = upgradeSkill(player.skillLv, sk.id, player.bag, player.gold);
+      if (!r.ok) return toast(r.reason === "max" ? "이미 최대 수련이다" : r.reason === "books" ? "불씨 비급이 부족하다" : "골드가 부족하다");
+      player.skillLv = r.lv; player.bag = r.bag; player.gold = r.gold;
+      sfx.levelUp(); toast(`${sk.name} Lv${r.lv[sk.id]}!`);
+      saveGame(); renderTrain();
+    });
+  });
+  $("dialog").querySelector<HTMLElement>('[data-act="back"]')!.addEventListener("click", () => { trainMode = false; render(); });
+}
+
 function render() {
   if (!current) return;
+  if (trainMode) return renderTrain();
   if (craftMode) return renderCraft();
   if (shopMode) return renderShop();
   if (enhMode) return renderEnhance();
@@ -158,12 +189,13 @@ function render() {
       `<div class="dqr">보상: ${rewardText(q)}</div></div>` : "";
   $("dialog").innerHTML = `<div class="dn">${current.def.name} <span class="dr">${current.def.role}</span></div>
     <div class="dt">${d.text}</div>${objectives}
-    <div class="db">${current.def.id === "merchant" ? `<button data-act="shop">거래</button>` : ""}${current.def.id === "smith" ? `<button data-act="enh">강화</button><button data-act="craft">제작</button>` : ""}<button data-act="primary">${primary} <kbd>F</kbd></button>${d.kind === "offer" ? `<button data-act="close">다음에 <kbd>Esc</kbd></button>` : ""}</div>`;
+    <div class="db">${current.def.id === "merchant" ? `<button data-act="shop">거래</button>` : ""}${current.def.id === "priest" ? `<button data-act="train">수련</button>` : ""}${current.def.id === "smith" ? `<button data-act="enh">강화</button><button data-act="craft">제작</button>` : ""}<button data-act="primary">${primary} <kbd>F</kbd></button>${d.kind === "offer" ? `<button data-act="close">다음에 <kbd>Esc</kbd></button>` : ""}</div>`;
   $("dialog").querySelectorAll<HTMLElement>("button").forEach((b) =>
     b.addEventListener("click", () => {
       if (b.dataset.act === "shop") { shopMode = true; shopLevel = player.lv.level; render(); }
       else if (b.dataset.act === "enh") { enhMode = true; render(); }
       else if (b.dataset.act === "craft") { craftMode = true; render(); }
+      else if (b.dataset.act === "train") { trainMode = true; render(); }
       else if (b.dataset.act === "primary") dialogPrimary();
       else closeDialog();
     }));
@@ -180,11 +212,12 @@ export function closeDialog() {
   shopMode = false;
   enhMode = false;
   craftMode = false;
+  trainMode = false;
   $("dialog").classList.remove("open");
 }
 export function dialogPrimary() {
   if (!current) return;
-  if (shopMode || enhMode || craftMode) { shopMode = enhMode = craftMode = false; render(); return; }
+  if (shopMode || enhMode || craftMode || trainMode) { shopMode = enhMode = craftMode = trainMode = false; render(); return; }
   const d = dialogFor(current.def, player.quests);
   if (d.kind === "offer" && d.quest) {
     const next = accept(player.quests, d.quest.id);

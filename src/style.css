@@ -152,3 +152,4 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1218; fon
 .craft-need { font-size: 11px; color: #8f98a6; }
 .craft-need .lack { color: #ff8a7a; }
 #shopTip { min-height: 118px; box-sizing: border-box; margin-top: 8px; }
+.skill .lv { position: absolute; right: 4px; top: 2px; font-size: 10px; color: #ffd27a; }

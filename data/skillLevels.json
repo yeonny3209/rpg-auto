@@ -1,0 +1,17 @@
+{
+  "maxLevel": 5,
+  "effectPerLevel": 0.12,
+  "cooldownPerLevel": 0.04,
+  "booksPerLevel": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "goldPerLevel": [
+    50,
+    120,
+    250,
+    450
+  ]
+}

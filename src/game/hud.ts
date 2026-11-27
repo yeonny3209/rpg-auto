@@ -1,3 +1,4 @@
+import { scaledList, levelOf } from "../logic/skillLevel";
 import { skillsFor, castBlock, EMBER } from "../logic/skills";
 import { engrave, engraveBonus, nextLevelProgress } from "../logic/embers";
 import { expToNext } from "../logic/progression";
@@ -72,10 +73,12 @@ export function drawMinimap() {
 
 let skillBarCls: string | null = "__none__";
 function syncSkillBar() {
-  if (skillBarCls === player.cls) return;
-  skillBarCls = player.cls;
-  const list = skillsFor(player.cls);
-  $("skillbar").innerHTML = list.map((sk, i) => `<div class="skill" data-i="${i}" style="--c:${sk.color}" title="${sk.desc}"><span class="k">${i + 1}</span><span class="n">${sk.name}</span><span class="c">${sk.cost}</span><div class="cd"></div></div>`).join("");
+  const key = `${player.cls}|${JSON.stringify(player.skillLv)}`;
+  if (skillBarCls === key) return;
+  skillBarCls = key;
+  const base = skillsFor(player.cls);
+  const list = scaledList(base, player.skillLv);
+  $("skillbar").innerHTML = list.map((sk, i) => { const lv = levelOf(player.skillLv, sk.id); return `<div class="skill" data-i="${i}" style="--c:${sk.color}" title="${sk.desc}"><span class="k">${i + 1}</span><span class="n">${sk.name}</span>${lv > 1 ? `<span class="lv">Lv${lv}</span>` : ""}<span class="c">${sk.cost}</span><div class="cd"></div></div>`; }).join("");
 }
 export function updateDarkness(dt: number) {
   const lit = beacons.filter((b) => b.lit).map((b) => b.def);
@@ -98,7 +101,7 @@ export function updateHud() {
       $("bossPoise").style.width = `${Math.max(0, boss.poise.value / boss.def.poise) * 100}%`;
     }
   }
-  const list = skillsFor(player.cls);
+  const list = scaledList(skillsFor(player.cls), player.skillLv);
   $("emFill").style.width = `${(player.sk.ember / EMBER.max) * 100}%`;
   $("skillbar").querySelectorAll<HTMLElement>(".skill").forEach((el, i) => {
     const sk = list[i];

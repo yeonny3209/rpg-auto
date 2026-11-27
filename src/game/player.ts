@@ -5,6 +5,7 @@ import combatCfg from "../../data/combat.json";
 import { WORLD_RADIUS } from "./world";
 import { onDeath } from "../logic/embers";
 import { sfx } from "./sfx";
+import { scaledList } from "../logic/skillLevel";
 import { usePotion, rollMatDrops, bagAdd, MATS } from "../logic/bag";
 import { computeDamage, rollRange } from "../logic/combat";
 import { gainExp } from "../logic/progression";
@@ -119,7 +120,7 @@ export function strike(range: number, arcDeg: number, mul: number, poiseDmg: num
 
 // ---------- 스킬 (1~4) ----------
 export function castSkill(slot: number) {
-  const list = skillsFor(player.cls);
+  const list = scaledList(skillsFor(player.cls), player.skillLv);
   const sk = list[slot];
   if (!sk || player.dead || player.dodgeT !== null || player.dash || player.charging) return;
   const why = castBlock(player.sk, slot, list);

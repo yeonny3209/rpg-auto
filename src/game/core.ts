@@ -1,4 +1,5 @@
 import type { Bag } from "../logic/bag";
+import type { SkillLevels } from "../logic/skillLevel";
 import * as THREE from "three";
 import { addGear, classGear, classAttack, classMoveMul, classDef, classStartAttrs, isClassId, NEUTRAL_ATTACK, type ClassId, type ClassAttack } from "../logic/classes";
 import prog from "../../data/progression.json";
@@ -61,6 +62,7 @@ export const player = {
   def: prog.base.def,
   gold: 0,
   bag: {} as Bag, // 소모품·재료
+  skillLv: {} as SkillLevels, // 스킬 수련 단계(2 이상만 기록)
   potionCd: 0,
   attackT: 0, // 공격 모션 남은 시간
   attackKind: "light" as "light" | "heavy",
@@ -131,7 +133,7 @@ export const SAVE_KEY = "emberlands.save";
 export function saveGame() {
   try {
     localStorage.setItem(SAVE_KEY, serialize({ level: player.lv.level, exp: player.lv.exp, statPoints: player.lv.statPoints, attrs: player.attrs, gold: player.gold, inventory: player.inventory, equipment: player.equipment,
-      embers: player.embers, litBeacons: beacons.filter((b) => b.lit).map((b) => b.def.id), respawnBeacon: player.respawnBeacon, trace: player.trace, classId: player.cls, quests: player.quests, bag: player.bag }));
+      embers: player.embers, litBeacons: beacons.filter((b) => b.lit).map((b) => b.def.id), respawnBeacon: player.respawnBeacon, trace: player.trace, classId: player.cls, quests: player.quests, bag: player.bag, skillLv: player.skillLv }));
   } catch { /* 저장 불가 환경(시크릿 모드 등)은 무시 */ }
 }
 export function loadGame(): boolean {
@@ -150,6 +152,7 @@ export function loadGame(): boolean {
   player.gold = d.gold;
   player.quests = d.quests;
   player.bag = d.bag;
+  player.skillLv = d.skillLv;
   setClass(d.classId, false);
   return true;
 }

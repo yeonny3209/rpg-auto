@@ -1,12 +1,13 @@
 // 저장 데이터 직렬화/검증/마이그레이션. localStorage 접근은 게임 쪽에서 한다.
 import { ATTR_KEYS, type Attrs } from "./stats";
+import { sanitizeSkillLevels, type SkillLevels } from "./skillLevel";
 import { sanitizeBag, type Bag } from "./bag";
 import { SLOT_IDS, type Equipment, type Item } from "./items";
 import type { EmberState, Trace } from "./embers";
 import { emptyQuests, sanitize as sanitizeQuests, type QuestState } from "./quests";
 import { isClassId, DEFAULT_CLASS, type ClassId } from "./classes";
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 export interface SaveData {
   version: number;
@@ -24,6 +25,7 @@ export interface SaveData {
   classId: ClassId | null;
   quests: QuestState;
   bag: Bag;
+  skillLv: SkillLevels;
   savedAt: number;
 }
 
@@ -46,6 +48,7 @@ function migrate(o: any): any {
   if (o.version === 3) o = { ...o, version: 4, classId: DEFAULT_CLASS };
   if (o.version === 4) o = { ...o, version: 5, quests: emptyQuests() };
   if (o.version === 5) o = { ...o, version: 6, bag: {} };
+  if (o.version === 6) o = { ...o, version: 7, skillLv: {} };
   return o;
 }
 
@@ -73,7 +76,7 @@ export function deserialize(raw: string | null, maxLevel = 40, invCap = 30): Sav
   const attrs = Object.fromEntries(ATTR_KEYS.map((k) => [k, Math.floor(o.attrs[k])])) as Attrs;
   return {
     version: SAVE_VERSION, level: o.level, exp: o.exp, statPoints: Math.floor(o.statPoints), attrs, gold: Math.floor(o.gold),
-    inventory, equipment, embers: { held: Math.floor(o.embers.held), banked: Math.floor(o.embers.banked) }, litBeacons, respawnBeacon, trace, classId, quests: sanitizeQuests(o.quests), bag: sanitizeBag(o.bag),
+    inventory, equipment, embers: { held: Math.floor(o.embers.held), banked: Math.floor(o.embers.banked) }, litBeacons, respawnBeacon, trace, classId, quests: sanitizeQuests(o.quests), bag: sanitizeBag(o.bag), skillLv: sanitizeSkillLevels(o.skillLv),
     savedAt: isNum(o.savedAt) ? o.savedAt : 0,
   };
 }

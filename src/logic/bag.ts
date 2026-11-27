@@ -51,7 +51,10 @@ export function rollMatDrops(rng: () => number, enemy: { level: number; ai: stri
   const boss = enemy.ai === "boss";
   if (rng() < (boss ? 1 : 0.3)) out.push({ id: "ashLump", n: boss ? 4 + Math.floor(rng() * 3) : 1 + (rng() < 0.25 ? 1 : 0) });
   if (rng() < (boss ? 0 : 0.1)) out.push({ id: "potion", n: 1 });
-  if (boss) out.push({ id: "emberCore", n: 1 + (rng() < 0.5 ? 1 : 0) });
-  else if (enemy.level >= 3 && rng() < 0.04) out.push({ id: "emberCore", n: 1 });
+  if (boss) { out.push({ id: "emberCore", n: 1 + (rng() < 0.5 ? 1 : 0) }); out.push({ id: "skillBook", n: 1 + (rng() < 0.4 ? 1 : 0) }); }
+  else {
+    if (enemy.level >= 3 && rng() < 0.04) out.push({ id: "emberCore", n: 1 });
+    if (enemy.level >= 2 && rng() < 0.03) out.push({ id: "skillBook", n: 1 });
+  }
   return out;
 }
