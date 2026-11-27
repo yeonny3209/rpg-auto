@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import type { Circle } from "../logic/collision";
 
 /** 결정론적 난수 (월드 배치 재현용) */
 export function mulberry32(seed: number) {
@@ -16,10 +17,12 @@ export const WORLD_RADIUS = 60;
 export interface World {
   beaconLight: THREE.PointLight;
   flame: THREE.Mesh;
+  obstacles: Circle[];
   update(t: number): void;
 }
 
 export function buildWorld(scene: THREE.Scene): World {
+  const obstacles: Circle[] = [];
   scene.background = new THREE.Color("#1a2230");
   scene.fog = new THREE.Fog("#1a2230", 18, 70);
 
@@ -68,8 +71,10 @@ export function buildWorld(scene: THREE.Scene): World {
   const rockMat = new THREE.MeshStandardMaterial({ color: "#6b6f75", roughness: 0.95, flatShading: true });
   for (let i = 0; i < 40; i++) {
     const r = 13 + rng() * WORLD_RADIUS, th = rng() * Math.PI * 2;
-    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.4 + rng() * 1.2, 0), rockMat);
+    const size = 0.4 + rng() * 1.2;
+    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(size, 0), rockMat);
     rock.position.set(Math.cos(th) * r, 0.2, Math.sin(th) * r);
+    if (size > 0.6) obstacles.push({ x: rock.position.x, z: rock.position.z, r: size * 0.85 });
     rock.rotation.set(rng() * 3, rng() * 3, rng() * 3);
     rock.castShadow = rock.receiveShadow = true;
     scene.add(rock);
@@ -80,6 +85,7 @@ export function buildWorld(scene: THREE.Scene): World {
     const h = 1.2 + rng() * 2.5;
     const col = new THREE.Mesh(new THREE.BoxGeometry(0.8, h, 0.8), ruinMat);
     col.position.set(Math.cos(th) * 11, h / 2, Math.sin(th) * 11);
+    obstacles.push({ x: col.position.x, z: col.position.z, r: 0.6 });
     col.rotation.z = (rng() - 0.5) * 0.2;
     col.castShadow = col.receiveShadow = true;
     scene.add(col);
@@ -88,6 +94,7 @@ export function buildWorld(scene: THREE.Scene): World {
   // 중앙 봉화
   const base = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.2, 1, 8), ruinMat);
   base.position.y = 0.5;
+  obstacles.push({ x: 0, z: 0, r: 1.25 });
   base.castShadow = true;
   scene.add(base);
   const flame = new THREE.Mesh(
@@ -103,6 +110,7 @@ export function buildWorld(scene: THREE.Scene): World {
   return {
     beaconLight,
     flame,
+    obstacles,
     update(t: number) {
       flame.rotation.y = t * 1.2;
       flame.position.y = 1.6 + Math.sin(t * 2) * 0.08;

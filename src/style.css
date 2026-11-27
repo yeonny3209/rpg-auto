@@ -7,6 +7,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1218; fon
 .bars { display: flex; flex-direction: column; gap: 6px; }
 .bar { position: relative; width: 280px; height: 16px; background: #1c222c; border: 1px solid #3a4352; border-radius: 4px; overflow: hidden; }
 .bar.exp { height: 8px; }
+.bar.st { height: 8px; width: 220px; }
+.bar.st > div { background: linear-gradient(90deg, #3e9a5a, #7fdc8a); transition: none; }
+.bar.st.empty { border-color: #c0392b; }
 .bar > div { height: 100%; transition: width 0.15s; }
 .bar.hp > div { background: linear-gradient(90deg, #b8332b, #e2553c); }
 .bar.exp > div { background: linear-gradient(90deg, #d98a1f, #ffcc66); }

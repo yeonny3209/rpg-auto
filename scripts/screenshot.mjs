@@ -55,8 +55,15 @@ try {
     if (i === 9) await page.screenshot({ path: join(outDir, "02-combat.png") });
   }
   await page.waitForTimeout(300);
-  await page.screenshot({ path: join(outDir, "03-after.png") });
-  const state = await page.evaluate(() => ({ level: window.__game.player.lv.level, gold: window.__game.player.gold, hp: window.__game.player.hp }));
+  // 회피 구르기 중간 장면
+  await page.keyboard.down("KeyD");
+  await page.keyboard.press("Space");
+  await page.waitForTimeout(140);
+  await page.screenshot({ path: join(outDir, "03-dodge.png") });
+  await page.keyboard.up("KeyD");
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: join(outDir, "04-after.png") });
+  const state = await page.evaluate(() => ({ level: window.__game.player.lv.level, gold: window.__game.player.gold, hp: window.__game.player.hp, stamina: Math.round(window.__game.player.stamina.value) }));
   console.log("state", JSON.stringify(state));
 } finally {
   await browser.close();

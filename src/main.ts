@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import enemyData from "../data/enemies.json";
 import prog from "../data/progression.json";
+import combatCfg from "../data/combat.json";
+import { makeStamina, spend, regen, isInvulnerable } from "./logic/stamina";
+import { resolveCircle } from "./logic/collision";
 import { buildWorld, WORLD_RADIUS } from "./game/world";
 import { makePlayerMesh, makeEnemyMesh } from "./game/actors";
 import { computeDamage, rollRange } from "./logic/combat";
@@ -45,7 +48,12 @@ const player = {
   attackCd: 0,
   hurtT: 0,
   dead: false,
+  stamina: makeStamina(combatCfg.stamina),
+  dodgeT: null as number | null, // 회피 시작 후 경과 시간 (null = 회피 중 아님)
+  dodgeDir: new THREE.Vector3(),
+  dodgeCd: 0,
 };
+const PLAYER_RADIUS = 0.4;
 
 // ---------- 적 ----------
 type EnemyDef = (typeof enemyData)["ashCrawler"];
@@ -98,16 +106,38 @@ const keys = new Set<string>();
 addEventListener("keydown", (e) => {
   keys.add(e.code);
   if (e.code === "KeyJ") tryAttack();
+  if (e.code === "Space") { e.preventDefault(); tryDodge(); }
 });
 addEventListener("keyup", (e) => keys.delete(e.code));
 renderer.domElement.addEventListener("mousedown", (e) => {
   if (e.button === 0) tryAttack();
 });
 
-const ATTACK_TIME = 0.32, ATTACK_CD = 0.45, ATTACK_RANGE = 2.3, ATTACK_ARC = Math.cos((110 / 2) * (Math.PI / 180));
+const AC = combatCfg.attack, DC = combatCfg.dodge;
+const ATTACK_TIME = AC.time, ATTACK_CD = AC.cooldown, ATTACK_RANGE = AC.range, ATTACK_ARC = Math.cos((AC.arcDeg / 2) * (Math.PI / 180));
+
+function moveInput(): THREE.Vector3 {
+  return new THREE.Vector3(
+    (keys.has("KeyA") ? 1 : 0) - (keys.has("KeyD") ? 1 : 0),
+    0,
+    (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0)
+  );
+}
+
+function tryDodge() {
+  if (player.dead || player.dodgeT !== null || player.dodgeCd > 0) return;
+  if (!spend(player.stamina, DC.staminaCost)) return flashStamina();
+  const dir = moveInput();
+  if (dir.lengthSq() === 0) dir.set(Math.sin(player.facing), 0, Math.cos(player.facing));
+  player.dodgeDir.copy(dir.normalize());
+  player.facing = Math.atan2(dir.x, dir.z);
+  player.dodgeT = 0;
+  player.attackT = 0;
+}
 
 function tryAttack() {
-  if (player.dead || player.attackCd > 0) return;
+  if (player.dead || player.attackCd > 0 || player.dodgeT !== null) return;
+  if (!spend(player.stamina, AC.staminaCost)) return flashStamina();
   player.attackT = ATTACK_TIME;
   player.attackCd = ATTACK_CD;
   // 휘두르는 순간 판정
@@ -118,7 +148,7 @@ function tryAttack() {
     const d = to.length();
     if (d > ATTACK_RANGE + e.def.size * 0.6) continue;
     if (d > 0.3 && to.normalize().dot(fwd) < ATTACK_ARC) continue;
-    const r = computeDamage({ atk: player.atk, def: e.def.def, critChance: 0.1 });
+    const r = computeDamage({ atk: player.atk, def: e.def.def, critChance: AC.critChance });
     hitEnemy(e, r.amount, r.crit);
   }
 }
@@ -156,7 +186,11 @@ function onLevelUp(_from: number) {
 
 // ---------- HUD ----------
 const $ = (id: string) => document.getElementById(id)!;
+let stFlashT = 0;
+function flashStamina() { stFlashT = 0.4; }
 function updateHud() {
+  $("stFill").style.width = `${(player.stamina.value / player.stamina.max) * 100}%`;
+  $("stFill").parentElement!.classList.toggle("empty", stFlashT > 0);
   $("lvl").textContent = String(player.lv.level);
   $("hpFill").style.width = `${(player.hp / player.maxHp) * 100}%`;
   $("hpText").textContent = `${Math.ceil(player.hp)} / ${player.maxHp}`;
@@ -191,12 +225,29 @@ function updatePlayer(dt: number) {
   player.hurtT = Math.max(0, player.hurtT - dt);
   if (player.dead) return;
 
+  regen(player.stamina, dt, combatCfg.stamina);
+  stFlashT = Math.max(0, stFlashT - dt);
+  player.dodgeCd = Math.max(0, player.dodgeCd - dt);
+
+  // 회피 구르기: 이동 입력 무시, 빠르게 미끄러지며 한 바퀴 구름
+  if (player.dodgeT !== null) {
+    player.dodgeT += dt;
+    const k = player.dodgeT / DC.time;
+    player.pos.addScaledVector(player.dodgeDir, DC.speed * (1 - k * 0.6) * dt);
+    resolveCircle(player.pos, PLAYER_RADIUS, world.obstacles);
+    playerMesh.position.copy(player.pos);
+    playerMesh.position.y = Math.sin(Math.min(1, k) * Math.PI) * 0.25;
+    playerMesh.rotation.set(Math.min(1, k) * Math.PI * 2, player.facing, 0, "YXZ");
+    if (player.dodgeT >= DC.time) {
+      player.dodgeT = null;
+      player.dodgeCd = DC.cooldown;
+      playerMesh.rotation.set(0, player.facing, 0);
+    }
+    return;
+  }
+
   // 카메라 기준 이동 (카메라는 +z를 바라보는 고정 방향)
-  const dir = new THREE.Vector3(
-    (keys.has("KeyA") ? 1 : 0) - (keys.has("KeyD") ? 1 : 0),
-    0,
-    (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0)
-  );
+  const dir = moveInput();
   const moving = dir.lengthSq() > 0;
   if (moving) {
     dir.normalize();
@@ -207,6 +258,7 @@ function updatePlayer(dt: number) {
     diff = Math.atan2(Math.sin(diff), Math.cos(diff));
     player.facing += diff * Math.min(1, dt * 14);
   }
+  resolveCircle(player.pos, PLAYER_RADIUS, world.obstacles);
   const lim = WORLD_RADIUS + 8;
   if (player.pos.length() > lim) player.pos.setLength(lim);
 
@@ -261,7 +313,9 @@ function updateEnemies(dt: number) {
       m.body.scale.y = 0.8 - Math.min(1, e.t / 0.55) * 0.25;
       if (e.t >= 0.55) {
         m.body.scale.y = 1.0;
-        if (!player.dead && dist < e.def.attackRange + 0.5) {
+        const inv = isInvulnerable(player.dodgeT, DC.iframe);
+        if (inv && dist < e.def.attackRange + 0.5) floater(player.pos.clone().setY(2), "회피!", "exp");
+        else if (!player.dead && dist < e.def.attackRange + 0.5) {
           const r = computeDamage({ atk: e.def.atk, def: player.def });
           hurtPlayer(r.amount);
         }
@@ -281,6 +335,7 @@ function updateEnemies(dt: number) {
     m.mat.emissiveIntensity = e.flashT > 0 ? 0.8 : 0;
     m.root.position.set(e.pos.x, e.state === "chase" ? Math.abs(Math.sin(e.t * 10)) * 0.08 : 0, e.pos.z);
   }
+  for (const e of enemies) if (e.state !== "dead") resolveCircle(e.pos, e.def.size * 0.8, world.obstacles);
   // 적끼리 겹침 방지
   for (let i = 0; i < enemies.length; i++)
     for (let j = i + 1; j < enemies.length; j++) {
@@ -363,6 +418,7 @@ frame();
   player,
   enemies,
   attack: tryAttack,
+  dodge: tryDodge,
   faceNearest() {
     let best: Enemy | null = null, bd = Infinity;
     for (const e of enemies) {
