@@ -17,10 +17,12 @@ export const WORLD_RADIUS = 60;
 export interface World {
   obstacles: Circle[];
   ruinMat: THREE.Material;
+  occluders: THREE.Mesh[]; // 카메라를 가릴 수 있는 큰 물체
 }
 
 export function buildWorld(scene: THREE.Scene): World {
   const obstacles: Circle[] = [];
+  const occluders: THREE.Mesh[] = [];
   scene.background = new THREE.Color("#1a2230");
   scene.fog = new THREE.Fog("#1a2230", 18, 70);
 
@@ -72,6 +74,7 @@ export function buildWorld(scene: THREE.Scene): World {
     const size = 0.4 + rng() * 1.2;
     const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(size, 0), rockMat);
     rock.position.set(Math.cos(th) * r, 0.2, Math.sin(th) * r);
+    if (size > 0.6) occluders.push(rock);
     if (size > 0.6) obstacles.push({ x: rock.position.x, z: rock.position.z, r: size * 0.85 });
     rock.rotation.set(rng() * 3, rng() * 3, rng() * 3);
     rock.castShadow = rock.receiveShadow = true;
@@ -87,7 +90,8 @@ export function buildWorld(scene: THREE.Scene): World {
     col.rotation.z = (rng() - 0.5) * 0.2;
     col.castShadow = col.receiveShadow = true;
     scene.add(col);
+    occluders.push(col);
   }
 
-  return { obstacles, ruinMat };
+  return { obstacles, ruinMat, occluders };
 }

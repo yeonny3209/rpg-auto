@@ -1051,6 +1051,27 @@ function updateCamera(dt: number) {
   fx.applyShake(camera);
 }
 
+// ---------- 카메라 가림 처리: 카메라와 플레이어 사이 물체를 반투명하게 ----------
+const raycaster = new THREE.Raycaster();
+const fadedMat = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
+const ghostMat = new THREE.MeshStandardMaterial({ color: "#6b6f75", transparent: true, opacity: 0.25, depthWrite: false });
+function updateOcclusion() {
+  const target = player.pos.clone().setY(1);
+  const dir = target.clone().sub(camera.position);
+  const dist = dir.length();
+  raycaster.set(camera.position, dir.normalize());
+  raycaster.far = dist - 0.5;
+  // 몸통 근처도 가리면 안 되므로 좌우로 살짝 벌린 광선 3개
+  const hits = new Set<THREE.Mesh>();
+  const side = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize().multiplyScalar(0.5);
+  for (const off of [0, 1, -1]) {
+    raycaster.set(camera.position, target.clone().addScaledVector(side, off).sub(camera.position).normalize());
+    for (const h of raycaster.intersectObjects(world.occluders, false)) hits.add(h.object as THREE.Mesh);
+  }
+  for (const [m, orig] of fadedMat) if (!hits.has(m)) { m.material = orig; fadedMat.delete(m); }
+  for (const m of hits) if (!fadedMat.has(m)) { fadedMat.set(m, m.material); m.material = ghostMat; }
+}
+
 const clock = new THREE.Clock();
 function frame() {
   const realDt = Math.min(clock.getDelta(), 0.05);
@@ -1070,6 +1091,7 @@ function frame() {
   updateTrace(dt, t);
   fx.update(realDt);
   updateCamera(realDt);
+  updateOcclusion();
 
   renderer.render(scene, camera);
   updateFloaters(realDt);
@@ -1100,6 +1122,9 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   beacons,
   interact,
   hurt: hurtPlayer,
+  fadedCount: () => fadedMat.size,
+  obstacles: world.obstacles,
+  occluders: world.occluders,
   nearest(filter?: string) {
     let best: Enemy | null = null, bd = Infinity;
     for (const e of enemies) {

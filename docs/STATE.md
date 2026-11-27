@@ -4,17 +4,16 @@
 
 ## 완료된 것
 - 기획 문서 3종, 프로젝트 뼈대, 테스트·스크린샷 스크립트
-- ROADMAP M0 전부, M1 전부, M2-1·M2-6·M2-7·M2-8, M3-3·M3-5, 미니맵(M3-11 일부)
+- ROADMAP M0 전부, M1 전부, M2-1·M2-6·M2-7·M2-8, M3-3·M3-5, 미니맵(M3-11 일부), 카메라 가림 시 기둥·바위 반투명
 
 ## 코드 구조
 - `src/logic/` — 렌더링 무관 로직 (테스트 대상): progression, combat, stamina, collision, poise, spawn, stats, items, embers, save
 - `src/game/` — Three.js 쪽: world(지형·장식), beacons, actors(메시), fx(파티클·흔들림·히트스톱), sfx(WebAudio)
-- `src/main.ts` — 게임 루프, 입력, 적 AI, HUD, 패널. **약 1000줄로 커짐 → 다음에 손댈 때 enemies/player/hud로 분리 권장**
+- `src/main.ts` — 게임 루프, 입력, 적 AI, HUD, 패널. **약 1150줄로 커짐 → 다음에 손댈 때 enemies/player/hud로 분리 권장**
 - `data/*.json` — 밸런스 수치 (progression, combat, enemies, items, world)
 - `window.__game` — 테스트용 디버그 핸들(스크린샷 스크립트가 사용)
 
 ## 알려진 문제 / 미검증
-- 카메라와 플레이어 사이에 폐허 기둥·바위가 있으면 가려짐 (카메라 충돌·투명 처리 없음)
 - 시작 지점 근처에 적이 몰려 있어 첫 화면이 복잡함
 - 적 HP 바가 가운데 기준으로 줄어듦 (왼쪽 정렬 아님)
 - 인벤토리 칸 아이콘이 이름 앞 두 글자 텍스트뿐
@@ -25,5 +24,5 @@
 1. `src/main.ts`를 player / enemies / hud 모듈로 분리 (동작 변화 없이, 스크린샷 스크립트로 회귀 확인)
 2. M2-2 클래스 3종 데이터 + 시작 선택 화면
 3. M2-3 잔불 게이지 + 선봉 스킬 4개(1~4키, 쿨타임)
-4. 카메라 가림 처리(카메라와 플레이어 사이 장애물 반투명)
-5. M3-1 노이즈 하이트맵 지형
+4. M3-1 노이즈 하이트맵 지형
+5. M3-6 마을 NPC 3명 + 대화창
