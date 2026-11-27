@@ -6,6 +6,7 @@ import { $, BC, HC, beacons, cam, camera, floaters, player, ui } from "./core";
 import { enemies } from "./enemies";
 import { nearBeacon } from "./sanctuary";
 import { loots } from "./loot";
+import { nearNpc } from "./npcs";
 
 // ---------- 미니맵 ----------
 export const mini = document.getElementById("minimap") as HTMLCanvasElement;
@@ -98,9 +99,15 @@ export function updateHud() {
   const np = nextLevelProgress(player.embers.banked);
   $("embers").textContent = `✦ ${player.embers.held}`;
   $("engrave").textContent = `각인 Lv ${engraveBonus(player.embers.banked).level} (${np.into}/${np.need})`;
-  const nb = player.dead ? null : nearBeacon(BC.interactRange);
+  const nb0 = player.dead ? null : nearBeacon(BC.interactRange);
+  const nn = player.dead ? null : nearNpc();
+  const npcFirst = nn && (!nb0 || nn.pos.distanceTo(player.pos) <= nb0.pos.distanceTo(player.pos));
+  const nb = npcFirst ? null : nb0;
   const pr = $("prompt");
-  if (nb) {
+  if (npcFirst && nn) {
+    pr.style.display = "block";
+    pr.innerHTML = `<b>F</b> ${nn.def.name} — 대화`;
+  } else if (nb) {
     pr.style.display = "block";
     pr.innerHTML = nb.lit
       ? `<b>F</b> ${nb.def.name} — ${player.embers.held > 0 ? `잔불 ${player.embers.held} 각인` : "쉬기"}`

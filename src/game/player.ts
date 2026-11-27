@@ -16,6 +16,7 @@ import { enemies, type Enemy } from "./enemies";
 import { syncTrace } from "./sanctuary";
 import { spawnLoot } from "./loot";
 import { renderCharPanel } from "./panels";
+import { reportQuest } from "./questflow";
 
 export function moveInput(): THREE.Vector3 {
   const f = camForward();
@@ -183,6 +184,7 @@ export function killEnemy(e: Enemy) {
   fx.burst(e.pos.clone().setY(0.6), e.def.eyeColor, 18, 5);
   fx.burst(e.pos.clone().setY(0.6), "#2a2433", 10, 3);
   gainEmber(player.sk, EMBER.gainKill);
+  reportQuest("kill", e.id);
   sfx.kill();
   const gold = rollRange(e.def.gold as [number, number]);
   player.gold += gold;

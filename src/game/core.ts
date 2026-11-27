@@ -13,6 +13,7 @@ import { derive, emptyAttrs, ATTR_KEYS, type Attrs } from "../logic/stats";
 import { serialize, deserialize } from "../logic/save";
 import { generateItem, equipmentStats, ITEM_CFG, type Item, type Equipment } from "../logic/items";
 import { makeStamina, isInvulnerable } from "../logic/stamina";
+import { emptyQuests, type QuestState } from "../logic/quests";
 import { makeSkillState, noBuff, type SkillDef } from "../logic/skills";
 import { type Enemy } from "./enemies";
 
@@ -75,6 +76,7 @@ export const player = {
   respawnBeacon: "lastLight",
   trace: null as Trace | null,
   cls: null as ClassId | null,
+  quests: emptyQuests() as QuestState,
   sk: makeSkillState(),
   buff: noBuff(),
   skillPower: 1,
@@ -125,7 +127,7 @@ export const SAVE_KEY = "emberlands.save";
 export function saveGame() {
   try {
     localStorage.setItem(SAVE_KEY, serialize({ level: player.lv.level, exp: player.lv.exp, statPoints: player.lv.statPoints, attrs: player.attrs, gold: player.gold, inventory: player.inventory, equipment: player.equipment,
-      embers: player.embers, litBeacons: beacons.filter((b) => b.lit).map((b) => b.def.id), respawnBeacon: player.respawnBeacon, trace: player.trace, classId: player.cls }));
+      embers: player.embers, litBeacons: beacons.filter((b) => b.lit).map((b) => b.def.id), respawnBeacon: player.respawnBeacon, trace: player.trace, classId: player.cls, quests: player.quests }));
   } catch { /* 저장 불가 환경(시크릿 모드 등)은 무시 */ }
 }
 export function loadGame(): boolean {
@@ -142,6 +144,7 @@ export function loadGame(): boolean {
   player.lv = { level: d.level, exp: d.exp, statPoints: d.statPoints };
   player.attrs = d.attrs;
   player.gold = d.gold;
+  player.quests = d.quests;
   setClass(d.classId, false);
   return true;
 }

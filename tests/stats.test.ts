@@ -32,7 +32,7 @@ describe("stats", () => {
 });
 
 describe("save", () => {
-  const data = { level: 5, exp: 12, statPoints: 3, attrs: { str: 4, agi: 2, wis: 0, vit: 3 }, gold: 99, inventory: [], equipment: {}, embers: { held: 0, banked: 0 }, litBeacons: [], respawnBeacon: "lastLight", trace: null, classId: "tracker" as const };
+  const data = { level: 5, exp: 12, statPoints: 3, attrs: { str: 4, agi: 2, wis: 0, vit: 3 }, gold: 99, inventory: [], equipment: {}, embers: { held: 0, banked: 0 }, litBeacons: [], respawnBeacon: "lastLight", trace: null, classId: "tracker" as const, quests: { active: { main1: [2] }, done: [] } };
   it("왕복", () => {
     const s = deserialize(serialize(data, 123))!;
     expect(s).toEqual({ ...data, version: SAVE_VERSION, savedAt: 123 });

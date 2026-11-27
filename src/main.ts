@@ -14,6 +14,12 @@ import "./game/input";
 import "./game/hud";
 import "./game/panels";
 import "./game/classSelect";
+import "./game/dialog";
+import { updateNpcs, npcs } from "./game/npcs";
+import { renderQuestLog } from "./game/questflow";
+import { dialogPrimary, openDialog, closeDialog } from "./game/dialog";
+import { killEnemy } from "./game/player";
+import { createEnemy } from "./game/enemies";
 
 const clock = new THREE.Clock();
 function frame() {
@@ -21,7 +27,7 @@ function frame() {
   const t = clock.elapsedTime;
   // 히트스톱: 잠깐 게임 시간을 멈춘다 (카메라·이펙트는 계속)
   let dt = realDt;
-  const paused = document.querySelector("#charPanel.open, #invPanel.open, #classSelect.open") !== null;
+  const paused = document.querySelector("#charPanel.open, #invPanel.open, #classSelect.open, #dialog.open") !== null;
   if (paused) dt = 0; // 창을 열면 게임 시간 정지
   else if (fx.hitstop > 0) {
     fx.hitstop -= realDt;
@@ -34,6 +40,7 @@ function frame() {
   updateBeacon(dt);
   updateBeacons(beacons, t, realDt);
   updateTrace(dt, t);
+  updateNpcs(dt, t);
   fx.update(realDt);
   updateCamera(realDt);
   updateOcclusion();
@@ -44,6 +51,7 @@ function frame() {
   drawMinimap();
   requestAnimationFrame(frame);
 }
+renderQuestLog();
 // 첫 프레임 카메라 위치
 camera.position.copy(player.pos).addScaledVector(camForward(), -cam.dist * 0.74).setY(cam.height);
 frame();
@@ -55,6 +63,12 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   enemies,
   cam,
   attack: tryAttack,
+  npcs,
+  talk: (id: string) => openDialog(npcs.find((n) => n.def.id === id)!),
+  dialogPrimary,
+  closeDialog,
+  kill: killEnemy,
+  spawn: (id: string, x: number, z: number) => createEnemy(id as any, new THREE.Vector3(x, 0, z)),
   cast: castSkill,
   dodge: tryDodge,
   startCharge,

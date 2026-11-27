@@ -6,6 +6,9 @@ import { sfx } from "./sfx";
 import { gainExp } from "../logic/progression";
 import { $, BC, EC, applyDerived, beacons, floater, fx, player, saveGame, scene, toast } from "./core";
 import { onLevelUp } from "./player";
+import { nearNpc } from "./npcs";
+import { openDialog } from "./dialog";
+import { reportQuest } from "./questflow";
 
 // ---------- 봉화·잔불 ----------
 export function nearBeacon(range: number): Beacon | null {
@@ -19,6 +22,8 @@ export function nearBeacon(range: number): Beacon | null {
 export function interact() {
   if (player.dead) return;
   const b = nearBeacon(BC.interactRange);
+  const n = nearNpc();
+  if (n && (!b || n.pos.distanceTo(player.pos) <= b.pos.distanceTo(player.pos))) { openDialog(n); return; }
   if (!b) return;
   if (!b.lit) {
     setLit(b, true);
@@ -26,6 +31,7 @@ export function interact() {
     const r = gainExp(player.lv, BC.lightExp);
     player.lv = r.state;
     toast(`봉화 점화 — ${b.def.name}`);
+    reportQuest("beacon", b.def.id);
     floater(b.pos.clone().setY(3), `+${BC.lightExp} EXP`, "exp");
     fx.burst(b.pos.clone().setY(1.6), "#ffcc66", 40, 7);
     fx.addShake(0.4);

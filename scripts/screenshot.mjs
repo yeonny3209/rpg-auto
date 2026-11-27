@@ -45,7 +45,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   page.on("pageerror", (e) => errors.push(String(e)));
-  await page.goto(`http://localhost:${port}/`);
+  await page.goto(`http://localhost:${port}/?demo`);
   await page.waitForTimeout(1500);
   await shot(page, "00-class-select.png");
   await page.click('.class-card[data-id="vanguard"]');
@@ -225,6 +225,33 @@ try {
   await page.keyboard.press("Digit2");
   await page.waitForTimeout(300);
   console.log("pressed 2 ->", await page.evaluate(() => window.__game.player.cls));
+
+  // 퀘스트 흐름: 사제 대화(수락) → 처치 5 → 보고(보상) → 다음 퀘스트 제안
+  const near = (id) => page.evaluate((id) => { const g = window.__game, n = g.npcs.find((x) => x.def.id === id); g.player.pos.set(n.pos.x - 1.8, 0, n.pos.z - 0.6); }, id);
+  await near("priest");
+  await page.waitForTimeout(400);
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(300);
+  await shot(page, "16-dialog-offer.png");
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(300);
+  console.log("quest accepted:", JSON.stringify(await page.evaluate(() => window.__game.player.quests)));
+  for (let i = 0; i < 5; i++) await page.evaluate((i) => { const g = window.__game; g.kill(g.spawn("ashCrawler", 20 + i, 20)); }, i);
+  await page.waitForTimeout(300);
+  await near("priest");
+  await page.waitForTimeout(500);
+  await shot(page, "17-quest-ready.png");
+  const exp0 = await page.evaluate(() => { const p = window.__game.player; return { lv: p.lv.level, exp: p.lv.exp, gold: p.gold }; });
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(250);
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(300);
+  console.log("quest turned in:", JSON.stringify({ before: exp0, after: await page.evaluate(() => { const p = window.__game.player; return { lv: p.lv.level, exp: p.lv.exp, gold: p.gold, done: p.quests.done, active: Object.keys(p.quests.active) }; }) }));
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(250);
+  await shot(page, "18-dialog-next.png");
+  await page.keyboard.press("Escape");
+  console.log("dialog closed by Esc:", await page.evaluate(() => !document.getElementById("dialog").classList.contains("open")));
 
   const state = await page.evaluate(() => {
     const g = window.__game, p = g.player;

@@ -73,3 +73,41 @@ export function makeEnemyMesh(color: string, eyeColor: string, size: number, ai 
   root.add(body);
   return { root, body, eyeMat, mat };
 }
+
+/** 마을 NPC 모형: 몸 색 + 복장 스타일(hood 사제 / apron 대장장이 / cap 상인) */
+export function makeNpcMesh(color: string, style: string): THREE.Group {
+  const root = new THREE.Group();
+  const cloth = new THREE.MeshStandardMaterial({ color, roughness: 0.85 });
+  const skin = new THREE.MeshStandardMaterial({ color: "#d9b38c", roughness: 0.7 });
+  const dark = new THREE.MeshStandardMaterial({ color: "#3a2f2a", roughness: 0.9 });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.4, 0.85, 4, 10), cloth);
+  body.position.y = 0.88;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 10), skin);
+  head.position.y = 1.62;
+  root.add(body, head);
+  if (style === "hood") {
+    const hood = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.6, 10), cloth);
+    hood.position.y = 1.9;
+    const robe = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.62, 0.5, 10), cloth);
+    robe.position.y = 0.3;
+    root.add(hood, robe);
+  } else if (style === "apron") {
+    const apron = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.8, 0.12), dark);
+    apron.position.set(0, 0.85, 0.38);
+    const hammer = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.7), dark);
+    hammer.position.set(0.5, 1.0, 0.2);
+    const head2 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.22, 0.22), new THREE.MeshStandardMaterial({ color: "#8f98a6", metalness: 0.7, roughness: 0.4 }));
+    head2.position.set(0.5, 1.0, 0.55);
+    root.add(apron, hammer, head2);
+  } else {
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.05, 12), dark);
+    brim.position.y = 1.8;
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.25, 12), dark);
+    top.position.y = 1.95;
+    const pack = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 0.35), new THREE.MeshStandardMaterial({ color: "#6b4f35", roughness: 0.9 }));
+    pack.position.set(0, 0.95, -0.45);
+    root.add(brim, top, pack);
+  }
+  root.traverse((o) => { if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).castShadow = true; });
+  return root;
+}

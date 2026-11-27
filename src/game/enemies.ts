@@ -68,11 +68,13 @@ export function respawn(e: Enemy) {
   e.mesh.root.scale.setScalar(1);
 }
 for (let i = 0; i < ENEMY_COUNT; i++) createEnemy(weightedPick(weights, Math.random()), spawnPoint());
-// 첫 화면에서 바로 보이도록 세 종류를 가까이 배치
-createEnemy("ashCrawler", new THREE.Vector3(-3, 0, 9));
-createEnemy("ashCrawler", new THREE.Vector3(1, 0, 10));
-createEnemy("ashSpitter", new THREE.Vector3(5, 0, 14));
-createEnemy("ashCharger", new THREE.Vector3(-6, 0, 15));
+// 테스트·스크린샷용(?demo): 세 종류를 시작 지점 가까이 배치. 일반 플레이에서는 마을 주변이 조용하다.
+if (new URLSearchParams(location.search).has("demo")) {
+  createEnemy("ashCrawler", new THREE.Vector3(-3, 0, 9));
+  createEnemy("ashCrawler", new THREE.Vector3(1, 0, 10));
+  createEnemy("ashSpitter", new THREE.Vector3(5, 0, 14));
+  createEnemy("ashCharger", new THREE.Vector3(-6, 0, 15));
+}
 
 // ---------- 투사체 ----------
 export interface Projectile { mesh: THREE.Mesh; vel: THREE.Vector3; life: number; dmg: number }
