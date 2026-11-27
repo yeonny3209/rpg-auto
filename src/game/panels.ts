@@ -1,3 +1,4 @@
+import { MAT_IDS, MATS } from "../logic/bag";
 import { classDef } from "../logic/classes";
 import prog from "../../data/progression.json";
 import { sfx } from "./sfx";
@@ -45,6 +46,7 @@ export function renderInvPanel() {
         return `<div class="cell item" data-i="${i}" style="border-color:${c};box-shadow: inset 0 0 10px ${c}55"><span>${it.name.slice(0, 2)}</span></div>`;
       }).join("")}</div>
     </div>
+    <div class="mats">${MAT_IDS.map((id) => `<span class="mat" title="${MATS[id].desc}">${MATS[id].name} <b>${player.bag[id] ?? 0}</b>/${MATS[id].max}</span>`).join("")}</div>
     <div id="tooltip" class="tooltip">아이템에 마우스를 올리면 정보가 보인다. 클릭: 장착 / 장착칸 클릭: 해제</div>
     <div class="hint">I 닫기</div>`;
   const tt = el.querySelector("#tooltip") as HTMLElement;
