@@ -348,6 +348,34 @@ try {
   await shot(page, "25-enhance.png");
   await page.keyboard.press("Escape");
 
+  // 제작 + 물약: 대장장이 → 제작(물약, 단조 무기) → H로 마시기
+  await page.evaluate(() => { const p = window.__game.player; p.bag = { ashLump: 20, emberCore: 2 }; p.gold = 1000; });
+  await near("smith");
+  await page.waitForTimeout(400);
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(300);
+  await page.click('#dialog button[data-act="craft"]');
+  await page.waitForTimeout(300);
+  const craftBefore = await page.evaluate(() => ({ inv: window.__game.player.inventory.length, bag: { ...window.__game.player.bag }, gold: window.__game.player.gold }));
+  await page.click('#dialog .shop-row >> nth=0'); // 물약 ×3
+  await page.waitForTimeout(150);
+  await page.click('#dialog .shop-row >> nth=1'); // 단조 무기
+  await page.waitForTimeout(150);
+  const craftAfter = await page.evaluate(() => ({ inv: window.__game.player.inventory.length, bag: { ...window.__game.player.bag }, gold: window.__game.player.gold }));
+  console.log("craft:", JSON.stringify({ craftBefore, craftAfter }));
+  await shot(page, "26-craft.png");
+  await page.keyboard.press("Escape");
+  await page.evaluate(() => { const p = window.__game.player; p.hp = Math.floor(p.maxHp * 0.3); });
+  const hpBefore = await page.evaluate(() => window.__game.player.hp);
+  await page.keyboard.press("KeyH");
+  await page.waitForTimeout(200);
+  const potion = await page.evaluate(() => ({ hp: window.__game.player.hp, max: window.__game.player.maxHp, potions: window.__game.player.bag.potion, cd: window.__game.player.potionCd }));
+  await page.keyboard.press("KeyH");
+  await page.waitForTimeout(200);
+  const potion2 = await page.evaluate(() => ({ hp: window.__game.player.hp, potions: window.__game.player.bag.potion }));
+  console.log("potion:", JSON.stringify({ hpBefore, potion, secondDrinkBlockedByCd: potion2.potions === potion.potions }));
+  await page.evaluate(() => { const p = window.__game.player; p.hp = p.maxHp; });
+
   // 어둠: 마을에서는 0, 먼 곳(남서쪽)에서는 올라감
   const darkHome = await page.evaluate(() => { const g = window.__game; g.player.pos.set(0, 0, 3); return g.env ? g.env.dark : null; });
   await page.evaluate(() => { const g = window.__game; g.player.pos.set(-30, 0, -30); g.player.hp = g.player.maxHp = 500; g.enemies.forEach((e) => (e.attackCd = 99)); });

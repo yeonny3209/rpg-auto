@@ -1,7 +1,7 @@
 import { $ } from "./core";
 import * as THREE from "three";
 import { cam, keys, renderer } from "./core";
-import { castSkill, releaseCharge, startCharge, toggleLockOn, tryAttack, tryDodge } from "./player";
+import { castSkill, releaseCharge, startCharge, toggleLockOn, tryAttack, tryDodge, drinkPotion } from "./player";
 import { interact } from "./sanctuary";
 import { dialogOpen, dialogPrimary, closeDialog } from "./dialog";
 import { toggleCharPanel, toggleInvPanel } from "./panels";
@@ -21,6 +21,7 @@ addEventListener("keydown", (e) => {
   if (e.code === "KeyK") startCharge();
   if (e.code === "Space") { e.preventDefault(); tryDodge(); }
   if (e.code === "Tab") { e.preventDefault(); toggleLockOn(); }
+  if (e.code === "KeyH") drinkPotion();
   if (e.code === "KeyC") toggleCharPanel();
   if (e.code === "KeyI") toggleInvPanel();
   if (e.code === "KeyF" || e.code === "KeyR") interact();

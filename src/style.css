@@ -148,3 +148,6 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1218; fon
 .shop-row .sp { color: #ffb347; white-space: nowrap; }
 .shop-empty { font-size: 12px; color: #6f7886; }
 #darkTag { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); padding: 3px 12px; border-radius: 12px; background: #0b0e14cc; border: 1px solid #3a2f50; color: #b9a6e8; font-size: 12px; pointer-events: none; transition: opacity .3s; }
+.dmg.heal { color: #7ee8a0; font-size: 20px; }
+.craft-need { font-size: 11px; color: #8f98a6; }
+.craft-need .lack { color: #ff8a7a; }

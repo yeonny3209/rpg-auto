@@ -1,0 +1,5 @@
+{
+  "potion": { "name": "잿빛 물약", "type": "consumable", "max": 10, "price": 25, "healPct": 0.4, "cooldown": 8, "desc": "체력 40% 회복 (H, 재사용 8초)" },
+  "ashLump": { "name": "재 덩어리", "type": "material", "max": 99, "price": 6, "desc": "재 속에서 건진 단단한 덩어리. 제작 재료" },
+  "emberCore": { "name": "불씨핵", "type": "material", "max": 20, "price": 0, "desc": "강한 적에게서만 나오는 핵. 좋은 장비 제작 재료" }
+}

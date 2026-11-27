@@ -1,0 +1,8 @@
+[
+  { "id": "potion", "name": "잿빛 물약 ×3", "needs": { "ashLump": 2 }, "gold": 0, "gives": { "bag": { "potion": 3 } } },
+  { "id": "forgeWeapon", "name": "재 단조 무기 (고급)", "needs": { "ashLump": 8 }, "gold": 60, "gives": { "item": { "kinds": ["weapon"], "rarity": "uncommon" } } },
+  { "id": "forgeArmor", "name": "재 단조 방어구 (고급)", "needs": { "ashLump": 6 }, "gold": 50, "gives": { "item": { "kinds": ["head", "body", "hands", "feet"], "rarity": "uncommon" } } },
+  { "id": "forgeRing", "name": "재 단조 반지 (고급)", "needs": { "ashLump": 5 }, "gold": 70, "gives": { "item": { "kinds": ["ring"], "rarity": "uncommon" } } },
+  { "id": "coreWeapon", "name": "불씨 단조 무기 (희귀)", "needs": { "ashLump": 10, "emberCore": 2 }, "gold": 200, "gives": { "item": { "kinds": ["weapon"], "rarity": "rare" } } },
+  { "id": "coreArmor", "name": "불씨 단조 방어구 (희귀)", "needs": { "ashLump": 8, "emberCore": 2 }, "gold": 180, "gives": { "item": { "kinds": ["head", "body", "hands", "feet"], "rarity": "rare" } } }
+]

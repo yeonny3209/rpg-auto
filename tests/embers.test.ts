@@ -33,7 +33,7 @@ describe("embers", () => {
 describe("save v3", () => {
   const base = { level: 2, exp: 0, statPoints: 0, attrs: { str: 0, agi: 0, wis: 0, vit: 0 }, gold: 0, inventory: [], equipment: {} };
   it("잔불·봉화·흔적 왕복", () => {
-    const d = { ...base, embers: { held: 7, banked: 30 }, litBeacons: ["lastLight", "northRuins"], respawnBeacon: "northRuins", trace: { x: 1, z: 2, amount: 3 }, classId: null, quests: { active: {}, done: [] } };
+    const d = { ...base, embers: { held: 7, banked: 30 }, litBeacons: ["lastLight", "northRuins"], respawnBeacon: "northRuins", trace: { x: 1, z: 2, amount: 3 }, classId: null, quests: { active: {}, done: [] }, bag: {} };
     const s = deserialize(serialize(d))!;
     expect(s.embers).toEqual({ held: 7, banked: 30 });
     expect(s.litBeacons).toEqual(["lastLight", "northRuins"]);

@@ -5,6 +5,7 @@ import combatCfg from "../../data/combat.json";
 import { WORLD_RADIUS } from "./world";
 import { onDeath } from "../logic/embers";
 import { sfx } from "./sfx";
+import { usePotion, rollMatDrops, bagAdd, MATS } from "../logic/bag";
 import { computeDamage, rollRange } from "../logic/combat";
 import { gainExp } from "../logic/progression";
 import { rollDrop, generateItem, type RarityId } from "../logic/items";
@@ -203,6 +204,13 @@ export function killEnemy(e: Enemy) {
   if (r.levelsGained > 0) onLevelUp();
   const drop = e.boss ? generateItem(Math.random, e.def.level + 2, { rarity: bossCfg("boarKing").guaranteedRarity as RarityId }) : rollDrop(Math.random, e.def.level, e.def.dropChance);
   if (drop) spawnLoot(drop, e.pos);
+  const got: string[] = [];
+  for (const m of rollMatDrops(Math.random, { level: e.def.level, ai: e.def.ai, embers: e.def.embers })) {
+    const res = bagAdd(player.bag, m.id, m.n);
+    player.bag = res.bag;
+    if (res.added) got.push(`${MATS[m.id].name} ×${res.added}`);
+  }
+  if (got.length) floater(e.pos.clone().setY(e.pos.y + 3), got.join("  "), "exp");
   if (e.boss) { toast(`${e.def.name} 쓰러뜨림!`); fx.addShake(1); }
 }
 
@@ -230,7 +238,26 @@ export function toggleLockOn() {
 }
 
 let lastX = 0, lastZ = 0;
+/** H: 물약 마시기 */
+export function drinkPotion() {
+  if (player.dead) return;
+  const r = usePotion(player.hp, player.maxHp, player.bag, player.potionCd);
+  if (!r.ok) {
+    if (r.reason === "none") toast("물약이 없다");
+    else if (r.reason === "full") toast("체력이 가득하다");
+    return;
+  }
+  player.hp = r.hp;
+  player.bag = r.bag;
+  player.potionCd = MATS.potion.cooldown;
+  floater(player.pos.clone().setY(player.pos.y + 2.2), `+${r.healed}`, "heal");
+  fx.burst(player.pos.clone().setY(player.pos.y + 1), "#7ee8a0", 14, 3);
+  sfx.pickup();
+  saveGame();
+}
+
 export function updatePlayer(dt: number) {
+  if (player.potionCd > 0) player.potionCd = Math.max(0, player.potionCd - dt);
   player.pos.y = heightAt(player.pos.x, player.pos.z);
   if (dt > 0) {
     const moved = Math.hypot(player.pos.x - lastX, player.pos.z - lastZ);
