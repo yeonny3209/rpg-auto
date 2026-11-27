@@ -1,0 +1,37 @@
+{
+  "inventorySize": 30,
+  "rarities": [
+    { "id": "common", "name": "일반", "color": "#b8bcc4", "weight": 60, "affixes": [0, 0], "statMul": 1.0 },
+    { "id": "uncommon", "name": "고급", "color": "#6fdc7a", "weight": 28, "affixes": [1, 1], "statMul": 1.15 },
+    { "id": "rare", "name": "희귀", "color": "#5aa8ff", "weight": 9, "affixes": [2, 2], "statMul": 1.3 },
+    { "id": "epic", "name": "영웅", "color": "#c27bff", "weight": 2.6, "affixes": [3, 3], "statMul": 1.5 },
+    { "id": "legendary", "name": "전설", "color": "#ffa23a", "weight": 0.4, "affixes": [4, 4], "statMul": 1.8 }
+  ],
+  "slots": {
+    "weapon": "무기",
+    "head": "투구",
+    "body": "갑옷",
+    "hands": "장갑",
+    "feet": "장화",
+    "ring1": "장신구 1",
+    "ring2": "장신구 2"
+  },
+  "bases": [
+    { "id": "rustySword", "name": "녹슨 장검", "kind": "weapon", "stats": { "atk": 3 }, "perLevel": { "atk": 0.8 } },
+    { "id": "emberBlade", "name": "잔불 칼날", "kind": "weapon", "stats": { "atk": 4, "crit": 0.02 }, "perLevel": { "atk": 0.9 } },
+    { "id": "clothHood", "name": "천 두건", "kind": "head", "stats": { "def": 1, "maxHp": 6 }, "perLevel": { "def": 0.3, "maxHp": 2 } },
+    { "id": "leatherCoat", "name": "가죽 외투", "kind": "body", "stats": { "def": 3, "maxHp": 10 }, "perLevel": { "def": 0.6, "maxHp": 3 } },
+    { "id": "ashGloves", "name": "재 묻은 장갑", "kind": "hands", "stats": { "def": 1, "atk": 1 }, "perLevel": { "def": 0.2, "atk": 0.2 } },
+    { "id": "wandererBoots", "name": "방랑자 장화", "kind": "feet", "stats": { "def": 1, "maxStamina": 5 }, "perLevel": { "def": 0.2, "maxStamina": 1 } },
+    { "id": "cinderRing", "name": "불씨 반지", "kind": "ring", "stats": { "crit": 0.02 }, "perLevel": { "crit": 0.002 } },
+    { "id": "boneCharm", "name": "뼈 부적", "kind": "ring", "stats": { "maxHp": 12 }, "perLevel": { "maxHp": 3 } }
+  ],
+  "affixes": [
+    { "id": "atk", "name": "공격력", "min": 1, "max": 3, "perLevel": 0.4, "fmt": "flat" },
+    { "id": "atkPct", "name": "공격력", "min": 0.03, "max": 0.08, "perLevel": 0.002, "fmt": "pct" },
+    { "id": "def", "name": "방어력", "min": 1, "max": 3, "perLevel": 0.3, "fmt": "flat" },
+    { "id": "maxHp", "name": "최대 HP", "min": 5, "max": 15, "perLevel": 2, "fmt": "flat" },
+    { "id": "crit", "name": "치명타", "min": 0.01, "max": 0.03, "perLevel": 0.001, "fmt": "pct" },
+    { "id": "maxStamina", "name": "최대 스태미나", "min": 3, "max": 8, "perLevel": 0.5, "fmt": "flat" }
+  ]
+}

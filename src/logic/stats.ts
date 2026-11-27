@@ -16,15 +16,19 @@ export interface Derived {
   skillPower: number;
 }
 
-export function derive(level: number, a: Attrs, c = cfg): Derived {
+export interface GearBonus { atk: number; atkPct: number; def: number; maxHp: number; crit: number; maxStamina: number }
+const NO_GEAR: GearBonus = { atk: 0, atkPct: 0, def: 0, maxHp: 0, crit: 0, maxStamina: 0 };
+
+export function derive(level: number, a: Attrs, gear: GearBonus = NO_GEAR, c = cfg): Derived {
   const A = c.attributes;
   const L = level - 1;
+  const flatAtk = c.base.atk + L * c.atkPerLevel + a.str * A.str.atk + gear.atk;
   return {
-    maxHp: c.base.hp + L * c.hpPerLevel + a.vit * A.vit.hp + a.str * A.str.hp,
-    maxStamina: c.base.stamina + L * c.staminaPerLevel + a.agi * A.agi.stamina,
-    atk: c.base.atk + L * c.atkPerLevel + a.str * A.str.atk,
-    def: c.base.def + a.vit * A.vit.def,
-    critChance: 0.1 + a.agi * A.agi.crit,
+    maxHp: c.base.hp + L * c.hpPerLevel + a.vit * A.vit.hp + a.str * A.str.hp + gear.maxHp,
+    maxStamina: c.base.stamina + L * c.staminaPerLevel + a.agi * A.agi.stamina + gear.maxStamina,
+    atk: Math.round(flatAtk * (1 + gear.atkPct)),
+    def: c.base.def + a.vit * A.vit.def + gear.def,
+    critChance: 0.1 + a.agi * A.agi.crit + gear.crit,
     dodgeCostMul: Math.max(c.minDodgeCostRatio, 1 - a.agi * A.agi.dodgeCost),
     skillPower: 1 + a.wis * A.wis.skillPower,
   };

@@ -114,11 +114,33 @@ try {
   await shot(page, "08-character.png");
   await page.evaluate(() => window.__game.toggleCharPanel());
 
+  // 전리품: 희귀·영웅 아이템을 바닥에 떨어뜨리고 줍기
+  await page.evaluate(() => { const g = window.__game; g.spawnLoot("rare"); g.spawnLoot("epic", "emberBlade"); g.spawnLoot("legendary"); });
+  await page.waitForTimeout(300);
+  await shot(page, "09-loot.png");
+  await page.evaluate(() => { const g = window.__game; g.player.pos.x += 1.2; g.player.pos.z += 1.2; });
+  await page.waitForTimeout(800);
+  await page.evaluate(() => window.__game.toggleInvPanel());
+  const invCount = await page.evaluate(() => window.__game.player.inventory.length);
+  console.log("inventory after pickup:", invCount);
+  await page.hover("#invPanel .cell.item");
+  await page.waitForTimeout(150);
+  await shot(page, "10-inventory.png");
+  const atkBefore = await page.evaluate(() => window.__game.player.atk);
+  // 무기가 있으면 장착
+  await page.evaluate(() => {
+    const g = window.__game, i = g.player.inventory.findIndex((it) => it.kind === "weapon");
+    if (i >= 0) document.querySelectorAll("#invPanel .cell.item")[i].click();
+  });
+  const atkAfter = await page.evaluate(() => window.__game.player.atk);
+  console.log("atk before/after equip:", atkBefore, atkAfter);
+  await page.evaluate(() => window.__game.toggleInvPanel());
+
   // 저장/불러오기: 새로고침 후 레벨·속성 유지 확인
-  const before = await page.evaluate(() => { window.__game.save(); const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold }; });
+  const before = await page.evaluate(() => { window.__game.save(); const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold, inv: p.inventory.length, eq: Object.keys(p.equipment).sort() }; });
   await page.reload();
   await page.waitForTimeout(1500);
-  const after = await page.evaluate(() => { const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold }; });
+  const after = await page.evaluate(() => { const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold, inv: p.inventory.length, eq: Object.keys(p.equipment).sort() }; });
   console.log("save/load", JSON.stringify(before) === JSON.stringify(after) ? "OK" : `MISMATCH ${JSON.stringify(before)} vs ${JSON.stringify(after)}`);
 
   const state = await page.evaluate(() => {

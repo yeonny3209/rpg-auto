@@ -75,5 +75,7 @@ export const sfx = {
   levelUp: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, f, 0.25, 0.25, "triangle", i * 0.09)),
   charge: () => tone(200, 500, 0.3, 0.12, "sine"),
   spit: () => tone(400, 150, 0.15, 0.2, "sawtooth"),
+  pickup: () => { tone(880, 1320, 0.12, 0.2, "triangle"); tone(1320, 1760, 0.12, 0.15, "triangle", 0.06); },
+  equip: () => { noise(0.06, 3000, 3, 0.3); tone(300, 200, 0.1, 0.2, "square"); },
   telegraph: () => tone(900, 700, 0.12, 0.08, "square"),
 };

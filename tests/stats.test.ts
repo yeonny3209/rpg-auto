@@ -32,7 +32,7 @@ describe("stats", () => {
 });
 
 describe("save", () => {
-  const data = { level: 5, exp: 12, statPoints: 3, attrs: { str: 4, agi: 2, wis: 0, vit: 3 }, gold: 99 };
+  const data = { level: 5, exp: 12, statPoints: 3, attrs: { str: 4, agi: 2, wis: 0, vit: 3 }, gold: 99, inventory: [], equipment: {} };
   it("왕복", () => {
     const s = deserialize(serialize(data, 123))!;
     expect(s).toEqual({ ...data, version: SAVE_VERSION, savedAt: 123 });
@@ -45,5 +45,21 @@ describe("save", () => {
     expect(deserialize(serialize({ ...data, level: 41 }))).toBeNull();
     expect(deserialize(serialize({ ...data, gold: -1 }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...JSON.parse(serialize(data)), attrs: { str: 1 } }))).toBeNull();
+  });
+  it("v1 저장은 빈 인벤토리로 마이그레이션", () => {
+    const v1 = JSON.stringify({ version: 1, level: 3, exp: 1, statPoints: 0, attrs: { str: 1, agi: 0, wis: 0, vit: 0 }, gold: 5, savedAt: 1 });
+    const s = deserialize(v1)!;
+    expect(s.version).toBe(2);
+    expect(s.level).toBe(3);
+    expect(s.inventory).toEqual([]);
+    expect(s.equipment).toEqual({});
+  });
+  it("장비 보너스가 능력치에 반영", () => {
+    const d = derive(1, emptyAttrs(), { atk: 8, atkPct: 0.1, def: 2, maxHp: 20, crit: 0.05, maxStamina: 5 });
+    expect(d.atk).toBe(22);
+    expect(d.def).toBe(7);
+    expect(d.maxHp).toBe(120);
+    expect(d.critChance).toBeCloseTo(0.15);
+    expect(d.maxStamina).toBe(105);
   });
 });

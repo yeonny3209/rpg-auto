@@ -10,6 +10,7 @@ import { computeDamage, rollRange } from "./logic/combat";
 import { expToNext, gainExp, type LevelState } from "./logic/progression";
 import { derive, allocate, emptyAttrs, ATTR_KEYS, type AttrKey, type Attrs } from "./logic/stats";
 import { serialize, deserialize } from "./logic/save";
+import { generateItem, rollDrop, equipFromInventory, unequip, equipmentStats, rarityOf, formatStat, itemScore, slotsFor, SLOT_IDS, ITEM_CFG, type Item, type Equipment, type SlotId, type StatKey } from "./logic/items";
 import { makeStamina, spend, regen, isInvulnerable } from "./logic/stamina";
 import { resolveCircle } from "./logic/collision";
 import { makePoise, hitPoise, tickPoise, isStaggered, heavyMultipliers, type Poise } from "./logic/poise";
@@ -65,6 +66,8 @@ const player = {
   dodgeDir: new THREE.Vector3(),
   dodgeCd: 0,
   attrs: emptyAttrs() as Attrs,
+  inventory: [] as Item[],
+  equipment: {} as Equipment,
   crit: AC.critChance,
   dodgeCostMul: 1,
 };
@@ -72,7 +75,7 @@ const PLAYER_RADIUS = 0.4;
 
 // 레벨·속성 → 능력치 반영
 function applyDerived(fullHeal: boolean) {
-  const d = derive(player.lv.level, player.attrs);
+  const d = derive(player.lv.level, player.attrs, equipmentStats(player.equipment));
   const hpRatio = player.hp / player.maxHp;
   player.maxHp = d.maxHp;
   player.atk = d.atk;
@@ -87,20 +90,23 @@ function applyDerived(fullHeal: boolean) {
 const SAVE_KEY = "emberlands.save";
 function saveGame() {
   try {
-    localStorage.setItem(SAVE_KEY, serialize({ level: player.lv.level, exp: player.lv.exp, statPoints: player.lv.statPoints, attrs: player.attrs, gold: player.gold }));
+    localStorage.setItem(SAVE_KEY, serialize({ level: player.lv.level, exp: player.lv.exp, statPoints: player.lv.statPoints, attrs: player.attrs, gold: player.gold, inventory: player.inventory, equipment: player.equipment }));
   } catch { /* 저장 불가 환경(시크릿 모드 등)은 무시 */ }
 }
 function loadGame(): boolean {
   let raw: string | null = null;
   try { raw = localStorage.getItem(SAVE_KEY); } catch { return false; }
-  const d = deserialize(raw, prog.maxLevel);
+  const d = deserialize(raw, prog.maxLevel, ITEM_CFG.inventorySize);
   if (!d) return false;
+  player.inventory = d.inventory;
+  player.equipment = d.equipment;
   player.lv = { level: d.level, exp: d.exp, statPoints: d.statPoints };
   player.attrs = d.attrs;
   player.gold = d.gold;
   return true;
 }
 const loaded = new URLSearchParams(location.search).has("fresh") ? false : loadGame();
+if (!loaded) player.equipment = { weapon: generateItem(Math.random, 1, { baseId: "rustySword", rarity: "common" }) };
 applyDerived(true);
 setInterval(saveGame, 10000);
 addEventListener("beforeunload", saveGame);
@@ -219,6 +225,7 @@ addEventListener("keydown", (e) => {
   if (e.code === "Space") { e.preventDefault(); tryDodge(); }
   if (e.code === "Tab") { e.preventDefault(); toggleLockOn(); }
   if (e.code === "KeyC") toggleCharPanel();
+  if (e.code === "KeyI") toggleInvPanel();
 });
 addEventListener("keyup", (e) => {
   keys.delete(e.code);
@@ -361,6 +368,8 @@ function killEnemy(e: Enemy) {
   player.lv = r.state;
   floater(e.pos.clone().setY(2.2), `+${e.def.exp} EXP  ◆${gold}`, "exp");
   if (r.levelsGained > 0) onLevelUp();
+  const drop = rollDrop(Math.random, e.def.level, e.def.dropChance);
+  if (drop) spawnLoot(drop, e.pos);
 }
 
 function onLevelUp() {
@@ -384,6 +393,126 @@ function toggleLockOn() {
     if (d < 16 && score < bd) { bd = score; best = e; }
   }
   cam.target = best;
+}
+
+// ---------- 바닥 전리품 ----------
+interface Loot { item: Item; group: THREE.Group; t: number }
+const loots: Loot[] = [];
+const lootBoxGeo = new THREE.OctahedronGeometry(0.22, 0);
+const beamGeo = new THREE.CylinderGeometry(0.05, 0.12, 3, 8, 1, true);
+beamGeo.translate(0, 1.5, 0);
+function spawnLoot(item: Item, at: THREE.Vector3) {
+  const color = rarityOf(item.rarity).color;
+  const g = new THREE.Group();
+  const gem = new THREE.Mesh(lootBoxGeo, new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.2 }));
+  gem.position.y = 0.5;
+  const beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending }));
+  g.add(gem, beam);
+  g.position.set(at.x + (Math.random() - 0.5), 0, at.z + (Math.random() - 0.5));
+  scene.add(g);
+  loots.push({ item, group: g, t: 0 });
+}
+function updateLoot(dt: number) {
+  for (let i = loots.length - 1; i >= 0; i--) {
+    const l = loots[i];
+    l.t += dt;
+    const gem = l.group.children[0];
+    gem.rotation.y += dt * 2;
+    gem.position.y = 0.5 + Math.sin(l.t * 3) * 0.1;
+    if (player.dead || l.t < 0.4) continue;
+    const dx = l.group.position.x - player.pos.x, dz = l.group.position.z - player.pos.z;
+    if (dx * dx + dz * dz < 1.6 * 1.6) {
+      if (player.inventory.length >= ITEM_CFG.inventorySize) {
+        if (l.t % 2 < dt) floater(player.pos.clone().setY(2.3), "가방이 가득 찼다", "hurt");
+        continue;
+      }
+      player.inventory.push(l.item);
+      const r = rarityOf(l.item.rarity);
+      floater(l.group.position.clone().setY(1.4), `${l.item.name} [${r.name}]`, `loot r-${l.item.rarity}`);
+      sfx.pickup();
+      scene.remove(l.group);
+      loots.splice(i, 1);
+      saveGame();
+      renderInvPanel();
+    }
+  }
+}
+
+// ---------- 인벤토리 창 (I) ----------
+function toggleInvPanel() {
+  $("invPanel").classList.toggle("open");
+  renderInvPanel();
+}
+function itemTooltip(it: Item, compare?: Item): string {
+  const r = rarityOf(it.rarity);
+  const lines = (Object.entries(it.stats) as [StatKey, number][]).map(([k, v]) => {
+    let diff = "";
+    if (compare) {
+      const d = v - (compare.stats[k] ?? 0);
+      if (Math.abs(d) > 1e-9) diff = ` <span class="${d > 0 ? "up" : "down"}">(${d > 0 ? "▲" : "▼"})</span>`;
+    }
+    return `<div>${formatStat(k, v)}${diff}</div>`;
+  });
+  const slot = slotsFor(it.kind).map((s) => ITEM_CFG.slotNames[s]).join("/");
+  return `<div class="tt-name" style="color:${r.color}">${it.name}</div>
+    <div class="tt-sub">${r.name} · ${slot} · 아이템 레벨 ${it.ilvl}</div>${lines.join("")}
+    ${it.affixes.length ? `<div class="tt-sub">부가옵션 ${it.affixes.length}개 포함</div>` : ""}
+    ${compare ? `<div class="tt-sub">착용 중: ${compare.name} (점수 ${Math.round(itemScore(compare))} → ${Math.round(itemScore(it))})</div>` : ""}`;
+}
+function renderInvPanel() {
+  const el = $("invPanel");
+  if (!el.classList.contains("open")) return;
+  const eq = player.equipment;
+  el.innerHTML = `
+    <h3>장비 · 가방 <span class="cap">${player.inventory.length}/${ITEM_CFG.inventorySize}</span></h3>
+    <div class="inv-wrap">
+      <div class="slots">${SLOT_IDS.map((s) => {
+        const it = eq[s];
+        return `<div class="slot ${it ? "filled" : ""}" data-slot="${s}" style="${it ? `border-color:${rarityOf(it.rarity).color}` : ""}">
+          <span class="sl">${ITEM_CFG.slotNames[s]}</span><span class="sn" style="${it ? `color:${rarityOf(it.rarity).color}` : ""}">${it ? it.name : "—"}</span></div>`;
+      }).join("")}</div>
+      <div class="grid">${Array.from({ length: ITEM_CFG.inventorySize }, (_, i) => {
+        const it = player.inventory[i];
+        if (!it) return `<div class="cell"></div>`;
+        const c = rarityOf(it.rarity).color;
+        return `<div class="cell item" data-i="${i}" style="border-color:${c};box-shadow: inset 0 0 10px ${c}55"><span>${it.name.slice(0, 2)}</span></div>`;
+      }).join("")}</div>
+    </div>
+    <div id="tooltip" class="tooltip">아이템에 마우스를 올리면 정보가 보인다. 클릭: 장착 / 장착칸 클릭: 해제</div>
+    <div class="hint">I 닫기</div>`;
+  const tt = el.querySelector("#tooltip") as HTMLElement;
+  el.querySelectorAll<HTMLElement>(".cell.item").forEach((c) => {
+    const it = player.inventory[Number(c.dataset.i)];
+    // 빈 칸이 있으면 비교 대상 없음, 아니면 교체될 장비와 비교
+    const slots = slotsFor(it.kind);
+    const cur = slots.some((s) => !player.equipment[s]) ? undefined : player.equipment[slots[0]];
+    c.addEventListener("mouseenter", () => (tt.innerHTML = itemTooltip(it, cur)));
+    c.addEventListener("click", () => {
+      const r = equipFromInventory(player.equipment, player.inventory, Number(c.dataset.i));
+      if (!r) return;
+      player.equipment = r.eq;
+      player.inventory = r.inv;
+      applyDerived(false);
+      sfx.equip();
+      saveGame();
+      renderInvPanel();
+      renderCharPanel();
+    });
+  });
+  el.querySelectorAll<HTMLElement>(".slot.filled").forEach((c) => {
+    const s = c.dataset.slot as SlotId;
+    c.addEventListener("mouseenter", () => (tt.innerHTML = itemTooltip(player.equipment[s]!)));
+    c.addEventListener("click", () => {
+      const r = unequip(player.equipment, player.inventory, s, ITEM_CFG.inventorySize);
+      if (!r) return toast("가방이 가득 찼다");
+      player.equipment = r.eq;
+      player.inventory = r.inv;
+      applyDerived(false);
+      saveGame();
+      renderInvPanel();
+      renderCharPanel();
+    });
+  });
 }
 
 // ---------- HUD ----------
@@ -756,6 +885,7 @@ function frame() {
   updatePlayer(dt);
   updateEnemies(dt);
   updateProjectiles(dt);
+  updateLoot(dt);
   updateBeacon(dt);
   world.update(t);
   fx.update(realDt);
@@ -782,6 +912,8 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   releaseCharge,
   lockOn: toggleLockOn,
   toggleCharPanel,
+  toggleInvPanel,
+  spawnLoot: (rarity: string, baseId?: string) => spawnLoot(generateItem(Math.random, player.lv.level, { rarity: rarity as any, baseId }), player.pos.clone().add(new THREE.Vector3(1.2, 0, 1.2))),
   spendPoint,
   save: saveGame,
   nearest(filter?: string) {
