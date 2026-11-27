@@ -2,6 +2,7 @@
 import cfg from "../../data/shop.json";
 import { generateItem, type Item, type RarityId } from "./items";
 import type { Rng } from "./combat";
+import { enhanceCost, plusOf } from "./enhance";
 
 export const SHOP = cfg;
 
@@ -12,8 +13,14 @@ export function buyPrice(item: Pick<Item, "rarity" | "kind" | "ilvl">): number {
   const raw = base * kind * (1 + cfg.perItemLevel * (Math.max(1, item.ilvl) - 1));
   return Math.max(5, Math.round(raw / 5) * 5);
 }
-/** 판매가: 매입가의 일정 비율(항상 매입가보다 낮아 재판매 차익이 없다) */
-export const sellPrice = (item: Pick<Item, "rarity" | "kind" | "ilvl">): number => Math.max(1, Math.floor(buyPrice(item) * cfg.sellRatio));
+/** 강화에 쓴 골드 합계 (+0→+plus) */
+function enhanceSpent(item: Pick<Item, "rarity" | "ilvl" | "plus">): number {
+  let sum = 0;
+  for (let p = 0; p < plusOf(item); p++) sum += enhanceCost({ ...item, plus: p });
+  return sum;
+}
+/** 판매가: (매입가 + 강화에 쓴 골드)의 일정 비율(항상 매입가보다 낮아 재판매 차익이 없다) */
+export const sellPrice = (item: Pick<Item, "rarity" | "kind" | "ilvl" | "plus">): number => Math.max(1, Math.floor((buyPrice(item) + enhanceSpent(item)) * cfg.sellRatio));
 
 /** 간단한 시드 난수 (같은 시드 → 같은 재고) */
 export function seededRng(seed: number): Rng {

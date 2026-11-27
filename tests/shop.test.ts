@@ -23,6 +23,17 @@ describe("가격", () => {
   });
 });
 
+describe("강화 반영", () => {
+  it("강화한 아이템은 더 비싸게 팔리지만 쓴 골드보다는 적게 받는다", async () => {
+    const { withPlus, enhanceCost } = await import("../src/logic/enhance");
+    const a = generateItem(seededRng(9), 6, { rarity: "rare" });
+    const b = withPlus(a, 6);
+    expect(sellPrice(b)).toBeGreaterThan(sellPrice(a));
+    let spent = 0; for (let p = 0; p < 6; p++) spent += enhanceCost({ ...a, plus: p });
+    expect(sellPrice(b) - sellPrice(a)).toBeLessThan(spent);
+  });
+});
+
 describe("재고", () => {
   it("같은 레벨이면 같은 재고, 레벨이 오르면 상위 등급이 추가", () => {
     const a = makeStock(3), b = makeStock(3);
