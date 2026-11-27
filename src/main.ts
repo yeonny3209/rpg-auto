@@ -166,6 +166,7 @@ function spawnPoint(): THREE.Vector3 {
 }
 
 const hpBarGeo = new THREE.PlaneGeometry(1, 0.09);
+hpBarGeo.translate(0.5, 0, 0); // 왼쪽 끝 기준으로 줄어들도록
 function createEnemy(id: EnemyId, pos: THREE.Vector3): Enemy {
   const def = enemyData[id] as EnemyDef;
   const mesh = makeEnemyMesh(def.color, def.eyeColor, def.size, def.ai);
@@ -957,10 +958,12 @@ function updateEnemies(dt: number) {
     const hb = e.hpBar;
     hb.visible = e.hp < e.def.hp;
     if (hb.visible) {
-      hb.position.set(e.pos.x, e.def.size * 2 + 0.3, e.pos.z);
+      const full = e.def.size * 1.6;
+      const camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      hb.position.set(e.pos.x, e.def.size * 2 + 0.3, e.pos.z).addScaledVector(camRight, -full / 2);
       hb.quaternion.copy(camera.quaternion);
       const k = Math.max(0, e.hp / e.def.hp);
-      hb.scale.set(Math.max(0.01, k) * e.def.size * 1.6, 1, 1);
+      hb.scale.set(Math.max(0.01, k) * full, 1, 1);
     }
   }
   for (const e of enemies) if (e.state !== "dead" && e.state !== "attack") resolveCircle(e.pos, e.def.size * 0.8, world.obstacles);
@@ -1078,7 +1081,9 @@ function frame() {
   const t = clock.elapsedTime;
   // 히트스톱: 잠깐 게임 시간을 멈춘다 (카메라·이펙트는 계속)
   let dt = realDt;
-  if (fx.hitstop > 0) {
+  const paused = document.querySelector("#charPanel.open, #invPanel.open") !== null;
+  if (paused) dt = 0; // 창을 열면 게임 시간 정지
+  else if (fx.hitstop > 0) {
     fx.hitstop -= realDt;
     dt = realDt * 0.05;
   }
