@@ -1,23 +1,251 @@
 {
   "quests": [
-    { "id": "main1", "chapter": "1장 · 꺼진 불씨", "name": "첫 불씨", "giver": "priest", "turnIn": "priest", "requires": [],
-      "objectives": [{ "type": "kill", "target": "ashCrawler", "count": 5, "label": "재먹이 처치" }],
-      "rewards": { "exp": 50, "gold": 25 },
-      "text": { "offer": "마지막 등불 주위를 재먹이가 맴돌고 있네. 놈들을 다섯 마리만 쫓아 주게. 불씨를 지키는 첫걸음이야.", "progress": "아직 재먹이가 남았나? 서두르지 말게, 숨부터 고르고.", "done": "고맙네. 이 등불이 한 뼘 더 밝아졌군. 이건 약소하지만 받아 두게." } },
-    { "id": "main2", "chapter": "1장 · 꺼진 불씨", "name": "북쪽의 불빛", "giver": "priest", "turnIn": "priest", "requires": ["main1"],
-      "objectives": [{ "type": "beacon", "target": "northRuins", "count": 1, "label": "북쪽 폐허 봉화 점화" }],
-      "rewards": { "exp": 90, "gold": 40 },
-      "text": { "offer": "북쪽 폐허에 옛 봉화가 있네. 그곳에 불을 붙이면 대지가 우리를 기억해 줄 걸세. 길을 가는 동안 조심하게.", "progress": "북쪽 폐허 봉화는 아직 어둡군. 서쪽이 아니라 북쪽일세.", "done": "먼 곳의 불빛이 여기서도 보이네! 자네는 진짜 점화자야." } },
-    { "id": "main3", "chapter": "1장 · 꺼진 불씨", "name": "재의 전령", "giver": "smith", "turnIn": "smith", "requires": ["main2"],
+    {
+      "id": "main1",
+      "chapter": "1장 · 꺼진 불씨",
+      "name": "첫 불씨",
+      "giver": "priest",
+      "turnIn": "priest",
+      "requires": [],
       "objectives": [
-        { "type": "kill", "target": "ashSpitter", "count": 3, "label": "재 투척꾼 처치" },
-        { "type": "kill", "target": "ashCharger", "count": 2, "label": "돌진 멧돼지 처치" }
+        {
+          "type": "kill",
+          "target": "ashCrawler",
+          "count": 5,
+          "label": "재먹이 처치"
+        }
       ],
-      "rewards": { "exp": 160, "gold": 80, "item": { "rarity": "rare" } },
-      "text": { "offer": "봉화를 밝혔다고? 그럼 놈들이 더 날뛸 거야. 투척꾼 셋, 돌진 멧돼지 둘을 처리해 주면 내 손으로 한 자루 만들어 주지.", "progress": "아직이야? 멧돼지는 돌진 직전에 뒷발질을 하니까 그때 구르라고.", "done": "솜씨 좋군! 약속한 물건이다. 쓸 만할 거야." } },
-    { "id": "side1", "chapter": "곁가지", "name": "막힌 길 뚫기", "giver": "merchant", "turnIn": "merchant", "requires": ["main1"],
-      "objectives": [{ "type": "kill", "target": "ashCrawler", "count": 8, "label": "재먹이 처치" }],
-      "rewards": { "exp": 70, "gold": 60 },
-      "text": { "offer": "재먹이들이 길을 막아서 장사가 안 돼요. 여덟 마리만 치워 주면 사례할게요!", "progress": "아직 길에 놈들이 보여요. 부탁해요!", "done": "와, 길이 뻥 뚫렸네요! 약속한 사례예요." } }
+      "rewards": {
+        "exp": 50,
+        "gold": 25
+      },
+      "text": {
+        "offer": "마지막 등불 주위를 재먹이가 맴돌고 있네. 놈들을 다섯 마리만 쫓아 주게. 불씨를 지키는 첫걸음이야.",
+        "progress": "아직 재먹이가 남았나? 서두르지 말게, 숨부터 고르고.",
+        "done": "고맙네. 이 등불이 한 뼘 더 밝아졌군. 이건 약소하지만 받아 두게."
+      }
+    },
+    {
+      "id": "main2",
+      "chapter": "1장 · 꺼진 불씨",
+      "name": "북쪽의 불빛",
+      "giver": "priest",
+      "turnIn": "priest",
+      "requires": [
+        "main1"
+      ],
+      "objectives": [
+        {
+          "type": "beacon",
+          "target": "northRuins",
+          "count": 1,
+          "label": "북쪽 폐허 봉화 점화"
+        }
+      ],
+      "rewards": {
+        "exp": 90,
+        "gold": 40
+      },
+      "text": {
+        "offer": "북쪽 폐허에 옛 봉화가 있네. 그곳에 불을 붙이면 대지가 우리를 기억해 줄 걸세. 길을 가는 동안 조심하게.",
+        "progress": "북쪽 폐허 봉화는 아직 어둡군. 서쪽이 아니라 북쪽일세.",
+        "done": "먼 곳의 불빛이 여기서도 보이네! 자네는 진짜 점화자야."
+      }
+    },
+    {
+      "id": "main3",
+      "chapter": "1장 · 꺼진 불씨",
+      "name": "재의 전령",
+      "giver": "smith",
+      "turnIn": "smith",
+      "requires": [
+        "main2"
+      ],
+      "objectives": [
+        {
+          "type": "kill",
+          "target": "ashSpitter",
+          "count": 3,
+          "label": "재 투척꾼 처치"
+        },
+        {
+          "type": "kill",
+          "target": "ashCharger",
+          "count": 2,
+          "label": "돌진 멧돼지 처치"
+        }
+      ],
+      "rewards": {
+        "exp": 160,
+        "gold": 80,
+        "item": {
+          "rarity": "rare"
+        }
+      },
+      "text": {
+        "offer": "봉화를 밝혔다고? 그럼 놈들이 더 날뛸 거야. 투척꾼 셋, 돌진 멧돼지 둘을 처리해 주면 내 손으로 한 자루 만들어 주지.",
+        "progress": "아직이야? 멧돼지는 돌진 직전에 뒷발질을 하니까 그때 구르라고.",
+        "done": "솜씨 좋군! 약속한 물건이다. 쓸 만할 거야."
+      }
+    },
+    {
+      "id": "side1",
+      "chapter": "곁가지",
+      "name": "막힌 길 뚫기",
+      "giver": "merchant",
+      "turnIn": "merchant",
+      "requires": [
+        "main1"
+      ],
+      "objectives": [
+        {
+          "type": "kill",
+          "target": "ashCrawler",
+          "count": 8,
+          "label": "재먹이 처치"
+        }
+      ],
+      "rewards": {
+        "exp": 70,
+        "gold": 60
+      },
+      "text": {
+        "offer": "재먹이들이 길을 막아서 장사가 안 돼요. 여덟 마리만 치워 주면 사례할게요!",
+        "progress": "아직 길에 놈들이 보여요. 부탁해요!",
+        "done": "와, 길이 뻥 뚫렸네요! 약속한 사례예요."
+      }
+    },
+    {
+      "id": "main4",
+      "chapter": "1장 · 꺼진 불씨",
+      "name": "다섯 봉화",
+      "giver": "priest",
+      "turnIn": "priest",
+      "requires": [
+        "main3"
+      ],
+      "objectives": [
+        {
+          "type": "beacon",
+          "target": "eastFields",
+          "count": 1,
+          "label": "동쪽 들판 봉화 점화"
+        },
+        {
+          "type": "beacon",
+          "target": "southHollow",
+          "count": 1,
+          "label": "남쪽 움푹지 봉화 점화"
+        },
+        {
+          "type": "beacon",
+          "target": "westStones",
+          "count": 1,
+          "label": "서쪽 선돌 봉화 점화"
+        }
+      ],
+      "rewards": {
+        "exp": 300,
+        "gold": 150,
+        "item": {
+          "rarity": "epic"
+        }
+      },
+      "text": {
+        "offer": "이제 남은 봉화는 셋이네. 동쪽 들판, 남쪽 움푹지, 서쪽 선돌. 모두 밝히면 이 초원 전체가 자네의 불빛을 알아볼 걸세.",
+        "progress": "아직 어두운 봉화가 남았네. 지도 가장자리의 마름모를 따라가 보게.",
+        "done": "초원이 환하군… 이제 재의 숲으로 가는 길이 열렸네. 이건 내 마지막 선물일세."
+      }
+    },
+    {
+      "id": "side2",
+      "chapter": "곁가지",
+      "name": "대장장이의 시험",
+      "giver": "smith",
+      "turnIn": "smith",
+      "requires": [
+        "main2"
+      ],
+      "objectives": [
+        {
+          "type": "kill",
+          "target": "ashSpitter",
+          "count": 6,
+          "label": "재 투척꾼 처치"
+        }
+      ],
+      "rewards": {
+        "exp": 110,
+        "gold": 70
+      },
+      "text": {
+        "offer": "투척꾼 놈들이 쏘는 재 구슬이 내 지붕을 다 태워 먹었어. 여섯 마리만 정리해 줘. 구슬은 구르면 피할 수 있다.",
+        "progress": "저 멀리서 구슬을 쏘는 놈들 말이야. 가까이 붙어서 베면 쉬워.",
+        "done": "이제 좀 조용하겠군. 수고비다."
+      }
+    },
+    {
+      "id": "side3",
+      "chapter": "곁가지",
+      "name": "새 길 열기",
+      "giver": "merchant",
+      "turnIn": "merchant",
+      "requires": [
+        "side1"
+      ],
+      "objectives": [
+        {
+          "type": "beacon",
+          "target": "eastFields",
+          "count": 1,
+          "label": "동쪽 들판 봉화 점화"
+        },
+        {
+          "type": "beacon",
+          "target": "southHollow",
+          "count": 1,
+          "label": "남쪽 움푹지 봉화 점화"
+        }
+      ],
+      "rewards": {
+        "exp": 140,
+        "gold": 120
+      },
+      "text": {
+        "offer": "동쪽과 남쪽 봉화가 밝혀지면 상단이 올 수 있어요. 두 곳을 밝혀 주실래요? 사례는 두둑히 할게요.",
+        "progress": "동쪽과 남쪽, 두 곳이에요. 어둠 속에서는 길이 보이지 않거든요.",
+        "done": "봉화가 보여요! 상단이 곧 도착할 거예요. 약속한 사례예요."
+      }
+    },
+    {
+      "id": "side4",
+      "chapter": "곁가지",
+      "name": "돌진하는 그림자",
+      "giver": "priest",
+      "turnIn": "priest",
+      "requires": [
+        "main2"
+      ],
+      "objectives": [
+        {
+          "type": "kill",
+          "target": "ashCharger",
+          "count": 4,
+          "label": "돌진 멧돼지 처치"
+        }
+      ],
+      "rewards": {
+        "exp": 120,
+        "gold": 60,
+        "item": {
+          "rarity": "uncommon"
+        }
+      },
+      "text": {
+        "offer": "돌진 멧돼지가 순례자들의 길을 막고 있네. 넷만 쓰러뜨려 주게. 뒷발질이 보이면 옆으로 구르게나.",
+        "progress": "멧돼지는 곧장 달려드니 정면에 서지 말게.",
+        "done": "길이 다시 안전해졌네. 순례자들을 대신해 감사하네."
+      }
+    }
   ]
 }

@@ -3,6 +3,7 @@ import { $, player, saveGame, toast } from "./core";
 import { dialogFor, accept, turnIn, isReady, type Dialog } from "../logic/quests";
 import { grantRewards, renderQuestLog } from "./questflow";
 import { sfx } from "./sfx";
+import { rarityOf, type RarityId } from "../logic/items";
 import type { Npc } from "./npcs";
 import { tutorialEvent } from "./tutorial";
 
@@ -13,7 +14,7 @@ function rewardText(q: NonNullable<Dialog["quest"]>): string {
   const r = q.rewards, out: string[] = [];
   if (r.exp) out.push(`EXP ${r.exp}`);
   if (r.gold) out.push(`◆ ${r.gold}`);
-  if (r.item) out.push(`장비 1개(${r.item.rarity === "rare" ? "희귀" : r.item.rarity})`);
+  if (r.item) out.push(`장비 1개(${rarityOf(r.item.rarity as RarityId).name})`);
   return out.join(" · ");
 }
 

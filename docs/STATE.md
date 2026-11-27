@@ -1,26 +1,35 @@
 # 현재 상태
 
-마지막 실행: 2026-11-27 15:20 KST (첫 실행) — 상세: `docs/runs/2026-11-27_1520/summary.md`
+마지막 실행: 2026-11-28 00:00 KST (2번째 실행) — 상세: `docs/runs/2026-11-28_0000/summary.md`
 
 ## 완료된 것
 - 기획 문서 3종, 프로젝트 뼈대, 테스트·스크린샷 스크립트
-- ROADMAP M0 전부, M1 전부, M2-1·M2-6·M2-7·M2-8, M3-3·M3-5, 미니맵(M3-11 일부), 카메라 가림 시 기둥·바위 반투명, 적 HP 바 왼쪽 기준, C/I 창을 열면 게임 일시정지
+- ROADMAP M0·M1 전부, M2 전부(클래스 3종, 잔불 게이지·스킬, 인벤토리·장비·저장), M3-1·M3-3·M3-5~M3-8·M3-11
+- 이번 실행: `main.ts` 모듈 분리, 클래스 3종 + 시작 선택 화면, 잔불 게이지·스킬 12개, 마을 NPC 3명·대화·퀘스트 8개, 노이즈 지형, 첫 플레이 안내
 
 ## 코드 구조
-- `src/logic/` — 렌더링 무관 로직 (테스트 대상): progression, combat, stamina, collision, poise, spawn, stats, items, embers, save
-- `src/game/` — Three.js 쪽: world(지형·장식), beacons, actors(메시), fx(파티클·흔들림·히트스톱), sfx(WebAudio)
-- `src/main.ts` — 게임 루프, 입력, 적 AI, HUD, 패널. **약 1150줄로 커짐 → 다음에 손댈 때 enemies/player/hud로 분리 권장**
-- `data/*.json` — 밸런스 수치 (progression, combat, enemies, items, world)
-- `window.__game` — 테스트용 디버그 핸들(스크린샷 스크립트가 사용)
+- `src/logic/` — 렌더링 무관 로직 (테스트 대상): progression, combat, stamina, collision, poise, spawn, stats, items, embers, save(v5), classes, skills, quests, terrain, tutorial
+- `src/game/` — Three.js·DOM 쪽
+  - `core.ts` 렌더러·씬·플레이어 상태·저장/불러오기·토스트/떠오르는 글자 (다른 모듈이 모두 여기서 가져감)
+  - `player.ts` 입력 동작·공격·스킬 시전·피격/사망, `enemies.ts` 적 AI·투사체, `input.ts` 키/마우스
+  - `sanctuary.ts` 봉화·잔불 각인·사망 흔적, `loot.ts` 바닥 전리품, `camera.ts` 추적·가림 처리
+  - `hud.ts` HUD·미니맵·스킬바, `panels.ts` 능력치/장비 창, `classSelect.ts` 시작 화면
+  - `npcs.ts` 마을 NPC, `dialog.ts` 대화창, `questflow.ts` 퀘스트 보고·보상·목록, `tutorial.ts` 안내 상자
+  - `world.ts` 지형·장식, `beacons.ts`, `actors.ts`(메시), `fx.ts`, `sfx.ts`
+- `src/main.ts` — 프레임 루프 + `window.__game` 디버그 핸들 (약 90줄)
+- `data/*.json` — 밸런스·콘텐츠 수치 (progression, combat, enemies, items, world[지형 포함], classes, skills, quests, npcs, tutorial)
 
 ## 알려진 문제 / 미검증
-- 시작 지점 근처에 적이 몰려 있어 첫 화면이 복잡함
-- 인벤토리 칸 아이콘이 이름 앞 두 글자 텍스트뿐
-- 실제 GPU·사람 손 조작감·효과음은 미검증 (헤드리스 소프트웨어 렌더링으로만 확인)
+- 실제 GPU 성능, 사람 손 조작감, 효과음은 미검증 (헤드리스 소프트웨어 렌더링으로만 확인). 헤드리스는 프레임이 느려 시간 의존 검증이 흔들릴 수 있음
+- 스킬 수치(피해 배율·비용·쿨타임)와 클래스 간 밸런스는 첫 값 그대로. 레벨 1→8 소요 시간 시뮬레이션(M3-12)이 아직 없음
+- 지형 기복이 부드러워 위에서 내려다보면 눈에 잘 안 띔 (진폭 3, 기울기 < 27°). 경사로에서 이동 속도 영향 없음
+- 인벤토리 칸 아이콘이 이름 앞 두 글자 텍스트뿐. NPC는 대화·퀘스트만 가능(상점·제작 없음)
+- 퀘스트 목록이 길어지면 HUD가 길어짐(최대 8개 동시 활성 가능)
+- 시작 지점 근처에 적이 없음(`?demo` 주소로만 배치) — 그래서 첫 전투까지 거리가 있음. 튜토리얼 3단계(공격)는 멀리 가야 적을 만남
 
 ## 다음 실행이 할 일
-1. `src/main.ts`를 player / enemies / hud 모듈로 분리 (동작 변화 없이, 스크린샷 스크립트로 회귀 확인)
-2. M2-2 클래스 3종 데이터 + 시작 선택 화면
-3. M2-3 잔불 게이지 + 선봉 스킬 4개(1~4키, 쿨타임)
-4. M3-1 노이즈 하이트맵 지형
-5. M3-6 마을 NPC 3명 + 대화창
+1. M3-9 미니보스 + M3-10 지역 보스 "재뿔 멧돼지왕"(패턴 3개) — 보스 HP 바 UI 포함
+2. M4-1 골드·상점(상인 마라) 구매/판매 UI + 가격 로직·테스트
+3. M3-4 어둠 수치(밝혀진 반경 밖 시야 제한·적 강화)
+4. 시작 지점 근처에 약한 적 1~2마리를 일반 플레이에서도 두어 첫 전투를 쉽게(튜토리얼 흐름 점검)
+5. M3-12 밸런스 점검 시뮬레이션 테스트(레벨 1→8 소요 시간, 클래스별 처치 속도)

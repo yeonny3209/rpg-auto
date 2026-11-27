@@ -20,7 +20,7 @@ npm run build
 npm run preview    # http://localhost:4173
 ```
 
-처음부터 다시 하려면 주소 뒤에 `?fresh`를 붙인다(저장은 브라우저 localStorage에 자동으로 됨).
+처음부터 다시 하려면 주소 뒤에 `?fresh`를 붙인다(저장은 브라우저 localStorage에 자동으로 됨). 테스트용: `?class=tracker`(선택 화면 건너뛰기), `?demo`(시작 지점 근처에 적 배치).
 
 ## 조작
 | 키 | 동작 |
@@ -31,7 +31,8 @@ npm run preview    # http://localhost:4173
 | Space | 회피 구르기 (짧은 무적) |
 | Tab | 가까운 적 고정 |
 | Q / E, 휠클릭 드래그 | 카메라 회전 · 휠: 거리 |
-| F | 봉화 점화 / 쉬기 / 잔불 각인 |
+| 1~4 | 클래스 스킬 (잔불 게이지 소모) |
+| F | 봉화 점화 / 쉬기 / 잔불 각인 · NPC 대화 |
 | C | 능력치 창 |
 | I | 장비·가방 창 |
 
