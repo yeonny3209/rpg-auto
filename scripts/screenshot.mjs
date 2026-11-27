@@ -1,5 +1,5 @@
 // 사용법: npm run build && node scripts/screenshot.mjs <출력폴더>
-// dist/를 미리보기 서버로 띄우고 헤드리스 Chromium으로 장면 스크린샷을 찍는다.
+// dist/를 미리보기 서버로 띄우고 헤드리스 Chromium으로 플레이 장면 스크린샷을 찍는다.
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync } from "node:fs";
@@ -27,43 +27,90 @@ const browser = await chromium.launch({
   executablePath: findChrome(),
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
 });
+const shot = (page, name) => page.screenshot({ path: join(outDir, name) });
+// 가장 가까운 적(종류 지정 가능) 옆으로 다가가 바라본다
+const approach = (page, id, gap = 1.6) =>
+  page.evaluate(([id, gap]) => {
+    const g = window.__game;
+    const e = g.nearest(id || undefined);
+    if (!e) return false;
+    const dir = g.player.pos.clone().sub(e.pos).setY(0).normalize();
+    g.player.pos.copy(e.pos).addScaledVector(dir, gap + e.def.size * 0.6);
+    const to = e.pos.clone().sub(g.player.pos);
+    g.player.facing = Math.atan2(to.x, to.z);
+    return true;
+  }, [id, gap]);
+
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   page.on("pageerror", (e) => errors.push(String(e)));
   await page.goto(`http://localhost:${port}/`);
   await page.waitForTimeout(2000);
-  await page.screenshot({ path: join(outDir, "01-start.png") });
+  await shot(page, "01-start.png");
 
-  // 앞으로 걸어가 적에게 접근하고 공격
-  await page.keyboard.down("KeyW");
-  await page.waitForTimeout(900);
-  await page.keyboard.up("KeyW");
-  for (let i = 0; i < 14; i++) {
-    const d = await page.evaluate(() => window.__game.faceNearest());
-    if (d > 2) {
-      await page.evaluate(() => {
-        const g = window.__game;
-        let best, bd = Infinity;
-        for (const e of g.enemies) if (e.state !== "dead") { const d = e.pos.distanceTo(g.player.pos); if (d < bd) { bd = d; best = e; } }
-        if (best) g.player.pos.lerp(best.pos, 0.5);
-      });
-      await page.waitForTimeout(150);
-    }
-    await page.evaluate(() => { window.__game.faceNearest(); window.__game.attack(); });
-    await page.waitForTimeout(i === 9 ? 120 : 480);
-    if (i === 9) await page.screenshot({ path: join(outDir, "02-combat.png") });
+  // 약공격으로 기어다니는 것 처치
+  for (let i = 0; i < 8; i++) {
+    await approach(page, "ashCrawler");
+    await page.evaluate(() => window.__game.attack());
+    await page.waitForTimeout(i === 5 ? 90 : 500);
+    if (i === 5) await shot(page, "02-light-attack.png");
   }
-  await page.waitForTimeout(300);
-  // 회피 구르기 중간 장면
+
+  // 돌진자에게 고정 후 강공격 차지 (장면 재현을 위해 돌진자는 공격하지 않게 묶어 둔다)
+  const pacify = () => page.evaluate(() => { const g = window.__game; for (const e of g.enemies) e.attackCd = 99; });
+  await page.evaluate(() => {
+    const g = window.__game, e = g.nearest("ashCharger");
+    e.pos.set(-18, 0, -18); g.player.pos.set(-18, 0, -21);
+    for (const o of g.enemies) if (o !== e && o.state !== "dead" && o.pos.distanceTo(e.pos) < 10) o.pos.set(40, 0, 40);
+  });
+  await pacify();
+  await approach(page, "ashCharger", 2.0);
+  await page.evaluate(() => { const g = window.__game; g.cam.target = g.nearest("ashCharger"); });
+  await page.waitForTimeout(700);
+  await approach(page, "ashCharger", 2.0);
+  await page.evaluate(() => window.__game.startCharge());
+  await page.waitForTimeout(800);
+  await shot(page, "03-heavy-charge.png");
+  await approach(page, "ashCharger", 1.8);
+  await page.evaluate(() => window.__game.releaseCharge());
+  await page.waitForTimeout(80);
+  await shot(page, "04-heavy-hit.png");
+  // 연속 강공격으로 그로기
+  for (let i = 0; i < 2; i++) {
+    await page.waitForTimeout(700);
+    await pacify();
+    await approach(page, "ashCharger", 1.8);
+    await page.evaluate(() => window.__game.startCharge());
+    await page.waitForTimeout(700);
+    await approach(page, "ashCharger", 1.8);
+    await page.evaluate(() => window.__game.releaseCharge());
+  }
+  await page.waitForTimeout(250);
+  await shot(page, "05-stagger.png");
+  const staggerState = await page.evaluate(() => window.__game.enemies.find((e) => e.id === "ashCharger" && e.hp < e.def.hp)?.state);
+  console.log("charger after heavies:", staggerState);
+  await page.evaluate(() => { for (const e of window.__game.enemies) e.attackCd = 0; });
+
+  // 회피 구르기
+  await page.evaluate(() => { window.__game.cam.target = null; });
   await page.keyboard.down("KeyD");
   await page.keyboard.press("Space");
   await page.waitForTimeout(140);
-  await page.screenshot({ path: join(outDir, "03-dodge.png") });
+  await shot(page, "06-dodge.png");
   await page.keyboard.up("KeyD");
-  await page.waitForTimeout(800);
-  await page.screenshot({ path: join(outDir, "04-after.png") });
-  const state = await page.evaluate(() => ({ level: window.__game.player.lv.level, gold: window.__game.player.gold, hp: window.__game.player.hp, stamina: Math.round(window.__game.player.stamina.value) }));
+
+  // 원거리 적과 투사체
+  await approach(page, "ashSpitter", 6);
+  await page.evaluate(() => { window.__game.cam.target = window.__game.nearest("ashSpitter"); });
+  await page.waitForTimeout(1500);
+  await shot(page, "07-spitter.png");
+
+  const state = await page.evaluate(() => {
+    const g = window.__game, p = g.player;
+    const ch = g.enemies.find((e) => e.id === "ashCharger" && e.hp < e.def.hp);
+    return { level: p.lv.level, gold: p.gold, hp: Math.round(p.hp), stamina: Math.round(p.stamina.value), chargerState: ch && ch.state, chargerHp: ch && ch.hp };
+  });
   console.log("state", JSON.stringify(state));
 } finally {
   await browser.close();

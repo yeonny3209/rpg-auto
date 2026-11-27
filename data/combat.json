@@ -1,5 +1,45 @@
 {
-  "stamina": { "max": 100, "regenPerSec": 45, "regenDelay": 0.6 },
-  "attack": { "staminaCost": 12, "time": 0.32, "cooldown": 0.45, "range": 2.3, "arcDeg": 110, "critChance": 0.1 },
-  "dodge": { "staminaCost": 25, "time": 0.42, "iframe": 0.25, "speed": 13, "cooldown": 0.15 }
+  "stamina": {
+    "max": 100,
+    "regenPerSec": 45,
+    "regenDelay": 0.6
+  },
+  "attack": {
+    "staminaCost": 12,
+    "time": 0.32,
+    "cooldown": 0.45,
+    "range": 2.3,
+    "arcDeg": 110,
+    "critChance": 0.1,
+    "poiseDamage": 10,
+    "hitstop": 0.045
+  },
+  "dodge": {
+    "staminaCost": 25,
+    "time": 0.42,
+    "iframe": 0.25,
+    "speed": 13,
+    "cooldown": 0.15
+  },
+  "heavy": {
+    "staminaCost": 25,
+    "maxCharge": 1,
+    "minMul": 1,
+    "maxMul": 2.2,
+    "minPoise": 15,
+    "maxPoise": 50,
+    "range": 2.7,
+    "arcDeg": 150,
+    "time": 0.38,
+    "cooldown": 0.6,
+    "hitstop": 0.1,
+    "moveSlow": 0.25
+  },
+  "poise": {
+    "max": 40,
+    "regenPerSec": 12,
+    "regenDelay": 1.2,
+    "staggerTime": 2
+  },
+  "staggerDamageMul": 1.5
 }

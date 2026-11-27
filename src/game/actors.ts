@@ -32,7 +32,7 @@ export function makePlayerMesh(): { root: THREE.Group; sword: THREE.Group } {
   return { root, sword };
 }
 
-export function makeEnemyMesh(color: string, eyeColor: string, size: number) {
+export function makeEnemyMesh(color: string, eyeColor: string, size: number, ai = "melee") {
   const root = new THREE.Group();
   const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.9, flatShading: true });
   const body = new THREE.Mesh(new THREE.IcosahedronGeometry(size, 0), mat);
@@ -53,6 +53,22 @@ export function makeEnemyMesh(color: string, eyeColor: string, size: number) {
     spike.position.set((i - 2) * 0.15, size * 1.35, -0.1 + Math.abs(i - 2) * -0.05);
     spike.rotation.x = -0.4;
     root.add(spike);
+  }
+  if (ai === "charger") {
+    const hornMat = new THREE.MeshStandardMaterial({ color: "#d8c7a8", roughness: 0.6 });
+    for (const x of [-1, 1]) {
+      const horn = new THREE.Mesh(new THREE.ConeGeometry(0.12 * size, 0.7 * size, 6), hornMat);
+      horn.position.set(x * 0.35 * size, size * 1.05, size * 0.9);
+      horn.rotation.set(1.1, 0, -x * 0.5);
+      horn.castShadow = true;
+      root.add(horn);
+    }
+  }
+  if (ai === "ranged") {
+    const sacMat = new THREE.MeshStandardMaterial({ color: eyeColor, emissive: eyeColor, emissiveIntensity: 0.6, transparent: true, opacity: 0.85 });
+    const sac = new THREE.Mesh(new THREE.SphereGeometry(size * 0.55, 10, 8), sacMat);
+    sac.position.set(0, size * 1.3, -size * 0.4);
+    root.add(sac);
   }
   root.add(body);
   return { root, body, eyeMat, mat };
