@@ -1,0 +1,119 @@
+import { engrave, engraveBonus, nextLevelProgress } from "../logic/embers";
+import { expToNext } from "../logic/progression";
+import { rarityOf } from "../logic/items";
+import { $, BC, HC, beacons, cam, camera, floaters, player, ui } from "./core";
+import { enemies } from "./enemies";
+import { nearBeacon } from "./sanctuary";
+import { loots } from "./loot";
+
+// ---------- 미니맵 ----------
+export const mini = document.getElementById("minimap") as HTMLCanvasElement;
+export const mctx = mini.getContext("2d")!;
+export const MINI_RANGE = 45; // 미니맵 반경(월드 단위)
+export function drawMinimap() {
+  const W = mini.width, R = W / 2, k = R / MINI_RANGE;
+  mctx.clearRect(0, 0, W, W);
+  mctx.save();
+  mctx.beginPath();
+  mctx.arc(R, R, R - 1, 0, Math.PI * 2);
+  mctx.clip();
+  mctx.fillStyle = "#151b24e0";
+  mctx.fillRect(0, 0, W, W);
+  // 카메라가 바라보는 방향이 위쪽이 되도록 회전
+  const toMini = (x: number, z: number): [number, number] => {
+    const dx = x - player.pos.x, dz = z - player.pos.z;
+    const c = Math.cos(cam.yaw), sn = Math.sin(cam.yaw);
+    const fwd = dx * sn + dz * c; // 카메라 전방 성분
+    const right = -dx * c + dz * sn; // 화면 오른쪽 성분 (moveInput의 r과 같은 축)
+    return [R + right * k, R - fwd * k];
+  };
+  // 밝혀진 영역
+  for (const b of beacons) if (b.lit) {
+    const [x, y] = toMini(b.pos.x, b.pos.z);
+    const g = mctx.createRadialGradient(x, y, 0, x, y, BC.lightRadius * k);
+    g.addColorStop(0, "#ff9a3c55");
+    g.addColorStop(1, "#ff9a3c00");
+    mctx.fillStyle = g;
+    mctx.beginPath(); mctx.arc(x, y, BC.lightRadius * k, 0, Math.PI * 2); mctx.fill();
+  }
+  const dot = (x: number, z: number, r: number, color: string) => {
+    const [px, py] = toMini(x, z);
+    mctx.fillStyle = color;
+    mctx.beginPath(); mctx.arc(px, py, r, 0, Math.PI * 2); mctx.fill();
+  };
+  for (const e of enemies) if (e.state !== "dead") dot(e.pos.x, e.pos.z, e.def.ai === "charger" ? 3 : 2, e.state === "chase" || e.state === "windup" ? "#ff5a4a" : "#a05a6a");
+  for (const l of loots) dot(l.group.position.x, l.group.position.z, 2.5, rarityOf(l.item.rarity).color);
+  if (player.trace) dot(player.trace.x, player.trace.z, 3.5, "#ff8a2a");
+  for (const b of beacons) {
+    const [x, y] = toMini(b.pos.x, b.pos.z);
+    // 범위 밖 봉화는 테두리에 방향 표시
+    const dx = x - R, dy = y - R, d = Math.hypot(dx, dy), lim = R - 7;
+    const px = d > lim ? R + (dx / d) * lim : x, py = d > lim ? R + (dy / d) * lim : y;
+    mctx.fillStyle = b.lit ? "#ffcc66" : "#7d8694";
+    mctx.strokeStyle = "#000";
+    mctx.beginPath();
+    mctx.moveTo(px, py - 5); mctx.lineTo(px + 4, py); mctx.lineTo(px, py + 5); mctx.lineTo(px - 4, py); mctx.closePath();
+    mctx.fill(); mctx.stroke();
+  }
+  // 플레이어 화살표 (진행 방향)
+  mctx.translate(R, R);
+  mctx.rotate(-(player.facing - cam.yaw) + Math.PI);
+  mctx.fillStyle = "#ffffff";
+  mctx.beginPath(); mctx.moveTo(0, 6); mctx.lineTo(4, -4); mctx.lineTo(0, -2); mctx.lineTo(-4, -4); mctx.closePath(); mctx.fill();
+  mctx.restore();
+  mctx.strokeStyle = "#5a4a30";
+  mctx.lineWidth = 2;
+  mctx.beginPath(); mctx.arc(R, R, R - 1, 0, Math.PI * 2); mctx.stroke();
+}
+
+export function updateHud() {
+  $("stFill").style.width = `${(player.stamina.value / player.stamina.max) * 100}%`;
+  $("stFill").parentElement!.classList.toggle("empty", ui.stFlash > 0);
+  $("lvl").textContent = String(player.lv.level);
+  $("hpFill").style.width = `${(player.hp / player.maxHp) * 100}%`;
+  $("hpText").textContent = `${Math.ceil(player.hp)} / ${player.maxHp}`;
+  const need = expToNext(player.lv.level);
+  $("expFill").style.width = need === Infinity ? "100%" : `${(player.lv.exp / need) * 100}%`;
+  $("gold").textContent = String(player.gold);
+  const np = nextLevelProgress(player.embers.banked);
+  $("embers").textContent = `✦ ${player.embers.held}`;
+  $("engrave").textContent = `각인 Lv ${engraveBonus(player.embers.banked).level} (${np.into}/${np.need})`;
+  const nb = player.dead ? null : nearBeacon(BC.interactRange);
+  const pr = $("prompt");
+  if (nb) {
+    pr.style.display = "block";
+    pr.innerHTML = nb.lit
+      ? `<b>F</b> ${nb.def.name} — ${player.embers.held > 0 ? `잔불 ${player.embers.held} 각인` : "쉬기"}`
+      : `<b>F</b> ${nb.def.name} 점화`;
+  } else pr.style.display = "none";
+  $("beaconCount").textContent = `봉화 ${beacons.filter((b) => b.lit).length}/${beacons.length}`;
+  $("spBadge").style.display = player.lv.statPoints > 0 ? "inline-block" : "none";
+  $("spBadge").textContent = `+${player.lv.statPoints} (C)`;
+  const ch = $("charge");
+  ch.style.opacity = player.charging ? "1" : "0";
+  ($("chargeFill") as HTMLElement).style.width = `${Math.min(1, player.chargeT / HC.maxCharge) * 100}%`;
+  const tgt = $("target");
+  if (cam.target && cam.target.state !== "dead") {
+    tgt.style.display = "block";
+    const p = cam.target.pos.clone().setY(cam.target.def.size * 2 + 0.6).project(camera);
+    tgt.style.left = `${(p.x * 0.5 + 0.5) * innerWidth}px`;
+    tgt.style.top = `${(-p.y * 0.5 + 0.5) * innerHeight}px`;
+    $("targetName").textContent = cam.target.def.name;
+  } else tgt.style.display = "none";
+}
+
+export function updateFloaters(dt: number) {
+  for (let i = floaters.length - 1; i >= 0; i--) {
+    const f = floaters[i];
+    f.t += dt;
+    f.pos.y += dt * 1.2;
+    const p = f.pos.clone().project(camera);
+    f.el.style.left = `${(p.x * 0.5 + 0.5) * innerWidth}px`;
+    f.el.style.top = `${(-p.y * 0.5 + 0.5) * innerHeight}px`;
+    f.el.style.opacity = String(1 - f.t / 0.9);
+    if (f.t > 0.9) {
+      f.el.remove();
+      floaters.splice(i, 1);
+    }
+  }
+}
