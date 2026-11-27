@@ -7,7 +7,9 @@ import { makePlayerMesh, makeEnemyMesh } from "./game/actors";
 import { Fx } from "./game/fx";
 import { sfx } from "./game/sfx";
 import { computeDamage, rollRange } from "./logic/combat";
-import { expToNext, gainExp, maxHpAt, type LevelState } from "./logic/progression";
+import { expToNext, gainExp, type LevelState } from "./logic/progression";
+import { derive, allocate, emptyAttrs, ATTR_KEYS, type AttrKey, type Attrs } from "./logic/stats";
+import { serialize, deserialize } from "./logic/save";
 import { makeStamina, spend, regen, isInvulnerable } from "./logic/stamina";
 import { resolveCircle } from "./logic/collision";
 import { makePoise, hitPoise, tickPoise, isStaggered, heavyMultipliers, type Poise } from "./logic/poise";
@@ -62,8 +64,46 @@ const player = {
   dodgeT: null as number | null, // 회피 시작 후 경과 시간 (null = 회피 중 아님)
   dodgeDir: new THREE.Vector3(),
   dodgeCd: 0,
+  attrs: emptyAttrs() as Attrs,
+  crit: AC.critChance,
+  dodgeCostMul: 1,
 };
 const PLAYER_RADIUS = 0.4;
+
+// 레벨·속성 → 능력치 반영
+function applyDerived(fullHeal: boolean) {
+  const d = derive(player.lv.level, player.attrs);
+  const hpRatio = player.hp / player.maxHp;
+  player.maxHp = d.maxHp;
+  player.atk = d.atk;
+  player.def = d.def;
+  player.crit = d.critChance;
+  player.dodgeCostMul = d.dodgeCostMul;
+  player.stamina.max = d.maxStamina;
+  player.hp = fullHeal ? d.maxHp : Math.max(1, Math.round(d.maxHp * hpRatio));
+}
+
+// ---------- 저장/불러오기 ----------
+const SAVE_KEY = "emberlands.save";
+function saveGame() {
+  try {
+    localStorage.setItem(SAVE_KEY, serialize({ level: player.lv.level, exp: player.lv.exp, statPoints: player.lv.statPoints, attrs: player.attrs, gold: player.gold }));
+  } catch { /* 저장 불가 환경(시크릿 모드 등)은 무시 */ }
+}
+function loadGame(): boolean {
+  let raw: string | null = null;
+  try { raw = localStorage.getItem(SAVE_KEY); } catch { return false; }
+  const d = deserialize(raw, prog.maxLevel);
+  if (!d) return false;
+  player.lv = { level: d.level, exp: d.exp, statPoints: d.statPoints };
+  player.attrs = d.attrs;
+  player.gold = d.gold;
+  return true;
+}
+const loaded = new URLSearchParams(location.search).has("fresh") ? false : loadGame();
+applyDerived(true);
+setInterval(saveGame, 10000);
+addEventListener("beforeunload", saveGame);
 
 // ---------- 카메라 ----------
 const cam = { yaw: 0, dist: 15.5, height: 10.5, target: null as Enemy | null };
@@ -178,6 +218,7 @@ addEventListener("keydown", (e) => {
   if (e.code === "KeyK") startCharge();
   if (e.code === "Space") { e.preventDefault(); tryDodge(); }
   if (e.code === "Tab") { e.preventDefault(); toggleLockOn(); }
+  if (e.code === "KeyC") toggleCharPanel();
 });
 addEventListener("keyup", (e) => {
   keys.delete(e.code);
@@ -223,7 +264,7 @@ function faceTarget() {
 
 function tryDodge() {
   if (player.dead || player.dodgeT !== null || player.dodgeCd > 0) return;
-  if (!spend(player.stamina, DC.staminaCost)) return flashStamina();
+  if (!spend(player.stamina, DC.staminaCost * player.dodgeCostMul)) return flashStamina();
   const dir = moveInput();
   if (dir.lengthSq() === 0) dir.set(Math.sin(player.facing), 0, Math.cos(player.facing));
   player.dodgeDir.copy(dir.normalize());
@@ -277,7 +318,7 @@ function strike(range: number, arcDeg: number, mul: number, poiseDmg: number, hi
     if (d > range + e.def.size * 0.6) continue;
     if (d > 0.3 && to.normalize().dot(fwd) < arc) continue;
     const staggered = isStaggered(e.poise);
-    const r = computeDamage({ atk: player.atk, def: e.def.def, skillMul: mul, critChance: AC.critChance, staggered });
+    const r = computeDamage({ atk: player.atk, def: e.def.def, skillMul: mul, critChance: player.crit, staggered });
     const broke = hitPoise(e.poise, poiseDmg, { ...PC, max: e.def.poise });
     hitEnemy(e, r.amount, r.crit || staggered, heavy, broke);
     hitAny = true;
@@ -323,10 +364,10 @@ function killEnemy(e: Enemy) {
 }
 
 function onLevelUp() {
-  player.maxHp = maxHpAt(player.lv.level, prog.base.hp);
-  player.atk = prog.base.atk + (player.lv.level - 1) * 2;
-  player.hp = player.maxHp;
-  toast(`레벨 업!  Lv ${player.lv.level}`);
+  applyDerived(true);
+  toast(`레벨 업!  Lv ${player.lv.level}  —  C: 능력치 배분`);
+  saveGame();
+  renderCharPanel();
   fx.burst(player.pos.clone().setY(1), "#ffcc66", 30, 6);
   sfx.levelUp();
 }
@@ -358,6 +399,8 @@ function updateHud() {
   const need = expToNext(player.lv.level);
   $("expFill").style.width = need === Infinity ? "100%" : `${(player.lv.exp / need) * 100}%`;
   $("gold").textContent = String(player.gold);
+  $("spBadge").style.display = player.lv.statPoints > 0 ? "inline-block" : "none";
+  $("spBadge").textContent = `+${player.lv.statPoints} (C)`;
   const ch = $("charge");
   ch.style.opacity = player.charging ? "1" : "0";
   ($("chargeFill") as HTMLElement).style.width = `${Math.min(1, player.chargeT / HC.maxCharge) * 100}%`;
@@ -370,6 +413,44 @@ function updateHud() {
     $("targetName").textContent = cam.target.def.name;
   } else tgt.style.display = "none";
 }
+// ---------- 캐릭터 창 (C) ----------
+function toggleCharPanel() {
+  const el = $("charPanel");
+  el.classList.toggle("open");
+  renderCharPanel();
+}
+function spendPoint(key: AttrKey) {
+  const r = allocate(player.attrs, player.lv.statPoints, key);
+  if (!r) return;
+  player.attrs = r.attrs;
+  player.lv = { ...player.lv, statPoints: r.points };
+  applyDerived(false);
+  saveGame();
+  renderCharPanel();
+}
+function renderCharPanel() {
+  const el = $("charPanel");
+  if (!el.classList.contains("open")) return;
+  const d = derive(player.lv.level, player.attrs);
+  const A = prog.attributes as Record<AttrKey, { name: string; desc: string }>;
+  el.innerHTML = `
+    <h3>점화자 · Lv ${player.lv.level}</h3>
+    <div class="pts">남은 포인트: <b>${player.lv.statPoints}</b></div>
+    ${ATTR_KEYS.map((k) => `
+      <div class="attr"><span class="nm">${A[k].name}</span><span class="val">${player.attrs[k]}</span>
+        <button data-k="${k}" ${player.lv.statPoints > 0 ? "" : "disabled"}>+</button>
+        <div class="desc">${A[k].desc}</div></div>`).join("")}
+    <div class="derived">
+      <div>최대 HP <b>${d.maxHp}</b></div><div>공격력 <b>${d.atk}</b></div>
+      <div>방어력 <b>${d.def}</b></div><div>스태미나 <b>${d.maxStamina}</b></div>
+      <div>치명타 <b>${(d.critChance * 100).toFixed(1)}%</b></div><div>회피 비용 <b>${Math.round(DC.staminaCost * d.dodgeCostMul)}</b></div>
+    </div>
+    <div class="hint">C 닫기 · 진행 상황은 자동 저장</div>`;
+  el.querySelectorAll("button[data-k]").forEach((b) =>
+    b.addEventListener("click", (ev) => { ev.stopPropagation(); spendPoint((b as HTMLElement).dataset.k as AttrKey); })
+  );
+}
+
 let toastTimer = 0;
 function toast(msg: string) {
   const el = $("toast");
@@ -688,6 +769,7 @@ function frame() {
 // 첫 프레임 카메라 위치
 camera.position.copy(player.pos).addScaledVector(camForward(), -cam.dist * 0.74).setY(cam.height);
 frame();
+if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
 
 // 테스트·스크린샷용 디버그 핸들 (게임 플레이에 영향 없음)
 (window as any).__game = {
@@ -699,6 +781,9 @@ frame();
   startCharge,
   releaseCharge,
   lockOn: toggleLockOn,
+  toggleCharPanel,
+  spendPoint,
+  save: saveGame,
   nearest(filter?: string) {
     let best: Enemy | null = null, bd = Infinity;
     for (const e of enemies) {

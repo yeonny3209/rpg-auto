@@ -5,5 +5,39 @@
   "statPointsPerLevel": 3,
   "hpPerLevel": 8,
   "staminaPerLevel": 2,
-  "base": { "hp": 100, "stamina": 100, "atk": 12, "def": 5, "moveSpeed": 6 }
+  "base": {
+    "hp": 100,
+    "stamina": 100,
+    "atk": 12,
+    "def": 5,
+    "moveSpeed": 6
+  },
+  "atkPerLevel": 1,
+  "attributes": {
+    "str": {
+      "name": "힘",
+      "desc": "근접 피해 +2, 최대 HP +3",
+      "atk": 2,
+      "hp": 3
+    },
+    "agi": {
+      "name": "민첩",
+      "desc": "치명타 +0.6%, 최대 스태미나 +2, 회피 비용 -1%",
+      "crit": 0.006,
+      "stamina": 2,
+      "dodgeCost": 0.01
+    },
+    "wis": {
+      "name": "지혜",
+      "desc": "스킬 피해 +3% (스킬 시스템에서 사용)",
+      "skillPower": 0.03
+    },
+    "vit": {
+      "name": "체력",
+      "desc": "최대 HP +10, 방어 +1",
+      "hp": 10,
+      "def": 1
+    }
+  },
+  "minDodgeCostRatio": 0.5
 }

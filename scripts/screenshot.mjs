@@ -106,6 +106,21 @@ try {
   await page.waitForTimeout(1500);
   await shot(page, "07-spitter.png");
 
+  // 캐릭터 창: 포인트 배분
+  await page.evaluate(() => { const g = window.__game; g.cam.target = null; g.toggleCharPanel(); });
+  await page.click('#charPanel button[data-k="str"]');
+  await page.click('#charPanel button[data-k="vit"]');
+  await page.waitForTimeout(200);
+  await shot(page, "08-character.png");
+  await page.evaluate(() => window.__game.toggleCharPanel());
+
+  // 저장/불러오기: 새로고침 후 레벨·속성 유지 확인
+  const before = await page.evaluate(() => { window.__game.save(); const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold }; });
+  await page.reload();
+  await page.waitForTimeout(1500);
+  const after = await page.evaluate(() => { const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold }; });
+  console.log("save/load", JSON.stringify(before) === JSON.stringify(after) ? "OK" : `MISMATCH ${JSON.stringify(before)} vs ${JSON.stringify(after)}`);
+
   const state = await page.evaluate(() => {
     const g = window.__game, p = g.player;
     const ch = g.enemies.find((e) => e.id === "ashCharger" && e.hp < e.def.hp);
