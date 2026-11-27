@@ -310,6 +310,26 @@ try {
   await page.keyboard.press("Escape");
   console.log("dialog closed by Esc:", await page.evaluate(() => !document.getElementById("dialog").classList.contains("open")));
 
+  // 상점: 상인 대화 → 거래 → 구매 → 판매
+  await page.evaluate(() => { const p = window.__game.player; p.gold = 500; });
+  await near("merchant");
+  await page.waitForTimeout(400);
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(300);
+  await page.click('#dialog button[data-act="shop"]');
+  await page.waitForTimeout(300);
+  const shopBefore = await page.evaluate(() => ({ gold: window.__game.player.gold, inv: window.__game.player.inventory.length }));
+  await page.click('#dialog .shop-row[data-act="buy"]');
+  await page.waitForTimeout(200);
+  const afterBuy = await page.evaluate(() => ({ gold: window.__game.player.gold, inv: window.__game.player.inventory.length }));
+  await page.hover('#dialog .shop-row[data-act="buy"] >> nth=2');
+  await shot(page, "23-shop.png");
+  await page.click('#dialog .shop-row[data-act="sell"]');
+  await page.waitForTimeout(200);
+  const afterSell = await page.evaluate(() => ({ gold: window.__game.player.gold, inv: window.__game.player.inventory.length }));
+  console.log("shop:", JSON.stringify({ shopBefore, afterBuy, afterSell }));
+  await page.keyboard.press("Escape");
+
   const state = await page.evaluate(() => {
     const g = window.__game, p = g.player;
     const ch = g.enemies.find((e) => e.id === "ashCharger" && e.hp < e.def.hp);

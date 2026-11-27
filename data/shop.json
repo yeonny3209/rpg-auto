@@ -1,0 +1,10 @@
+{
+  "basePrice": { "common": 20, "uncommon": 55, "rare": 140, "epic": 380, "legendary": 1000 },
+  "perItemLevel": 0.12,
+  "kindMul": { "weapon": 1.4, "body": 1.2, "head": 1, "hands": 0.9, "feet": 0.9, "ring": 1.3 },
+  "sellRatio": 0.4,
+  "stock": [
+    { "rarity": "common" }, { "rarity": "common" }, { "rarity": "uncommon" },
+    { "rarity": "uncommon" }, { "rarity": "rare", "minLevel": 5 }, { "rarity": "rare", "minLevel": 8 }
+  ]
+}
