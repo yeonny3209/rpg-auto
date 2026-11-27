@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { heightAt } from "../logic/terrain";
 import { setLit, type Beacon } from "./beacons";
 import wdata from "../../data/world.json";
 import { recoverTrace, engrave, engraveBonus } from "../logic/embers";
@@ -32,8 +33,8 @@ export function interact() {
     player.lv = r.state;
     toast(`봉화 점화 — ${b.def.name}`);
     reportQuest("beacon", b.def.id);
-    floater(b.pos.clone().setY(3), `+${BC.lightExp} EXP`, "exp");
-    fx.burst(b.pos.clone().setY(1.6), "#ffcc66", 40, 7);
+    floater(b.pos.clone().setY(b.pos.y + (3)), `+${BC.lightExp} EXP`, "exp");
+    fx.burst(b.pos.clone().setY(b.pos.y + (1.6)), "#ffcc66", 40, 7);
     fx.addShake(0.4);
     sfx.ignite();
     if (r.levelsGained > 0) onLevelUp();
@@ -48,8 +49,8 @@ export function interact() {
       player.embers = engrave(player.embers);
       const after = engraveBonus(player.embers.banked).level;
       applyDerived(true);
-      floater(b.pos.clone().setY(3), `✦${amount} 각인`, "exp");
-      fx.burst(player.pos.clone().setY(1), "#ffb347", 20, 4);
+      floater(b.pos.clone().setY(b.pos.y + (3)), `✦${amount} 각인`, "exp");
+      fx.burst(player.pos.clone().setY(player.pos.y + (1)), "#ffb347", 20, 4);
       sfx.ignite();
       toast(after > before ? `각인 레벨 ${after}! 공격력 +${after}%, 최대 HP +${after * EC.hpPerLevel}` : `잔불 ${amount} 각인`);
     } else toast(`${b.def.name}에서 쉬었다`);
@@ -74,15 +75,15 @@ export const traceGroup = new THREE.Group();
 }
 export function syncTrace() {
   traceGroup.visible = !!player.trace;
-  if (player.trace) traceGroup.position.set(player.trace.x, 0, player.trace.z);
+  if (player.trace) traceGroup.position.set(player.trace.x, heightAt(player.trace.x, player.trace.z), player.trace.z);
 }
 export function updateTrace(dt: number, t: number) {
   if (!player.trace) return;
   traceGroup.rotation.y += dt * 1.5;
-  traceGroup.position.y = Math.sin(t * 2.5) * 0.1;
+  traceGroup.position.y = heightAt(traceGroup.position.x, traceGroup.position.z) + Math.sin(t * 2.5) * 0.1;
   const dx = player.trace.x - player.pos.x, dz = player.trace.z - player.pos.z;
   if (!player.dead && dx * dx + dz * dz < EC.tracePickupRange ** 2) {
-    floater(player.pos.clone().setY(2.2), `✦${player.trace.amount} 되찾음`, "exp");
+    floater(player.pos.clone().setY(player.pos.y + (2.2)), `✦${player.trace.amount} 되찾음`, "exp");
     player.embers = recoverTrace(player.embers, player.trace);
     player.trace = null;
     syncTrace();

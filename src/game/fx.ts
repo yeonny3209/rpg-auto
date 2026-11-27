@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { heightAt } from "../logic/terrain";
 
 // 파편 파티클 + 화면 흔들림 + 히트스톱
 interface Particle { mesh: THREE.Mesh; vel: THREE.Vector3; life: number; max: number }
@@ -42,7 +43,8 @@ export class Fx {
       p.life -= dt;
       p.vel.y -= 12 * dt;
       p.mesh.position.addScaledVector(p.vel, dt);
-      if (p.mesh.position.y < 0.05) { p.mesh.position.y = 0.05; p.vel.multiplyScalar(0.5); p.vel.y = Math.abs(p.vel.y) * 0.3; }
+      const gy = heightAt(p.mesh.position.x, p.mesh.position.z) + 0.05;
+      if (p.mesh.position.y < gy) { p.mesh.position.y = gy; p.vel.multiplyScalar(0.5); p.vel.y = Math.abs(p.vel.y) * 0.3; }
       p.mesh.rotation.x += dt * 8;
       p.mesh.scale.setScalar(Math.max(0.01, p.life / p.max));
       if (p.life <= 0) {

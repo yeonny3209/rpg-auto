@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { Circle } from "../logic/collision";
+import { heightAt } from "../logic/terrain";
 
 /** 결정론적 난수 (월드 배치 재현용) */
 export function mulberry32(seed: number) {
@@ -36,17 +37,21 @@ export function buildWorld(scene: THREE.Scene): World {
   sc.left = -30; sc.right = 30; sc.top = 30; sc.bottom = -30;
   scene.add(moon);
 
-  // 잿빛 초원 바닥 (정점 색으로 얼룩)
-  const groundGeo = new THREE.CircleGeometry(WORLD_RADIUS + 30, 96);
+  // 잿빛 초원 바닥: 높이 지도(heightAt)로 굴곡을 주고, 정점 색은 얼룩 + 높이에 따라 살짝 밝게
+  const SIZE = (WORLD_RADIUS + 30) * 2;
+  const groundGeo = new THREE.PlaneGeometry(SIZE, SIZE, 150, 150);
   groundGeo.rotateX(-Math.PI / 2);
   const rng = mulberry32(7);
   const colors: number[] = [];
   const pos = groundGeo.attributes.position;
-  const a = new THREE.Color("#5a6150"), b = new THREE.Color("#706a56"), tmp = new THREE.Color();
+  const a = new THREE.Color("#5a6150"), b = new THREE.Color("#706a56"), hi = new THREE.Color("#8a8a78"), tmp = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
-    tmp.copy(a).lerp(b, rng());
+    const h = heightAt(pos.getX(i), pos.getZ(i));
+    pos.setY(i, h);
+    tmp.copy(a).lerp(b, rng()).lerp(hi, Math.max(0, h) * 0.12);
     colors.push(tmp.r, tmp.g, tmp.b);
   }
+  groundGeo.computeVertexNormals();
   groundGeo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }));
   ground.receiveShadow = true;
@@ -59,7 +64,7 @@ export function buildWorld(scene: THREE.Scene): World {
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
   for (let i = 0; i < grass.count; i++) {
     const r = 4 + Math.sqrt(rng()) * WORLD_RADIUS, th = rng() * Math.PI * 2;
-    p.set(Math.cos(th) * r, 0, Math.sin(th) * r);
+    p.set(Math.cos(th) * r, heightAt(Math.cos(th) * r, Math.sin(th) * r), Math.sin(th) * r);
     q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rng() * 6.28);
     const k = 0.6 + rng() * 0.9;
     s.set(k, k * (0.7 + rng() * 0.8), k);
@@ -73,7 +78,7 @@ export function buildWorld(scene: THREE.Scene): World {
     const r = 13 + rng() * WORLD_RADIUS, th = rng() * Math.PI * 2;
     const size = 0.4 + rng() * 1.2;
     const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(size, 0), rockMat);
-    rock.position.set(Math.cos(th) * r, 0.2, Math.sin(th) * r);
+    rock.position.set(Math.cos(th) * r, heightAt(Math.cos(th) * r, Math.sin(th) * r) + 0.2, Math.sin(th) * r);
     if (size > 0.6) occluders.push(rock);
     if (size > 0.6) obstacles.push({ x: rock.position.x, z: rock.position.z, r: size * 0.85 });
     rock.rotation.set(rng() * 3, rng() * 3, rng() * 3);
@@ -85,7 +90,7 @@ export function buildWorld(scene: THREE.Scene): World {
     const th = (i / 9) * Math.PI * 2;
     const h = 1.2 + rng() * 2.5;
     const col = new THREE.Mesh(new THREE.BoxGeometry(0.8, h, 0.8), ruinMat);
-    col.position.set(Math.cos(th) * 11, h / 2, Math.sin(th) * 11);
+    col.position.set(Math.cos(th) * 11, heightAt(Math.cos(th) * 11, Math.sin(th) * 11) + h / 2, Math.sin(th) * 11);
     obstacles.push({ x: col.position.x, z: col.position.z, r: 0.6 });
     col.rotation.z = (rng() - 0.5) * 0.2;
     col.castShadow = col.receiveShadow = true;

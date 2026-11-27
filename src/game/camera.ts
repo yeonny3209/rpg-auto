@@ -15,7 +15,7 @@ export function updateCamera(dt: number) {
     }
   }
   const f = camForward();
-  const want = player.pos.clone().addScaledVector(f, -cam.dist * 0.74).setY(cam.height);
+  const want = player.pos.clone().addScaledVector(f, -cam.dist * 0.74).setY(player.pos.y + cam.height);
   camera.position.lerp(want, Math.min(1, dt * 6));
   camera.lookAt(player.pos.x, player.pos.y + 1, player.pos.z);
   fx.applyShake(camera);
@@ -26,7 +26,7 @@ export const raycaster = new THREE.Raycaster();
 export const fadedMat = new Map<THREE.Mesh, THREE.Material | THREE.Material[]>();
 export const ghostMat = new THREE.MeshStandardMaterial({ color: "#6b6f75", transparent: true, opacity: 0.25, depthWrite: false });
 export function updateOcclusion() {
-  const target = player.pos.clone().setY(1);
+  const target = player.pos.clone().setY(player.pos.y + (1));
   const dir = target.clone().sub(camera.position);
   const dist = dir.length();
   raycaster.set(camera.position, dir.normalize());

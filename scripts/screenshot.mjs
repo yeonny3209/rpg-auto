@@ -226,6 +226,20 @@ try {
   await page.waitForTimeout(300);
   console.log("pressed 2 ->", await page.evaluate(() => window.__game.player.cls));
 
+  // 지형: 가장 높은 언덕 근처로 이동해 굴곡과 발 높이 확인
+  const hill = await page.evaluate(() => {
+    const g = window.__game; let best = { h: -9, x: 0, z: 0 };
+    for (let x = -50; x <= 50; x += 2) for (let z = -50; z <= 50; z += 2) { const h = g.heightAt(x, z); if (h > best.h) best = { h, x, z }; }
+    g.player.pos.set(best.x - 5, 0, best.z - 5);
+    for (const e of g.enemies) e.attackCd = 99;
+    g.cam.yaw = Math.atan2(5, 5);
+    return best;
+  });
+  await page.waitForTimeout(2200);
+  console.log("hill:", JSON.stringify(hill), "player y:", await page.evaluate(() => +window.__game.player.pos.y.toFixed(2)));
+  await shot(page, "19-terrain.png");
+  await page.evaluate(() => { window.__game.cam.yaw = 0; });
+
   // 퀘스트 흐름: 사제 대화(수락) → 처치 5 → 보고(보상) → 다음 퀘스트 제안
   const near = (id) => page.evaluate((id) => { const g = window.__game, n = g.npcs.find((x) => x.def.id === id); g.player.pos.set(n.pos.x - 1.8, 0, n.pos.z - 0.6); }, id);
   await near("priest");

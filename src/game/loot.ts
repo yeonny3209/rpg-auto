@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { heightAt } from "../logic/terrain";
 import { sfx } from "./sfx";
 import { rarityOf, ITEM_CFG, type Item } from "../logic/items";
 import { $, floater, player, saveGame, scene } from "./core";
@@ -17,7 +18,10 @@ export function spawnLoot(item: Item, at: THREE.Vector3) {
   gem.position.y = 0.5;
   const beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending }));
   g.add(gem, beam);
-  g.position.set(at.x + (Math.random() - 0.5), 0, at.z + (Math.random() - 0.5));
+  {
+    const lx = at.x + (Math.random() - 0.5), lz = at.z + (Math.random() - 0.5);
+    g.position.set(lx, heightAt(lx, lz), lz);
+  }
   scene.add(g);
   loots.push({ item, group: g, t: 0 });
 }
@@ -32,12 +36,12 @@ export function updateLoot(dt: number) {
     const dx = l.group.position.x - player.pos.x, dz = l.group.position.z - player.pos.z;
     if (dx * dx + dz * dz < 1.6 * 1.6) {
       if (player.inventory.length >= ITEM_CFG.inventorySize) {
-        if (l.t % 2 < dt) floater(player.pos.clone().setY(2.3), "가방이 가득 찼다", "hurt");
+        if (l.t % 2 < dt) floater(player.pos.clone().setY(player.pos.y + (2.3)), "가방이 가득 찼다", "hurt");
         continue;
       }
       player.inventory.push(l.item);
       const r = rarityOf(l.item.rarity);
-      floater(l.group.position.clone().setY(1.4), `${l.item.name} [${r.name}]`, `loot r-${l.item.rarity}`);
+      floater(l.group.position.clone().setY(l.group.position.y + 1.4), `${l.item.name} [${r.name}]`, `loot r-${l.item.rarity}`);
       sfx.pickup();
       scene.remove(l.group);
       loots.splice(i, 1);

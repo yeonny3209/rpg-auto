@@ -20,6 +20,7 @@ import { renderQuestLog } from "./game/questflow";
 import { dialogPrimary, openDialog, closeDialog } from "./game/dialog";
 import { killEnemy } from "./game/player";
 import { createEnemy } from "./game/enemies";
+import { heightAt } from "./logic/terrain";
 
 const clock = new THREE.Clock();
 function frame() {
@@ -63,6 +64,7 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   enemies,
   cam,
   attack: tryAttack,
+  heightAt,
   npcs,
   talk: (id: string) => openDialog(npcs.find((n) => n.def.id === id)!),
   dialogPrimary,

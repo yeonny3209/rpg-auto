@@ -122,7 +122,7 @@ export function updateHud() {
   const tgt = $("target");
   if (cam.target && cam.target.state !== "dead") {
     tgt.style.display = "block";
-    const p = cam.target.pos.clone().setY(cam.target.def.size * 2 + 0.6).project(camera);
+    const p = cam.target.pos.clone().setY(cam.target.pos.y + (cam.target.def.size * 2 + 0.6)).project(camera);
     tgt.style.left = `${(p.x * 0.5 + 0.5) * innerWidth}px`;
     tgt.style.top = `${(-p.y * 0.5 + 0.5) * innerHeight}px`;
     $("targetName").textContent = cam.target.def.name;

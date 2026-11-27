@@ -2,12 +2,71 @@
   "zone": "ashenPlains",
   "zoneName": "잿빛 초원",
   "beacons": [
-    { "id": "lastLight", "name": "마지막 등불", "x": 0, "z": 0, "litAtStart": true, "major": true },
-    { "id": "northRuins", "name": "북쪽 폐허 봉화", "x": 4, "z": 38, "litAtStart": false },
-    { "id": "eastFields", "name": "동쪽 들판 봉화", "x": -36, "z": 8, "litAtStart": false },
-    { "id": "southHollow", "name": "남쪽 움푹지 봉화", "x": -6, "z": -37, "litAtStart": false },
-    { "id": "westStones", "name": "서쪽 선돌 봉화", "x": 35, "z": -12, "litAtStart": false }
+    {
+      "id": "lastLight",
+      "name": "마지막 등불",
+      "x": 0,
+      "z": 0,
+      "litAtStart": true,
+      "major": true
+    },
+    {
+      "id": "northRuins",
+      "name": "북쪽 폐허 봉화",
+      "x": 4,
+      "z": 38,
+      "litAtStart": false
+    },
+    {
+      "id": "eastFields",
+      "name": "동쪽 들판 봉화",
+      "x": -36,
+      "z": 8,
+      "litAtStart": false
+    },
+    {
+      "id": "southHollow",
+      "name": "남쪽 움푹지 봉화",
+      "x": -6,
+      "z": -37,
+      "litAtStart": false
+    },
+    {
+      "id": "westStones",
+      "name": "서쪽 선돌 봉화",
+      "x": 35,
+      "z": -12,
+      "litAtStart": false
+    }
   ],
-  "beacon": { "interactRange": 2.6, "healRange": 4.0, "healPerSec": 0.15, "lightExp": 40, "lightRadius": 18 },
-  "embers": { "deathLossRatio": 0.5, "perLevelCost": 20, "atkPctPerLevel": 0.01, "hpPerLevel": 3, "tracePickupRange": 1.6 }
+  "beacon": {
+    "interactRange": 2.6,
+    "healRange": 4.0,
+    "healPerSec": 0.15,
+    "lightExp": 40,
+    "lightRadius": 18
+  },
+  "embers": {
+    "deathLossRatio": 0.5,
+    "perLevelCost": 20,
+    "atkPctPerLevel": 0.01,
+    "hpPerLevel": 3,
+    "tracePickupRange": 1.6
+  },
+  "terrain": {
+    "seed": 11,
+    "amplitude": 3.0,
+    "scale": 0.05,
+    "octaves": 3,
+    "village": {
+      "x": 0,
+      "z": 0,
+      "inner": 13,
+      "outer": 24
+    },
+    "beaconFlat": {
+      "inner": 5,
+      "outer": 12
+    }
+  }
 }

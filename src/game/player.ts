@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { heightAt } from "../logic/terrain";
 import prog from "../../data/progression.json";
 import combatCfg from "../../data/combat.json";
 import { WORLD_RADIUS } from "./world";
@@ -115,24 +116,24 @@ export function castSkill(slot: number) {
   const sk = list[slot];
   if (!sk || player.dead || player.dodgeT !== null || player.dash || player.charging) return;
   const why = castBlock(player.sk, slot, list);
-  if (why === "ember") { floater(player.pos.clone().setY(2.3), "잔불 부족", "hurt"); return; }
+  if (why === "ember") { floater(player.pos.clone().setY(player.pos.y + (2.3)), "잔불 부족", "hurt"); return; }
   if (why === "cooldown" || !spendCast(player.sk, slot, list)) return;
   faceTarget();
   const fwd = new THREE.Vector3(Math.sin(player.facing), 0, Math.cos(player.facing));
   player.attackKind = "heavy";
   player.attackT = CAST_LOCK;
   player.attackCd = Math.max(player.attackCd, CAST_LOCK * 0.6);
-  floater(player.pos.clone().setY(2.5), sk.name, "exp");
+  floater(player.pos.clone().setY(player.pos.y + (2.5)), sk.name, "exp");
   const opts: StrikeOpts = { critAdd: sk.critAdd, skill: true };
   switch (sk.type) {
     case "arc":
       sfx.heavySwing();
-      fx.burst(player.pos.clone().addScaledVector(fwd, sk.range! * 0.5).setY(1), sk.color, 18, 6);
+      fx.burst(player.pos.clone().addScaledVector(fwd, sk.range! * 0.5).setY(player.pos.y + 1), sk.color, 18, 6);
       strike(sk.range!, sk.arcDeg!, sk.mul!, sk.poise!, HC.hitstop, true, opts);
       break;
     case "ring":
       sfx.heavySwing();
-      fx.burst(player.pos.clone().setY(0.5), sk.color, 44, 8);
+      fx.burst(player.pos.clone().setY(player.pos.y + (0.5)), sk.color, 44, 8);
       fx.addShake(0.5);
       strike(sk.range!, 360, sk.mul!, sk.poise!, HC.hitstop, true, opts);
       break;
@@ -151,10 +152,10 @@ export function castSkill(slot: number) {
       if (sk.heal) {
         const before = player.hp;
         player.hp = Math.min(player.maxHp, player.hp + player.maxHp * sk.heal);
-        floater(player.pos.clone().setY(2.1), `+${Math.round(player.hp - before)}`, "exp");
+        floater(player.pos.clone().setY(player.pos.y + (2.1)), `+${Math.round(player.hp - before)}`, "exp");
       }
       applyBuff(player.buff, sk);
-      fx.burst(player.pos.clone().setY(1), sk.color, 26, 5);
+      fx.burst(player.pos.clone().setY(player.pos.y + (1)), sk.color, 26, 5);
       break;
   }
 }
@@ -162,14 +163,14 @@ export function castSkill(slot: number) {
 export function hitEnemy(e: Enemy, amount: number, crit: boolean, heavy: boolean, broke: boolean) {
   e.hp -= amount;
   e.flashT = 0.12;
-  floater(e.pos.clone().setY(1.6 + e.def.size * 0.4), String(amount), crit ? "crit" : "");
-  fx.burst(e.pos.clone().setY(0.8), "#ffb347", heavy ? 10 : 5, heavy ? 5 : 3.5);
+  floater(e.pos.clone().setY(e.pos.y + (1.6 + e.def.size * 0.4)), String(amount), crit ? "crit" : "");
+  fx.burst(e.pos.clone().setY(e.pos.y + (0.8)), "#ffb347", heavy ? 10 : 5, heavy ? 5 : 3.5);
   const push = e.pos.clone().sub(player.pos).setY(0).normalize().multiplyScalar((heavy ? 1.1 : 0.5) / Math.max(0.7, e.def.size));
   e.pos.add(push);
   if (broke) {
     e.state = "stagger";
     e.t = 0;
-    floater(e.pos.clone().setY(2.4), "그로기!", "crit");
+    floater(e.pos.clone().setY(e.pos.y + (2.4)), "그로기!", "crit");
     sfx.stagger();
   } else if (e.state === "wander") e.state = "chase";
   if (e.hp <= 0) killEnemy(e);
@@ -181,8 +182,8 @@ export function killEnemy(e: Enemy) {
   e.respawnT = 8;
   e.hpBar.visible = false;
   if (cam.target === e) cam.target = null;
-  fx.burst(e.pos.clone().setY(0.6), e.def.eyeColor, 18, 5);
-  fx.burst(e.pos.clone().setY(0.6), "#2a2433", 10, 3);
+  fx.burst(e.pos.clone().setY(e.pos.y + (0.6)), e.def.eyeColor, 18, 5);
+  fx.burst(e.pos.clone().setY(e.pos.y + (0.6)), "#2a2433", 10, 3);
   gainEmber(player.sk, EMBER.gainKill);
   reportQuest("kill", e.id);
   sfx.kill();
@@ -191,7 +192,7 @@ export function killEnemy(e: Enemy) {
   const r = gainExp(player.lv, e.def.exp);
   player.lv = r.state;
   player.embers = { ...player.embers, held: player.embers.held + e.def.embers };
-  floater(e.pos.clone().setY(2.2), `+${e.def.exp} EXP  ◆${gold}  ✦${e.def.embers}`, "exp");
+  floater(e.pos.clone().setY(e.pos.y + (2.2)), `+${e.def.exp} EXP  ◆${gold}  ✦${e.def.embers}`, "exp");
   if (r.levelsGained > 0) onLevelUp();
   const drop = rollDrop(Math.random, e.def.level, e.def.dropChance);
   if (drop) spawnLoot(drop, e.pos);
@@ -202,7 +203,7 @@ export function onLevelUp() {
   toast(`레벨 업!  Lv ${player.lv.level}  —  C: 능력치 배분`);
   saveGame();
   renderCharPanel();
-  fx.burst(player.pos.clone().setY(1), "#ffcc66", 30, 6);
+  fx.burst(player.pos.clone().setY(player.pos.y + (1)), "#ffcc66", 30, 6);
   sfx.levelUp();
 }
 
@@ -221,6 +222,7 @@ export function toggleLockOn() {
 }
 
 export function updatePlayer(dt: number) {
+  player.pos.y = heightAt(player.pos.x, player.pos.z);
   player.attackCd = Math.max(0, player.attackCd - dt);
   player.hurtT = Math.max(0, player.hurtT - dt);
   if (player.dead) return;
@@ -242,7 +244,7 @@ export function updatePlayer(dt: number) {
     d.t -= dt;
     playerMesh.position.copy(player.pos);
     playerMesh.rotation.y = player.facing;
-    if (step > 0) fx.burst(player.pos.clone().setY(0.4), d.skill.color, 2, 2);
+    if (step > 0) fx.burst(player.pos.clone().setY(player.pos.y + (0.4)), d.skill.color, 2, 2);
     if (d.t <= 0) {
       player.dash = null;
       const sk = d.skill;
@@ -258,7 +260,7 @@ export function updatePlayer(dt: number) {
     player.pos.addScaledVector(player.dodgeDir, DC.speed * (1 - k * 0.6) * dt);
     resolveCircle(player.pos, PLAYER_RADIUS, world.obstacles);
     playerMesh.position.copy(player.pos);
-    playerMesh.position.y = Math.sin(Math.min(1, k) * Math.PI) * 0.25;
+    playerMesh.position.y = player.pos.y + Math.sin(Math.min(1, k) * Math.PI) * 0.25;
     playerMesh.rotation.set(Math.min(1, k) * Math.PI * 2, player.facing, 0, "YXZ");
     if (player.dodgeT >= DC.time) {
       player.dodgeT = null;
@@ -305,7 +307,7 @@ export function updatePlayer(dt: number) {
     playerMesh.rotation.z = 0;
   }
   playerMesh.position.copy(player.pos);
-  playerMesh.position.y = moving ? Math.abs(Math.sin(performance.now() / 110)) * 0.06 : 0;
+  playerMesh.position.y = player.pos.y + (moving ? Math.abs(Math.sin(performance.now() / 110)) * 0.06 : 0);
   playerMesh.rotation.y = player.facing;
 }
 
@@ -314,9 +316,9 @@ export function hurtPlayer(amount: number) {
   player.hp = Math.max(0, player.hp - amount);
   player.hurtT = 0.2;
   player.charging = false;
-  floater(player.pos.clone().setY(2), `-${amount}`, "hurt");
+  floater(player.pos.clone().setY(player.pos.y + (2)), `-${amount}`, "hurt");
   fx.addShake(0.5);
-  fx.burst(player.pos.clone().setY(1), "#e2553c", 6, 3);
+  fx.burst(player.pos.clone().setY(player.pos.y + (1)), "#e2553c", 6, 3);
   sfx.hurt();
   if (player.hp <= 0) {
     player.dead = true;
@@ -333,7 +335,7 @@ export function hurtPlayer(amount: number) {
       player.hp = player.maxHp;
       const b = beacons.find((x) => x.def.id === player.respawnBeacon && x.lit) ?? beacons[0];
       player.pos.copy(b.pos).add(new THREE.Vector3(0, 0, 3));
-      camera.position.copy(player.pos).addScaledVector(camForward(), -cam.dist * 0.74).setY(cam.height);
+      camera.position.copy(player.pos).addScaledVector(camForward(), -cam.dist * 0.74).setY(player.pos.y + cam.height);
       playerMesh.rotation.z = 0;
     }, 2500);
   }

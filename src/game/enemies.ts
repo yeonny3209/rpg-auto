@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { heightAt } from "../logic/terrain";
 import enemyData from "../../data/enemies.json";
 import { WORLD_RADIUS } from "./world";
 import { makeEnemyMesh } from "./actors";
@@ -83,8 +84,8 @@ export const projGeo = new THREE.SphereGeometry(0.22, 10, 8);
 export const projMat = new THREE.MeshStandardMaterial({ color: "#9cff6c", emissive: "#6cff3c", emissiveIntensity: 2 });
 export function fireProjectile(e: Enemy) {
   const mesh = new THREE.Mesh(projGeo, projMat);
-  mesh.position.copy(e.pos).setY(1.0);
-  const target = player.pos.clone().setY(1.0);
+  mesh.position.copy(e.pos).setY(e.pos.y + 1.0);
+  const target = player.pos.clone().setY(player.pos.y + (1.0));
   const vel = target.sub(mesh.position).normalize().multiplyScalar(e.def.projectileSpeed ?? 8);
   scene.add(mesh);
   projectiles.push({ mesh, vel, life: 2.5, dmg: computeDamage({ atk: e.def.atk, def: player.def }).amount });
@@ -98,7 +99,7 @@ export function updateProjectiles(dt: number) {
     let gone = p.life <= 0;
     const dx = p.mesh.position.x - player.pos.x, dz = p.mesh.position.z - player.pos.z;
     if (!gone && !player.dead && dx * dx + dz * dz < 0.55 * 0.55) {
-      if (playerInvulnerable()) floater(player.pos.clone().setY(2), "회피!", "exp");
+      if (playerInvulnerable()) floater(player.pos.clone().setY(player.pos.y + (2)), "회피!", "exp");
       else hurtPlayer(p.dmg);
       gone = true;
     }
@@ -123,6 +124,7 @@ export function enemyAttackHits(e: Enemy, dist: number): boolean {
 export function updateEnemies(dt: number) {
   for (const e of enemies) {
     const m = e.mesh;
+    e.pos.y = heightAt(e.pos.x, e.pos.z);
     if (e.state === "dead") {
       e.t += dt;
       m.root.scale.setScalar(Math.max(0.01, 1 - e.t * 3));
@@ -179,7 +181,7 @@ export function updateEnemies(dt: number) {
           e.attackCd = e.def.attackCooldown;
           if (e.def.ai === "melee") {
             if (enemyAttackHits(e, dist)) {
-              if (playerInvulnerable()) floater(player.pos.clone().setY(2), "회피!", "exp");
+              if (playerInvulnerable()) floater(player.pos.clone().setY(player.pos.y + (2)), "회피!", "exp");
               else hurtPlayer(computeDamage({ atk: e.def.atk, def: player.def }).amount);
             }
             e.state = "recover";
@@ -198,13 +200,13 @@ export function updateEnemies(dt: number) {
         e.pos.addScaledVector(e.chargeDir, (e.def.chargeSpeed ?? 12) * dt);
         if (!e.hitPlayer && !player.dead && dist < e.def.size + 0.6) {
           e.hitPlayer = true;
-          if (playerInvulnerable()) floater(player.pos.clone().setY(2), "회피!", "exp");
+          if (playerInvulnerable()) floater(player.pos.clone().setY(player.pos.y + (2)), "회피!", "exp");
           else {
             hurtPlayer(computeDamage({ atk: e.def.atk, def: player.def }).amount);
             player.pos.addScaledVector(e.chargeDir, 1.5);
           }
         }
-        if (e.t % 0.08 < dt) fx.burst(e.pos.clone().setY(0.2), "#6b6157", 2, 1.5);
+        if (e.t % 0.08 < dt) fx.burst(e.pos.clone().setY(e.pos.y + (0.2)), "#6b6157", 2, 1.5);
         if (e.t >= (e.def.chargeTime ?? 0.6) || resolveCircle(e.pos, e.def.size * 0.8, world.obstacles)) {
           e.state = "recover";
           e.t = 0;
@@ -227,7 +229,7 @@ export function updateEnemies(dt: number) {
     m.mat.emissive.set(e.flashT > 0 ? "#ffffff" : e.state === "stagger" ? "#ffcc66" : "#000000");
     m.mat.emissiveIntensity = e.flashT > 0 ? 0.8 : e.state === "stagger" ? 0.25 : 0;
     m.root.rotation.y = yaw;
-    m.root.position.set(e.pos.x, e.state === "chase" ? Math.abs(Math.sin(e.t * 10)) * 0.08 : 0, e.pos.z);
+    m.root.position.set(e.pos.x, e.pos.y + (e.state === "chase" ? Math.abs(Math.sin(e.t * 10)) * 0.08 : 0), e.pos.z);
 
     // 머리 위 HP 바 (피해를 입었을 때만)
     const hb = e.hpBar;
@@ -235,7 +237,7 @@ export function updateEnemies(dt: number) {
     if (hb.visible) {
       const full = e.def.size * 1.6;
       const camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-      hb.position.set(e.pos.x, e.def.size * 2 + 0.3, e.pos.z).addScaledVector(camRight, -full / 2);
+      hb.position.set(e.pos.x, e.pos.y + e.def.size * 2 + 0.3, e.pos.z).addScaledVector(camRight, -full / 2);
       hb.quaternion.copy(camera.quaternion);
       const k = Math.max(0, e.hp / e.def.hp);
       hb.scale.set(Math.max(0.01, k) * full, 1, 1);
