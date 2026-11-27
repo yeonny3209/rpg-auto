@@ -67,6 +67,7 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   cam,
   attack: tryAttack,
   boss: bossOf,
+  bosses: () => enemies.filter((x) => x.boss),
   tutorial: tutorialState,
   heightAt,
   npcs,

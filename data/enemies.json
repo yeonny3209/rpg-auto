@@ -109,5 +109,34 @@
     "projectileSpeed": 10,
     "chargeSpeed": 16,
     "chargeTime": 0.7
+  },
+  "cinderWarden": {
+    "name": "재티 파수꾼",
+    "ai": "boss",
+    "spawnWeight": 0,
+    "level": 3,
+    "hp": 300,
+    "atk": 13,
+    "def": 4,
+    "exp": 140,
+    "gold": [
+      30,
+      50
+    ],
+    "poise": 120,
+    "moveSpeed": 2.8,
+    "aggroRange": 13,
+    "attackRange": 4.0,
+    "attackCooldown": 1.8,
+    "windup": 1.0,
+    "recover": 1.0,
+    "color": "#4a4f5a",
+    "eyeColor": "#ffd06a",
+    "size": 1.6,
+    "dropChance": 1,
+    "embers": 50,
+    "projectileSpeed": 9,
+    "chargeSpeed": 13,
+    "chargeTime": 0.7
   }
 }

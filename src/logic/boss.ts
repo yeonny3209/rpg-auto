@@ -1,10 +1,18 @@
 // 보스 패턴 선택·페이즈 (렌더링 무관). 수치는 data/bosses.json.
-import cfg from "../../data/bosses.json";
+import raw from "../../data/bosses.json";
 
-export type BossId = keyof typeof cfg;
+export type BossId = keyof typeof raw;
 export type PatternId = "charge" | "slam" | "spit";
 export type Phase = 1 | 2;
+interface BossCfg {
+  home: { x: number; z: number }; leash: number; respawnSec: number; phase2At: number; guaranteedRarity: string;
+  cooldown: Record<string, number>;
+  patterns: Partial<Record<PatternId, Record<string, any>>>;
+}
+// 보스마다 쓰는 패턴이 다르므로(미니보스는 가시 투사 없음) 느슨한 형태로 다룬다
+const cfg = raw as unknown as Record<BossId, BossCfg>;
 export const BOSSES = cfg;
+export const BOSS_IDS = Object.keys(cfg) as BossId[];
 export const bossCfg = (id: BossId) => cfg[id];
 
 export const phaseOf = (hp: number, max: number, id: BossId): Phase => (hp / max <= cfg[id].phase2At ? 2 : 1);
@@ -25,7 +33,7 @@ export const cooldownFor = (id: BossId, phase: Phase) => (cfg[id].cooldown as Re
 export function nextPattern(id: BossId, prev: PatternId | null, dist: number, r: number): PatternId {
   const ids = Object.keys(cfg[id].patterns) as PatternId[];
   const w = ids.map((p) => {
-    let x = cfg[id].patterns[p].weight as number;
+    let x = cfg[id].patterns[p]!.weight as number;
     if (p === prev) x = 0;
     if (p === "slam") x *= dist < 6 ? 3 : 0.3;
     if (p === "charge" && dist < 3) x *= 0.3;

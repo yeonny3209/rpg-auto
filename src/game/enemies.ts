@@ -81,7 +81,7 @@ export function respawn(e: Enemy) {
 }
 for (let i = 0; i < ENEMY_COUNT; i++) createEnemy(weightedPick(weights, Math.random()), spawnPoint());
 // 지역 보스: 정해진 자리에서 기다린다
-{ const h = bossCfg("boarKing").home; createEnemy("boarKing", new THREE.Vector3(h.x, 0, h.z)); }
+for (const id of ["boarKing", "cinderWarden"] as const) { const h = bossCfg(id).home; createEnemy(id, new THREE.Vector3(h.x, 0, h.z)); }
 // 첫 전투가 쉽도록 마을에서 조금 떨어진 곳(약 14m)에 약한 적 둘
 createEnemy("ashCrawler", new THREE.Vector3(10, 0, 11));
 createEnemy("ashCrawler", new THREE.Vector3(-9, 0, 12));
@@ -160,7 +160,7 @@ function bossHit(e: Enemy, mul: number) {
 
 /** 보스 상태 기계. 새 yaw를 반환한다. */
 function updateBossState(e: Enemy, dt: number, dist: number, dirTo: THREE.Vector3, yawIn: number): number {
-  const b = e.boss!, id = "boarKing" as BossId, cfg = bossCfg(id);
+  const b = e.boss!, id = e.id as BossId, cfg = bossCfg(id);
   let yaw = yawIn;
   const ph = phaseOf(e.hp, e.def.hp, id);
   if (ph !== b.phase && e.state !== "dead") {

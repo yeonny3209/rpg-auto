@@ -67,3 +67,47 @@ describe("페이즈·패턴", () => {
     expect(c.leash).toBeGreaterThan(10);
   });
 });
+
+import { BOSS_IDS } from "../src/logic/boss";
+import worldData from "../data/world.json";
+import questsData from "../data/quests.json";
+
+describe("모든 보스 공통 규칙 (미니보스 포함)", () => {
+  it("보스마다 적 정의(ai boss·스폰 0)와 패턴이 있고 월드 안에 있다", () => {
+    expect(BOSS_IDS).toContain("cinderWarden");
+    for (const id of BOSS_IDS) {
+      const e = (enemies as any)[id];
+      expect(e.ai).toBe("boss");
+      expect(e.spawnWeight).toBe(0);
+      const c = bossCfg(id);
+      expect(Math.hypot(c.home.x, c.home.z)).toBeLessThan(60);
+      expect(Object.keys(c.patterns).length).toBeGreaterThanOrEqual(2);
+      for (const ph of [1, 2] as const) {
+        for (const p of Object.keys(c.patterns) as any[]) expect(patternParams(id, p, ph).windup).toBeGreaterThanOrEqual(0.5);
+        expect(cooldownFor(id, ph)).toBeGreaterThan(0);
+      }
+    }
+  });
+  it("미니보스는 지역 보스보다 약하고 보상도 작다", () => {
+    const m = (enemies as any).cinderWarden, k = (enemies as any).boarKing;
+    expect(m.hp).toBeLessThan(k.hp);
+    expect(m.atk).toBeLessThan(k.atk);
+    expect(m.exp).toBeLessThan(k.exp);
+    const rank = ["common", "uncommon", "rare", "epic", "legendary"];
+    expect(rank.indexOf(bossCfg("cinderWarden").guaranteedRarity)).toBeLessThan(rank.indexOf(bossCfg("boarKing").guaranteedRarity));
+  });
+  it("미니보스는 북쪽 폐허 봉화 근처, 가시 투사 없이도 같은 패턴 연속 금지", () => {
+    const b = worldData.beacons.find((x) => x.id === "northRuins")!;
+    const h = bossCfg("cinderWarden").home;
+    expect(Math.hypot(h.x - b.x, h.z - b.z)).toBeLessThan(25);
+    let prev: any = null;
+    for (let i = 0; i < 60; i++) { const n = nextPattern("cinderWarden", prev, 5 + (i % 7), (i * 0.137) % 1); expect(n).not.toBe(prev); expect(["charge", "slam"]).toContain(n); prev = n; }
+  });
+  it("미니보스 퀘스트의 목표가 실제 적을 가리킨다", () => {
+    const qs = (questsData as any).quests ?? questsData;
+    const list = Array.isArray(qs) ? qs : Object.values(qs);
+    const q = (list as any[]).find((x) => x.id === "side5");
+    expect(q).toBeTruthy();
+    for (const o of q.objectives) if (o.type === "kill") expect((enemies as any)[o.target]).toBeTruthy();
+  });
+});

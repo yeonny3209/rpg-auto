@@ -281,6 +281,20 @@ try {
   await page.evaluate(() => { const g = window.__game, b = g.boss(); g.player.hp = g.player.maxHp; g.kill(b); });
   await page.waitForTimeout(400);
   console.log("boss dead:", JSON.stringify(await page.evaluate(() => { const g = window.__game, b = g.boss(); return { state: b.state, respawn: b.respawnT, bar: document.getElementById("bossBar").style.display, loot: g.player.inventory.length }; })));
+  // 미니보스(재티 파수꾼): 패턴 관찰 → 처치 → 재료·드롭
+  await page.evaluate(() => { const g = window.__game, b = g.bosses().find((x) => x.id === "cinderWarden"); g.player.pos.set(b.pos.x + 9, 0, b.pos.z + 3); g.player.hp = g.player.maxHp = 5000; for (const e of g.enemies) e.attackCd = e.boss ? 0 : 99; g.player.bag = {}; });
+  const mseen = new Set(); let mshot = false;
+  for (let i = 0; i < 200 && mseen.size < 2; i++) {
+    await page.waitForTimeout(100);
+    const r = await page.evaluate(() => { const b = window.__game.bosses().find((x) => x.id === "cinderWarden"); return { p: b.boss.pattern, st: b.state, ring: b.boss.ring.visible }; });
+    if (r.p) mseen.add(r.p);
+    if (r.ring && !mshot) { mshot = true; await shot(page, "27-miniboss-slam.png"); }
+  }
+  console.log("miniboss patterns seen:", [...mseen].join(","));
+  const mbar = await page.evaluate(() => ({ display: document.getElementById("bossBar").style.display, name: document.getElementById("bossName").textContent }));
+  await page.evaluate(() => { const g = window.__game, b = g.bosses().find((x) => x.id === "cinderWarden"); g.player.hp = g.player.maxHp; g.kill(b); });
+  await page.waitForTimeout(400);
+  console.log("miniboss dead:", JSON.stringify({ mbar, ...(await page.evaluate(() => { const g = window.__game, b = g.bosses().find((x) => x.id === "cinderWarden"); return { state: b.state, respawn: Math.round(b.respawnT), bag: g.player.bag, boarAlive: g.bosses().find((x) => x.id === "boarKing").state !== "dead" }; })) }));
   await page.evaluate(() => { const g = window.__game; g.player.hp = g.player.maxHp = 100; g.player.pos.set(0, 0, 3); });
 
   // 퀘스트 흐름: 사제 대화(수락) → 처치 5 → 보고(보상) → 다음 퀘스트 제안
