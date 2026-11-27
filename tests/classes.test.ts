@@ -44,3 +44,25 @@ describe("classes", () => {
     expect(g.atk).toBe(1);
   });
 });
+
+import { changeClassAttrs, classChangeCost, classStartAttrs as startOf } from "../src/logic/classes";
+describe("클래스 변경", () => {
+  it("투자한 점수는 유지하고 시작 속성만 교체", () => {
+    const from = "vanguard" as const, to = "tracker" as const;
+    const invested = { ...startOf(from) };
+    invested.str += 3; invested.agi += 2;
+    const r = changeClassAttrs(invested, from, to);
+    const s = startOf(to), f = startOf(from);
+    for (const k of Object.keys(r) as (keyof typeof r)[]) expect(r[k]).toBe(s[k] + Math.max(0, invested[k] - f[k]));
+  });
+  it("왕복하면 원래 값으로 돌아오고 음수는 없다", () => {
+    const a = { ...startOf("igniter") }; a.wis += 4;
+    const back = changeClassAttrs(changeClassAttrs(a, "igniter", "vanguard"), "vanguard", "igniter");
+    expect(back).toEqual(a);
+    for (const v of Object.values(changeClassAttrs({ str: 0, agi: 0, wis: 0, vit: 0 }, "vanguard", "tracker"))) expect(v).toBeGreaterThanOrEqual(0);
+  });
+  it("비용은 레벨에 비례하고 1레벨도 0이 아니다", () => {
+    expect(classChangeCost(1)).toBeGreaterThan(0);
+    expect(classChangeCost(10)).toBe(classChangeCost(1) * 10);
+  });
+});

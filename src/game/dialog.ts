@@ -6,6 +6,8 @@ import { applyDerived } from "./core";
 import { renderCharPanel } from "./panels";
 import { scaledSkill, levelOf, upgradeCost, upgradeSkill, SL } from "../logic/skillLevel";
 import { skillsFor } from "../logic/skills";
+import { CLASS_IDS, classDef, changeClassAttrs, classChangeCost, type ClassId } from "../logic/classes";
+import { setClass } from "./core";
 import { bagAdd, bagTake, countOf, MATS, type MatId } from "../logic/bag";
 import { RECIPES, craft, shortfall } from "../logic/crafting";
 import { buyPrice, sellPrice, makeStock, tryBuy, trySell } from "../logic/shop";
@@ -23,6 +25,8 @@ let shopMode = false;
 let enhMode = false;
 let craftMode = false;
 let trainMode = false;
+let classMode = false;
+let pendingClass: ClassId | null = null;
 let shopLevel = 1;
 export const dialogOpen = () => $("dialog").classList.contains("open");
 
@@ -174,8 +178,37 @@ function renderTrain() {
   $("dialog").querySelector<HTMLElement>('[data-act="back"]')!.addEventListener("click", () => { trainMode = false; render(); });
 }
 
+function renderClass() {
+  const cost = classChangeCost(player.lv.level);
+  const rows = CLASS_IDS.filter((id) => id !== player.cls).map((id, i) => {
+    const c = classDef(id), armed = pendingClass === id;
+    return `<div class="shop-row" data-id="${id}" style="border-color:${c.color}${armed ? ";background:#3a2a1a" : ""}"><span><b style="color:${c.color}">${c.name}</b><br><span class="craft-need">${c.desc ?? ""}</span></span><span class="sp">${armed ? "다시 누르면 확정" : `◆ ${cost}`}</span></div>`;
+  });
+  $("dialog").innerHTML = `<div class="dn">${current!.def.name} <span class="dr">클래스 변경 · 현재 ${player.cls ? classDef(player.cls).name : "없음"} · ◆ ${player.gold}</span></div>
+    <div class="shop-h">장비·레벨·투자한 능력치는 그대로, 시작 능력치와 스킬 4개가 바뀐다. 수련한 스킬 단계는 클래스를 되돌리면 돌아온다.</div>
+    <div class="shop-cols" style="grid-template-columns:1fr">${rows.join("")}</div>
+    <div class="db"><button data-act="back">돌아가기 <kbd>Esc</kbd></button></div>`;
+  $("dialog").querySelectorAll<HTMLElement>(".shop-row").forEach((el) => {
+    el.addEventListener("click", () => {
+      const id = el.dataset.id as ClassId;
+      if (pendingClass !== id) { pendingClass = id; return renderClass(); }
+      if (!player.cls) return;
+      if (player.gold < cost) { pendingClass = null; toast("골드가 부족하다"); return renderClass(); }
+      player.gold -= cost;
+      player.attrs = changeClassAttrs(player.attrs, player.cls, id);
+      pendingClass = null;
+      setClass(id, false);
+      sfx.levelUp(); toast(`${classDef(id).name}(으)로 변경!`);
+      saveGame(); renderCharPanel();
+      classMode = false; render();
+    });
+  });
+  $("dialog").querySelector<HTMLElement>('[data-act="back"]')!.addEventListener("click", () => { classMode = false; pendingClass = null; render(); });
+}
+
 function render() {
   if (!current) return;
+  if (classMode) return renderClass();
   if (trainMode) return renderTrain();
   if (craftMode) return renderCraft();
   if (shopMode) return renderShop();
@@ -189,13 +222,14 @@ function render() {
       `<div class="dqr">보상: ${rewardText(q)}</div></div>` : "";
   $("dialog").innerHTML = `<div class="dn">${current.def.name} <span class="dr">${current.def.role}</span></div>
     <div class="dt">${d.text}</div>${objectives}
-    <div class="db">${current.def.id === "merchant" ? `<button data-act="shop">거래</button>` : ""}${current.def.id === "priest" ? `<button data-act="train">수련</button>` : ""}${current.def.id === "smith" ? `<button data-act="enh">강화</button><button data-act="craft">제작</button>` : ""}<button data-act="primary">${primary} <kbd>F</kbd></button>${d.kind === "offer" ? `<button data-act="close">다음에 <kbd>Esc</kbd></button>` : ""}</div>`;
+    <div class="db">${current.def.id === "merchant" ? `<button data-act="shop">거래</button>` : ""}${current.def.id === "priest" ? `<button data-act="train">수련</button><button data-act="class">클래스 변경</button>` : ""}${current.def.id === "smith" ? `<button data-act="enh">강화</button><button data-act="craft">제작</button>` : ""}<button data-act="primary">${primary} <kbd>F</kbd></button>${d.kind === "offer" ? `<button data-act="close">다음에 <kbd>Esc</kbd></button>` : ""}</div>`;
   $("dialog").querySelectorAll<HTMLElement>("button").forEach((b) =>
     b.addEventListener("click", () => {
       if (b.dataset.act === "shop") { shopMode = true; shopLevel = player.lv.level; render(); }
       else if (b.dataset.act === "enh") { enhMode = true; render(); }
       else if (b.dataset.act === "craft") { craftMode = true; render(); }
       else if (b.dataset.act === "train") { trainMode = true; render(); }
+      else if (b.dataset.act === "class") { classMode = true; pendingClass = null; render(); }
       else if (b.dataset.act === "primary") dialogPrimary();
       else closeDialog();
     }));
@@ -213,11 +247,13 @@ export function closeDialog() {
   enhMode = false;
   craftMode = false;
   trainMode = false;
+  classMode = false;
+  pendingClass = null;
   $("dialog").classList.remove("open");
 }
 export function dialogPrimary() {
   if (!current) return;
-  if (shopMode || enhMode || craftMode || trainMode) { shopMode = enhMode = craftMode = trainMode = false; render(); return; }
+  if (shopMode || enhMode || craftMode || trainMode || classMode) { shopMode = enhMode = craftMode = trainMode = classMode = false; pendingClass = null; render(); return; }
   const d = dialogFor(current.def, player.quests);
   if (d.kind === "offer" && d.quest) {
     const next = accept(player.quests, d.quest.id);

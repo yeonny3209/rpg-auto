@@ -24,3 +24,14 @@ export function addGear(a: GearBonus, b: GearBonus): GearBonus {
 export const classStartAttrs = (id: ClassId): Attrs => ({ ...classDef(id).startAttrs });
 export const classAttack = (id: ClassId | null): ClassAttack => (id ? classDef(id).attack : NEUTRAL_ATTACK);
 export const classMoveMul = (id: ClassId | null): number => (id ? classDef(id).moveSpeedMul : 1);
+
+/** 클래스 변경 비용(골드): 레벨에 비례 */
+export const classChangeCost = (level: number): number => 100 * Math.max(1, level);
+
+/** 클래스를 바꿀 때의 속성: 이전 클래스의 시작 속성을 빼고 새 클래스의 시작 속성을 더한다(투자한 점수는 그대로, 음수 방지) */
+export function changeClassAttrs(attrs: Attrs, from: ClassId, to: ClassId): Attrs {
+  const a = classStartAttrs(from), b = classStartAttrs(to);
+  const out = { ...attrs };
+  for (const k of Object.keys(out) as (keyof Attrs)[]) out[k] = Math.max(0, out[k] - a[k]) + b[k];
+  return out;
+}
