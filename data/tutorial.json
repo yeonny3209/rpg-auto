@@ -1,0 +1,11 @@
+{
+  "steps": [
+    { "id": "move", "event": "move", "text": "WASD로 이동해 보자", "need": 6 },
+    { "id": "attack", "event": "attack", "text": "좌클릭 또는 J — 공격", "need": 2 },
+    { "id": "dodge", "event": "dodge", "text": "Space — 구르며 회피 (구르는 동안 무적)", "need": 1 },
+    { "id": "heavy", "event": "heavy", "text": "우클릭/K를 길게 눌렀다 떼면 강공격 (적을 그로기로 만든다)", "need": 1 },
+    { "id": "skill", "event": "skill", "text": "공격을 맞히면 잔불 게이지가 찬다 — 1~4 키로 스킬 사용", "need": 1 },
+    { "id": "talk", "event": "talk", "text": "마을 사람(머리 위 ! 표식)에게 다가가 F로 대화", "need": 1 },
+    { "id": "beacon", "event": "beacon", "text": "봉화에서 F — 잔불 각인과 휴식. 먼 봉화를 밝히면 빠르게 돌아올 수 있다", "need": 1 }
+  ]
+}

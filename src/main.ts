@@ -15,6 +15,7 @@ import "./game/hud";
 import "./game/panels";
 import "./game/classSelect";
 import "./game/dialog";
+import { tutorialState } from "./game/tutorial";
 import { updateNpcs, npcs } from "./game/npcs";
 import { renderQuestLog } from "./game/questflow";
 import { dialogPrimary, openDialog, closeDialog } from "./game/dialog";
@@ -64,6 +65,7 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   enemies,
   cam,
   attack: tryAttack,
+  tutorial: tutorialState,
   heightAt,
   npcs,
   talk: (id: string) => openDialog(npcs.find((n) => n.def.id === id)!),

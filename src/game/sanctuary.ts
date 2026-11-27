@@ -10,6 +10,7 @@ import { onLevelUp } from "./player";
 import { nearNpc } from "./npcs";
 import { openDialog } from "./dialog";
 import { reportQuest } from "./questflow";
+import { tutorialEvent } from "./tutorial";
 
 // ---------- 봉화·잔불 ----------
 export function nearBeacon(range: number): Beacon | null {
@@ -26,6 +27,7 @@ export function interact() {
   const n = nearNpc();
   if (n && (!b || n.pos.distanceTo(player.pos) <= b.pos.distanceTo(player.pos))) { openDialog(n); return; }
   if (!b) return;
+  tutorialEvent("beacon");
   if (!b.lit) {
     setLit(b, true);
     player.respawnBeacon = b.def.id;

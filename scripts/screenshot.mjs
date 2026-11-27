@@ -240,6 +240,29 @@ try {
   await shot(page, "19-terrain.png");
   await page.evaluate(() => { window.__game.cam.yaw = 0; });
 
+  // 튜토리얼: 이동 → 공격 → 회피 → 강공격 → 스킬 → 대화 → 봉화
+  const tut = () => page.evaluate(() => { const t = window.__game.tutorial(); return `${t.index}:${Math.floor(t.count)}`; });
+  const tutSteps = [`start ${await tut()}`];
+  await page.evaluate(() => { const g = window.__game; g.player.pos.set(0, 0, 3); for (const e of g.enemies) e.attackCd = 99; });
+  await page.keyboard.down("KeyW"); await page.waitForTimeout(5000); await page.keyboard.up("KeyW");
+  tutSteps.push(`moved ${await tut()}`);
+  for (let i = 0; i < 2; i++) { await page.evaluate(() => { window.__game.player.attackCd = 0; window.__game.attack(); }); await page.waitForTimeout(250); }
+  tutSteps.push(`attacked ${await tut()}`);
+  await shot(page, "20-tutorial.png");
+  await page.evaluate(() => window.__game.dodge()); await page.waitForTimeout(1800);
+  tutSteps.push(`dodged ${await tut()}`);
+  await page.evaluate(() => { window.__game.player.attackCd = 0; window.__game.player.stamina.value = 100; window.__game.startCharge(); }); await page.waitForTimeout(600);
+  await page.evaluate(() => window.__game.releaseCharge()); await page.waitForTimeout(500);
+  tutSteps.push(`heavy ${await tut()}`);
+  await page.evaluate(() => { const g = window.__game; g.player.attackCd = 0; g.player.sk.ember = 100; g.cast(0); }); await page.waitForTimeout(500);
+  tutSteps.push(`skill ${await tut()}`);
+  await page.evaluate(() => { window.__game.talk("smith"); }); await page.waitForTimeout(200);
+  await page.keyboard.press("Escape");
+  tutSteps.push(`talk ${await tut()}`);
+  await page.evaluate(() => { const g = window.__game; g.player.pos.set(1.5, 0, 0); g.interact(); }); await page.waitForTimeout(200);
+  tutSteps.push(`beacon ${await tut()}`);
+  console.log("tutorial:", tutSteps.join(" | "));
+
   // 퀘스트 흐름: 사제 대화(수락) → 처치 5 → 보고(보상) → 다음 퀘스트 제안
   const near = (id) => page.evaluate((id) => { const g = window.__game, n = g.npcs.find((x) => x.def.id === id); g.player.pos.set(n.pos.x - 1.8, 0, n.pos.z - 0.6); }, id);
   await near("priest");

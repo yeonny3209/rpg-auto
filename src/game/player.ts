@@ -18,6 +18,7 @@ import { syncTrace } from "./sanctuary";
 import { spawnLoot } from "./loot";
 import { renderCharPanel } from "./panels";
 import { reportQuest } from "./questflow";
+import { tutorialEvent } from "./tutorial";
 
 export function moveInput(): THREE.Vector3 {
   const f = camForward();
@@ -45,6 +46,7 @@ export function tryDodge() {
   player.dodgeDir.copy(dir.normalize());
   player.facing = Math.atan2(dir.x, dir.z);
   player.dodgeT = 0;
+  tutorialEvent("dodge");
   player.attackT = 0;
   player.charging = false;
   sfx.dodge();
@@ -55,6 +57,7 @@ export function tryAttack() {
   const cm = player.atkMod;
   if (!spend(player.stamina, AC.staminaCost * cm.staminaMul)) return flashStamina();
   faceTarget();
+  tutorialEvent("attack");
   player.attackKind = "light";
   player.attackT = AC.time;
   player.attackCd = AC.cooldown * cm.cooldownMul;
@@ -76,6 +79,7 @@ export function releaseCharge() {
   if (!spend(player.stamina, HC.staminaCost)) return flashStamina();
   faceTarget();
   const { dmgMul, poiseDmg } = heavyMultipliers(player.chargeT / HC.maxCharge, HC);
+  tutorialEvent("heavy");
   player.attackKind = "heavy";
   player.attackT = HC.time;
   player.attackCd = HC.cooldown;
@@ -119,6 +123,7 @@ export function castSkill(slot: number) {
   if (why === "ember") { floater(player.pos.clone().setY(player.pos.y + (2.3)), "잔불 부족", "hurt"); return; }
   if (why === "cooldown" || !spendCast(player.sk, slot, list)) return;
   faceTarget();
+  tutorialEvent("skill");
   const fwd = new THREE.Vector3(Math.sin(player.facing), 0, Math.cos(player.facing));
   player.attackKind = "heavy";
   player.attackT = CAST_LOCK;
@@ -221,8 +226,14 @@ export function toggleLockOn() {
   cam.target = best;
 }
 
+let lastX = 0, lastZ = 0;
 export function updatePlayer(dt: number) {
   player.pos.y = heightAt(player.pos.x, player.pos.z);
+  if (dt > 0) {
+    const moved = Math.hypot(player.pos.x - lastX, player.pos.z - lastZ);
+    if (moved > 0.001 && moved < 3 && !player.dead) tutorialEvent("move", moved);
+  }
+  lastX = player.pos.x; lastZ = player.pos.z;
   player.attackCd = Math.max(0, player.attackCd - dt);
   player.hurtT = Math.max(0, player.hurtT - dt);
   if (player.dead) return;

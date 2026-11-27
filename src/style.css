@@ -125,3 +125,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1218; fon
 #questLog .qo { color: #b8b0a0; padding-left: 8px; }
 #questLog .q.ready .qn { color: #7dff9a; }
 #questLog .q.ready .qo { color: #7dff9a; }
+
+/* 첫 플레이 안내 */
+#tutorial { position: absolute; top: 74px; left: 50%; transform: translateX(-50%); display: none; padding: 7px 16px; background: #141a24dd; border: 1px solid #7a5a2a; border-radius: 18px; font-size: 14px; color: #ffe2a8; white-space: nowrap; }
+#tutorial .tn { color: #ffb347; font-weight: 800; margin-right: 6px; }
+#tutorial .tc { color: #9fe0a0; }
+#tutorial.flash { box-shadow: 0 0 18px #ffb347; }

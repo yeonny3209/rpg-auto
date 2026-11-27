@@ -4,6 +4,7 @@ import { dialogFor, accept, turnIn, isReady, type Dialog } from "../logic/quests
 import { grantRewards, renderQuestLog } from "./questflow";
 import { sfx } from "./sfx";
 import type { Npc } from "./npcs";
+import { tutorialEvent } from "./tutorial";
 
 let current: Npc | null = null;
 export const dialogOpen = () => $("dialog").classList.contains("open");
@@ -33,6 +34,7 @@ function render() {
 }
 
 export function openDialog(npc: Npc) {
+  tutorialEvent("talk");
   current = npc;
   $("dialog").classList.add("open");
   render();
