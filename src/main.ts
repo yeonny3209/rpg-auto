@@ -277,8 +277,8 @@ function moveInput(): THREE.Vector3 {
   const v = new THREE.Vector3();
   if (keys.has("KeyW")) v.add(f);
   if (keys.has("KeyS")) v.sub(f);
-  if (keys.has("KeyD")) v.sub(r);
-  if (keys.has("KeyA")) v.add(r);
+  if (keys.has("KeyD")) v.add(r);
+  if (keys.has("KeyA")) v.sub(r);
   return v;
 }
 
@@ -613,6 +613,66 @@ function renderInvPanel() {
       renderCharPanel();
     });
   });
+}
+
+// ---------- 미니맵 ----------
+const mini = document.getElementById("minimap") as HTMLCanvasElement;
+const mctx = mini.getContext("2d")!;
+const MINI_RANGE = 45; // 미니맵 반경(월드 단위)
+function drawMinimap() {
+  const W = mini.width, R = W / 2, k = R / MINI_RANGE;
+  mctx.clearRect(0, 0, W, W);
+  mctx.save();
+  mctx.beginPath();
+  mctx.arc(R, R, R - 1, 0, Math.PI * 2);
+  mctx.clip();
+  mctx.fillStyle = "#151b24e0";
+  mctx.fillRect(0, 0, W, W);
+  // 카메라가 바라보는 방향이 위쪽이 되도록 회전
+  const toMini = (x: number, z: number): [number, number] => {
+    const dx = x - player.pos.x, dz = z - player.pos.z;
+    const c = Math.cos(cam.yaw), sn = Math.sin(cam.yaw);
+    const fwd = dx * sn + dz * c; // 카메라 전방 성분
+    const right = -dx * c + dz * sn; // 화면 오른쪽 성분 (moveInput의 r과 같은 축)
+    return [R + right * k, R - fwd * k];
+  };
+  // 밝혀진 영역
+  for (const b of beacons) if (b.lit) {
+    const [x, y] = toMini(b.pos.x, b.pos.z);
+    const g = mctx.createRadialGradient(x, y, 0, x, y, BC.lightRadius * k);
+    g.addColorStop(0, "#ff9a3c55");
+    g.addColorStop(1, "#ff9a3c00");
+    mctx.fillStyle = g;
+    mctx.beginPath(); mctx.arc(x, y, BC.lightRadius * k, 0, Math.PI * 2); mctx.fill();
+  }
+  const dot = (x: number, z: number, r: number, color: string) => {
+    const [px, py] = toMini(x, z);
+    mctx.fillStyle = color;
+    mctx.beginPath(); mctx.arc(px, py, r, 0, Math.PI * 2); mctx.fill();
+  };
+  for (const e of enemies) if (e.state !== "dead") dot(e.pos.x, e.pos.z, e.def.ai === "charger" ? 3 : 2, e.state === "chase" || e.state === "windup" ? "#ff5a4a" : "#a05a6a");
+  for (const l of loots) dot(l.group.position.x, l.group.position.z, 2.5, rarityOf(l.item.rarity).color);
+  if (player.trace) dot(player.trace.x, player.trace.z, 3.5, "#ff8a2a");
+  for (const b of beacons) {
+    const [x, y] = toMini(b.pos.x, b.pos.z);
+    // 범위 밖 봉화는 테두리에 방향 표시
+    const dx = x - R, dy = y - R, d = Math.hypot(dx, dy), lim = R - 7;
+    const px = d > lim ? R + (dx / d) * lim : x, py = d > lim ? R + (dy / d) * lim : y;
+    mctx.fillStyle = b.lit ? "#ffcc66" : "#7d8694";
+    mctx.strokeStyle = "#000";
+    mctx.beginPath();
+    mctx.moveTo(px, py - 5); mctx.lineTo(px + 4, py); mctx.lineTo(px, py + 5); mctx.lineTo(px - 4, py); mctx.closePath();
+    mctx.fill(); mctx.stroke();
+  }
+  // 플레이어 화살표 (진행 방향)
+  mctx.translate(R, R);
+  mctx.rotate(-(player.facing - cam.yaw) + Math.PI);
+  mctx.fillStyle = "#ffffff";
+  mctx.beginPath(); mctx.moveTo(0, 6); mctx.lineTo(4, -4); mctx.lineTo(0, -2); mctx.lineTo(-4, -4); mctx.closePath(); mctx.fill();
+  mctx.restore();
+  mctx.strokeStyle = "#5a4a30";
+  mctx.lineWidth = 2;
+  mctx.beginPath(); mctx.arc(R, R, R - 1, 0, Math.PI * 2); mctx.stroke();
 }
 
 // ---------- HUD ----------
@@ -1014,6 +1074,7 @@ function frame() {
   renderer.render(scene, camera);
   updateFloaters(realDt);
   updateHud();
+  drawMinimap();
   requestAnimationFrame(frame);
 }
 // 첫 프레임 카메라 위치
