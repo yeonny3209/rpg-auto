@@ -153,7 +153,7 @@ function renderTrain() {
   const rows = list.map((sk, i) => {
     const lv = levelOf(player.skillLv, sk.id), cost = upgradeCost(lv);
     const now = scaledSkill(sk, lv), nxt = cost ? scaledSkill(sk, lv + 1) : null;
-    const eff = (s: typeof sk) => [s.mul ? `피해 ×${s.mul}` : "", s.heal ? `회복 ${Math.round(s.heal * 100)}%` : "", s.atkMul && s.atkMul > 1 ? `공격력 +${Math.round((s.atkMul - 1) * 100)}%` : "", `대기 ${s.cooldown}초`].filter(Boolean).join(" · ");
+    const eff = (s: typeof sk) => [s.mul ? `피해 ×${+s.mul.toFixed(2)}` : "", s.heal ? `회복 ${Math.round(s.heal * 100)}%` : "", s.atkMul && s.atkMul > 1 ? `공격력 +${Math.round((s.atkMul - 1) * 100)}%` : "", `대기 ${+s.cooldown.toFixed(1)}초`].filter(Boolean).join(" · ");
     const info = cost ? `비급 ${books}/${cost.books} · ◆ ${cost.gold}` : "최대";
     return `<div class="shop-row" data-i="${i}" style="border-color:${sk.color}"><span><b style="color:${sk.color}">${sk.name}</b> Lv${lv}<br><span class="craft-need">${eff(now)}${nxt ? ` → ${eff(nxt)}` : ""}</span></span><span class="sp">${info}</span></div>`;
   });

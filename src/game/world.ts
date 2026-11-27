@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { Circle } from "../logic/collision";
 import { heightAt } from "../logic/terrain";
+import { scatterSpots, SCATTER } from "../logic/scatter";
 
 /** 결정론적 난수 (월드 배치 재현용) */
 export function mulberry32(seed: number) {
@@ -74,17 +75,40 @@ export function buildWorld(scene: THREE.Scene): World {
 
   // 바위와 폐허 기둥
   const rockMat = new THREE.MeshStandardMaterial({ color: "#6b6f75", roughness: 0.95, flatShading: true });
-  for (let i = 0; i < 40; i++) {
-    const r = 13 + rng() * WORLD_RADIUS, th = rng() * Math.PI * 2;
+  const rockSpots = scatterSpots(rng, SCATTER.rocks);
+  for (const sp of rockSpots) {
     const size = 0.4 + rng() * 1.2;
     const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(size, 0), rockMat);
-    rock.position.set(Math.cos(th) * r, heightAt(Math.cos(th) * r, Math.sin(th) * r) + 0.2, Math.sin(th) * r);
+    rock.position.set(sp.x, heightAt(sp.x, sp.z) + 0.2, sp.z);
     if (size > 0.6) occluders.push(rock);
-    if (size > 0.6) obstacles.push({ x: rock.position.x, z: rock.position.z, r: size * 0.85 });
+    if (size > 0.6) obstacles.push({ x: sp.x, z: sp.z, r: size * 0.85 });
     rock.rotation.set(rng() * 3, rng() * 3, rng() * 3);
     rock.castShadow = rock.receiveShadow = true;
     scene.add(rock);
   }
+  // 고목: 줄기와 가지를 각각 인스턴싱 (바위 자리를 피해서 배치)
+  const treeSpots = scatterSpots(rng, SCATTER.deadTrees, rockSpots);
+  const trunkGeo = new THREE.CylinderGeometry(0.1, 0.26, 1, 6);
+  trunkGeo.translate(0, 0.5, 0);
+  const branchGeo = new THREE.CylinderGeometry(0.03, 0.1, 1, 5);
+  branchGeo.translate(0, 0.5, 0);
+  const barkMat = new THREE.MeshStandardMaterial({ color: "#3e3630", roughness: 1, flatShading: true });
+  const trunks = new THREE.InstancedMesh(trunkGeo, barkMat, treeSpots.length);
+  const branches = new THREE.InstancedMesh(branchGeo, barkMat, treeSpots.length * 2);
+  const up = new THREE.Vector3(0, 1, 0);
+  treeSpots.forEach((sp, i) => {
+    const h = 2.4 + rng() * 2.2, y = heightAt(sp.x, sp.z);
+    q.setFromAxisAngle(up, rng() * 6.28);
+    trunks.setMatrixAt(i, m.compose(p.set(sp.x, y, sp.z), q, s.set(1, h, 1)));
+    for (let b = 0; b < 2; b++) {
+      const ay = rng() * 6.28, lean = 0.7 + rng() * 0.5, len = h * (0.35 + rng() * 0.25);
+      q.setFromEuler(new THREE.Euler(lean, ay, 0, "YXZ"));
+      branches.setMatrixAt(i * 2 + b, m.compose(p.set(sp.x, y + h * (0.55 + b * 0.2), sp.z), q, s.set(1, len, 1)));
+    }
+    obstacles.push({ x: sp.x, z: sp.z, r: 0.35 });
+  });
+  trunks.castShadow = branches.castShadow = true;
+  scene.add(trunks, branches);
   const ruinMat = new THREE.MeshStandardMaterial({ color: "#8a8270", roughness: 0.9 });
   for (let i = 0; i < 9; i++) {
     const th = (i / 9) * Math.PI * 2;

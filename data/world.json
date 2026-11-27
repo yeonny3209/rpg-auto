@@ -75,5 +75,18 @@
     "maxDamageMul": 1.35,
     "fogFar": 70,
     "fogFarDark": 34
+  },
+  "scatter": {
+    "rocks": 40,
+    "deadTrees": 34,
+    "minR": 13,
+    "maxR": 58,
+    "spacing": 3.2,
+    "clear": {
+      "beacon": 7,
+      "boss": 10,
+      "village": 12,
+      "npc": 3
+    }
   }
 }
