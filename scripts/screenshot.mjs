@@ -136,11 +136,47 @@ try {
   console.log("atk before/after equip:", atkBefore, atkAfter);
   await page.evaluate(() => window.__game.toggleInvPanel());
 
+  // 봉화: 북쪽 폐허 봉화로 이동해 점화
+  await page.evaluate(() => {
+    const g = window.__game;
+    for (const e of g.enemies) e.attackCd = 99;
+    g.player.pos.set(4, 0, 36);
+    g.player.facing = 0;
+  });
+  await page.waitForTimeout(1200);
+  await shot(page, "11-beacon-unlit.png");
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(450);
+  await shot(page, "12-beacon-lit.png");
+  const lit = await page.evaluate(() => window.__game.beacons.filter((b) => b.lit).map((b) => b.def.id));
+  console.log("lit beacons:", lit.join(","));
+
+  // 잔불 각인
+  await page.evaluate(() => { window.__game.player.embers.held = 25; });
+  await page.keyboard.press("KeyF");
+  const emb = await page.evaluate(() => window.__game.player.embers);
+  console.log("after engrave:", JSON.stringify(emb));
+
+  // 사망 → 흔적 → 부활 → 회수
+  await page.evaluate(() => { const g = window.__game; g.player.embers.held = 20; g.player.pos.set(20, 0, 30); g.hurt(99999); });
+  await page.waitForTimeout(600);
+  await shot(page, "13-death.png");
+  await page.waitForTimeout(2400);
+  const afterDeath = await page.evaluate(() => { const p = window.__game.player; return { held: p.embers.held, trace: p.trace, pos: [Math.round(p.pos.x), Math.round(p.pos.z)] }; });
+  console.log("after respawn:", JSON.stringify(afterDeath));
+  await page.evaluate(() => { const p = window.__game.player; p.pos.set(p.trace.x + 4, 0, p.trace.z - 4); });
+  await page.waitForTimeout(700);
+  await shot(page, "14-trace.png");
+  await page.evaluate(() => { const p = window.__game.player; p.pos.set(p.trace.x, 0, p.trace.z); });
+  await page.waitForTimeout(300);
+  console.log("trace recovered:", JSON.stringify(await page.evaluate(() => ({ held: window.__game.player.embers.held, trace: window.__game.player.trace }))));
+  await page.evaluate(() => { for (const e of window.__game.enemies) e.attackCd = 0; });
+
   // 저장/불러오기: 새로고침 후 레벨·속성 유지 확인
-  const before = await page.evaluate(() => { window.__game.save(); const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold, inv: p.inventory.length, eq: Object.keys(p.equipment).sort() }; });
+  const before = await page.evaluate(() => { window.__game.save(); const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold, inv: p.inventory.length, eq: Object.keys(p.equipment).sort(), embers: p.embers, lit: window.__game.beacons.filter((b) => b.lit).length }; });
   await page.reload();
   await page.waitForTimeout(1500);
-  const after = await page.evaluate(() => { const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold, inv: p.inventory.length, eq: Object.keys(p.equipment).sort() }; });
+  const after = await page.evaluate(() => { const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold, inv: p.inventory.length, eq: Object.keys(p.equipment).sort(), embers: p.embers, lit: window.__game.beacons.filter((b) => b.lit).length }; });
   console.log("save/load", JSON.stringify(before) === JSON.stringify(after) ? "OK" : `MISMATCH ${JSON.stringify(before)} vs ${JSON.stringify(after)}`);
 
   const state = await page.evaluate(() => {

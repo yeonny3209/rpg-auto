@@ -77,5 +77,6 @@ export const sfx = {
   spit: () => tone(400, 150, 0.15, 0.2, "sawtooth"),
   pickup: () => { tone(880, 1320, 0.12, 0.2, "triangle"); tone(1320, 1760, 0.12, 0.15, "triangle", 0.06); },
   equip: () => { noise(0.06, 3000, 3, 0.3); tone(300, 200, 0.1, 0.2, "square"); },
+  ignite: () => { noise(0.6, 400, 0.5, 0.4, "lowpass"); [392, 523, 659].forEach((f, i) => tone(f, f * 1.01, 0.5, 0.18, "triangle", i * 0.08)); },
   telegraph: () => tone(900, 700, 0.12, 0.08, "square"),
 };

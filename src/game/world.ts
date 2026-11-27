@@ -15,10 +15,8 @@ export function mulberry32(seed: number) {
 export const WORLD_RADIUS = 60;
 
 export interface World {
-  beaconLight: THREE.PointLight;
-  flame: THREE.Mesh;
   obstacles: Circle[];
-  update(t: number): void;
+  ruinMat: THREE.Material;
 }
 
 export function buildWorld(scene: THREE.Scene): World {
@@ -91,30 +89,5 @@ export function buildWorld(scene: THREE.Scene): World {
     scene.add(col);
   }
 
-  // 중앙 봉화
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.2, 1, 8), ruinMat);
-  base.position.y = 0.5;
-  obstacles.push({ x: 0, z: 0, r: 1.25 });
-  base.castShadow = true;
-  scene.add(base);
-  const flame = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.45, 0),
-    new THREE.MeshStandardMaterial({ color: "#ffb347", emissive: "#ff8a2a", emissiveIntensity: 2.5 })
-  );
-  flame.position.y = 1.6;
-  scene.add(flame);
-  const beaconLight = new THREE.PointLight("#ff9a3c", 40, 22, 1.6);
-  beaconLight.position.set(0, 2.2, 0);
-  scene.add(beaconLight);
-
-  return {
-    beaconLight,
-    flame,
-    obstacles,
-    update(t: number) {
-      flame.rotation.y = t * 1.2;
-      flame.position.y = 1.6 + Math.sin(t * 2) * 0.08;
-      beaconLight.intensity = 38 + Math.sin(t * 7) * 3 + Math.sin(t * 13) * 2;
-    },
-  };
+  return { obstacles, ruinMat };
 }

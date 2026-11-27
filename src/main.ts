@@ -5,6 +5,9 @@ import combatCfg from "../data/combat.json";
 import { buildWorld, WORLD_RADIUS } from "./game/world";
 import { makePlayerMesh, makeEnemyMesh } from "./game/actors";
 import { Fx } from "./game/fx";
+import { buildBeacons, setLit, updateBeacons, type Beacon } from "./game/beacons";
+import wdata from "../data/world.json";
+import { onDeath, recoverTrace, engrave, engraveBonus, nextLevelProgress, type Trace } from "./logic/embers";
 import { sfx } from "./game/sfx";
 import { computeDamage, rollRange } from "./logic/combat";
 import { expToNext, gainExp, type LevelState } from "./logic/progression";
@@ -28,6 +31,8 @@ document.getElementById("app")!.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 200);
 const world = buildWorld(scene);
+const beacons: Beacon[] = buildBeacons(scene, world.ruinMat, world.obstacles);
+const BC = wdata.beacon, EC = wdata.embers;
 const fx = new Fx(scene);
 
 addEventListener("resize", () => {
@@ -68,6 +73,9 @@ const player = {
   attrs: emptyAttrs() as Attrs,
   inventory: [] as Item[],
   equipment: {} as Equipment,
+  embers: { held: 0, banked: 0 },
+  respawnBeacon: "lastLight",
+  trace: null as Trace | null,
   crit: AC.critChance,
   dodgeCostMul: 1,
 };
@@ -75,7 +83,11 @@ const PLAYER_RADIUS = 0.4;
 
 // 레벨·속성 → 능력치 반영
 function applyDerived(fullHeal: boolean) {
-  const d = derive(player.lv.level, player.attrs, equipmentStats(player.equipment));
+  const gear = equipmentStats(player.equipment);
+  const eb = engraveBonus(player.embers.banked);
+  gear.atkPct += eb.atkPct;
+  gear.maxHp += eb.maxHp;
+  const d = derive(player.lv.level, player.attrs, gear);
   const hpRatio = player.hp / player.maxHp;
   player.maxHp = d.maxHp;
   player.atk = d.atk;
@@ -90,7 +102,8 @@ function applyDerived(fullHeal: boolean) {
 const SAVE_KEY = "emberlands.save";
 function saveGame() {
   try {
-    localStorage.setItem(SAVE_KEY, serialize({ level: player.lv.level, exp: player.lv.exp, statPoints: player.lv.statPoints, attrs: player.attrs, gold: player.gold, inventory: player.inventory, equipment: player.equipment }));
+    localStorage.setItem(SAVE_KEY, serialize({ level: player.lv.level, exp: player.lv.exp, statPoints: player.lv.statPoints, attrs: player.attrs, gold: player.gold, inventory: player.inventory, equipment: player.equipment,
+      embers: player.embers, litBeacons: beacons.filter((b) => b.lit).map((b) => b.def.id), respawnBeacon: player.respawnBeacon, trace: player.trace }));
   } catch { /* 저장 불가 환경(시크릿 모드 등)은 무시 */ }
 }
 function loadGame(): boolean {
@@ -100,6 +113,10 @@ function loadGame(): boolean {
   if (!d) return false;
   player.inventory = d.inventory;
   player.equipment = d.equipment;
+  player.embers = d.embers;
+  player.respawnBeacon = d.respawnBeacon;
+  player.trace = d.trace;
+  for (const b of beacons) if (d.litBeacons.includes(b.def.id)) setLit(b, true, false);
   player.lv = { level: d.level, exp: d.exp, statPoints: d.statPoints };
   player.attrs = d.attrs;
   player.gold = d.gold;
@@ -108,6 +125,8 @@ function loadGame(): boolean {
 const loaded = new URLSearchParams(location.search).has("fresh") ? false : loadGame();
 if (!loaded) player.equipment = { weapon: generateItem(Math.random, 1, { baseId: "rustySword", rarity: "common" }) };
 applyDerived(true);
+const rb = beacons.find((b) => b.def.id === player.respawnBeacon && b.lit);
+if (rb) player.pos.copy(rb.pos).add(new THREE.Vector3(0, 0, 3));
 setInterval(saveGame, 10000);
 addEventListener("beforeunload", saveGame);
 
@@ -226,6 +245,7 @@ addEventListener("keydown", (e) => {
   if (e.code === "Tab") { e.preventDefault(); toggleLockOn(); }
   if (e.code === "KeyC") toggleCharPanel();
   if (e.code === "KeyI") toggleInvPanel();
+  if (e.code === "KeyF" || e.code === "KeyR") interact();
 });
 addEventListener("keyup", (e) => {
   keys.delete(e.code);
@@ -366,7 +386,8 @@ function killEnemy(e: Enemy) {
   player.gold += gold;
   const r = gainExp(player.lv, e.def.exp);
   player.lv = r.state;
-  floater(e.pos.clone().setY(2.2), `+${e.def.exp} EXP  ◆${gold}`, "exp");
+  player.embers = { ...player.embers, held: player.embers.held + e.def.embers };
+  floater(e.pos.clone().setY(2.2), `+${e.def.exp} EXP  ◆${gold}  ✦${e.def.embers}`, "exp");
   if (r.levelsGained > 0) onLevelUp();
   const drop = rollDrop(Math.random, e.def.level, e.def.dropChance);
   if (drop) spawnLoot(drop, e.pos);
@@ -394,6 +415,85 @@ function toggleLockOn() {
   }
   cam.target = best;
 }
+
+// ---------- 봉화·잔불 ----------
+function nearBeacon(range: number): Beacon | null {
+  let best: Beacon | null = null, bd = range;
+  for (const b of beacons) {
+    const d = b.pos.distanceTo(player.pos);
+    if (d < bd) { bd = d; best = b; }
+  }
+  return best;
+}
+function interact() {
+  if (player.dead) return;
+  const b = nearBeacon(BC.interactRange);
+  if (!b) return;
+  if (!b.lit) {
+    setLit(b, true);
+    player.respawnBeacon = b.def.id;
+    const r = gainExp(player.lv, BC.lightExp);
+    player.lv = r.state;
+    toast(`봉화 점화 — ${b.def.name}`);
+    floater(b.pos.clone().setY(3), `+${BC.lightExp} EXP`, "exp");
+    fx.burst(b.pos.clone().setY(1.6), "#ffcc66", 40, 7);
+    fx.addShake(0.4);
+    sfx.ignite();
+    if (r.levelsGained > 0) onLevelUp();
+    const left = beacons.filter((x) => !x.lit).length;
+    if (left === 0) setTimeout(() => toast(`${wdata.zoneName}의 봉화를 모두 밝혔다!`), 1800);
+  } else {
+    player.respawnBeacon = b.def.id;
+    player.hp = player.maxHp;
+    if (player.embers.held > 0) {
+      const before = engraveBonus(player.embers.banked).level;
+      const amount = player.embers.held;
+      player.embers = engrave(player.embers);
+      const after = engraveBonus(player.embers.banked).level;
+      applyDerived(true);
+      floater(b.pos.clone().setY(3), `✦${amount} 각인`, "exp");
+      fx.burst(player.pos.clone().setY(1), "#ffb347", 20, 4);
+      sfx.ignite();
+      toast(after > before ? `각인 레벨 ${after}! 공격력 +${after}%, 최대 HP +${after * EC.hpPerLevel}` : `잔불 ${amount} 각인`);
+    } else toast(`${b.def.name}에서 쉬었다`);
+  }
+  saveGame();
+}
+
+// 사망 흔적
+const traceGroup = new THREE.Group();
+{
+  const m = new THREE.MeshStandardMaterial({ color: "#ff9a3c", emissive: "#ff6a1a", emissiveIntensity: 2, transparent: true, opacity: 0.85 });
+  for (let i = 0; i < 3; i++) {
+    const o = new THREE.Mesh(new THREE.TetrahedronGeometry(0.18 - i * 0.04, 0), m);
+    o.position.set(Math.cos(i * 2.1) * 0.3, 0.6 + i * 0.25, Math.sin(i * 2.1) * 0.3);
+    traceGroup.add(o);
+  }
+  const l = new THREE.PointLight("#ff8a2a", 4, 5, 1.5);
+  l.position.y = 0.8;
+  traceGroup.add(l);
+  traceGroup.visible = false;
+  scene.add(traceGroup);
+}
+function syncTrace() {
+  traceGroup.visible = !!player.trace;
+  if (player.trace) traceGroup.position.set(player.trace.x, 0, player.trace.z);
+}
+function updateTrace(dt: number, t: number) {
+  if (!player.trace) return;
+  traceGroup.rotation.y += dt * 1.5;
+  traceGroup.position.y = Math.sin(t * 2.5) * 0.1;
+  const dx = player.trace.x - player.pos.x, dz = player.trace.z - player.pos.z;
+  if (!player.dead && dx * dx + dz * dz < EC.tracePickupRange ** 2) {
+    floater(player.pos.clone().setY(2.2), `✦${player.trace.amount} 되찾음`, "exp");
+    player.embers = recoverTrace(player.embers, player.trace);
+    player.trace = null;
+    syncTrace();
+    sfx.pickup();
+    saveGame();
+  }
+}
+syncTrace();
 
 // ---------- 바닥 전리품 ----------
 interface Loot { item: Item; group: THREE.Group; t: number }
@@ -528,6 +628,18 @@ function updateHud() {
   const need = expToNext(player.lv.level);
   $("expFill").style.width = need === Infinity ? "100%" : `${(player.lv.exp / need) * 100}%`;
   $("gold").textContent = String(player.gold);
+  const np = nextLevelProgress(player.embers.banked);
+  $("embers").textContent = `✦ ${player.embers.held}`;
+  $("engrave").textContent = `각인 Lv ${engraveBonus(player.embers.banked).level} (${np.into}/${np.need})`;
+  const nb = player.dead ? null : nearBeacon(BC.interactRange);
+  const pr = $("prompt");
+  if (nb) {
+    pr.style.display = "block";
+    pr.innerHTML = nb.lit
+      ? `<b>F</b> ${nb.def.name} — ${player.embers.held > 0 ? `잔불 ${player.embers.held} 각인` : "쉬기"}`
+      : `<b>F</b> ${nb.def.name} 점화`;
+  } else pr.style.display = "none";
+  $("beaconCount").textContent = `봉화 ${beacons.filter((b) => b.lit).length}/${beacons.length}`;
   $("spBadge").style.display = player.lv.statPoints > 0 ? "inline-block" : "none";
   $("spBadge").textContent = `+${player.lv.statPoints} (C)`;
   const ch = $("charge");
@@ -818,12 +930,19 @@ function hurtPlayer(amount: number) {
   if (player.hp <= 0) {
     player.dead = true;
     cam.target = null;
-    toast("쓰러졌다… 봉화에서 다시 일어난다");
+    const r = onDeath(player.embers, player.pos);
+    player.embers = r.state;
+    player.trace = r.trace;
+    syncTrace();
+    toast(r.trace ? `쓰러졌다… 잔불 ${r.trace.amount}개가 흩어졌다` : "쓰러졌다… 봉화에서 다시 일어난다");
     playerMesh.rotation.z = Math.PI / 2;
+    saveGame();
     setTimeout(() => {
       player.dead = false;
       player.hp = player.maxHp;
-      player.pos.set(0, 0, 3);
+      const b = beacons.find((x) => x.def.id === player.respawnBeacon && x.lit) ?? beacons[0];
+      player.pos.copy(b.pos).add(new THREE.Vector3(0, 0, 3));
+      camera.position.copy(player.pos).addScaledVector(camForward(), -cam.dist * 0.74).setY(cam.height);
       playerMesh.rotation.z = 0;
     }, 2500);
   }
@@ -847,9 +966,9 @@ function updateFloaters(dt: number) {
 
 // 봉화 근처에서는 천천히 회복
 function updateBeacon(dt: number) {
-  if (!player.dead && player.pos.length() < 3.5 && player.hp < player.maxHp) {
-    player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.15 * dt);
-  }
+  if (player.dead || player.hp >= player.maxHp) return;
+  if (beacons.some((b) => b.lit && b.pos.distanceTo(player.pos) < BC.healRange))
+    player.hp = Math.min(player.maxHp, player.hp + player.maxHp * BC.healPerSec * dt);
 }
 
 function updateCamera(dt: number) {
@@ -887,7 +1006,8 @@ function frame() {
   updateProjectiles(dt);
   updateLoot(dt);
   updateBeacon(dt);
-  world.update(t);
+  updateBeacons(beacons, t, realDt);
+  updateTrace(dt, t);
   fx.update(realDt);
   updateCamera(realDt);
 
@@ -916,6 +1036,9 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   spawnLoot: (rarity: string, baseId?: string) => spawnLoot(generateItem(Math.random, player.lv.level, { rarity: rarity as any, baseId }), player.pos.clone().add(new THREE.Vector3(1.2, 0, 1.2))),
   spendPoint,
   save: saveGame,
+  beacons,
+  interact,
+  hurt: hurtPlayer,
   nearest(filter?: string) {
     let best: Enemy | null = null, bd = Infinity;
     for (const e of enemies) {

@@ -32,7 +32,7 @@ describe("stats", () => {
 });
 
 describe("save", () => {
-  const data = { level: 5, exp: 12, statPoints: 3, attrs: { str: 4, agi: 2, wis: 0, vit: 3 }, gold: 99, inventory: [], equipment: {} };
+  const data = { level: 5, exp: 12, statPoints: 3, attrs: { str: 4, agi: 2, wis: 0, vit: 3 }, gold: 99, inventory: [], equipment: {}, embers: { held: 0, banked: 0 }, litBeacons: [], respawnBeacon: "lastLight", trace: null };
   it("왕복", () => {
     const s = deserialize(serialize(data, 123))!;
     expect(s).toEqual({ ...data, version: SAVE_VERSION, savedAt: 123 });
@@ -49,7 +49,7 @@ describe("save", () => {
   it("v1 저장은 빈 인벤토리로 마이그레이션", () => {
     const v1 = JSON.stringify({ version: 1, level: 3, exp: 1, statPoints: 0, attrs: { str: 1, agi: 0, wis: 0, vit: 0 }, gold: 5, savedAt: 1 });
     const s = deserialize(v1)!;
-    expect(s.version).toBe(2);
+    expect(s.version).toBe(3);
     expect(s.level).toBe(3);
     expect(s.inventory).toEqual([]);
     expect(s.equipment).toEqual({});

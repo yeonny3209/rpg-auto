@@ -22,7 +22,8 @@
     "color": "#3a3342",
     "eyeColor": "#b46cff",
     "size": 0.7,
-    "dropChance": 0.25
+    "dropChance": 0.25,
+    "embers": 3
   },
   "ashSpitter": {
     "name": "재 토하는 것",
@@ -49,7 +50,8 @@
     "color": "#3d4a3a",
     "eyeColor": "#9cff6c",
     "size": 0.55,
-    "dropChance": 0.3
+    "dropChance": 0.3,
+    "embers": 4
   },
   "ashCharger": {
     "name": "재뿔 돌진자",
@@ -76,6 +78,7 @@
     "color": "#4a3328",
     "eyeColor": "#ff9a3c",
     "size": 1.05,
-    "dropChance": 0.6
+    "dropChance": 0.6,
+    "embers": 10
   }
 }
