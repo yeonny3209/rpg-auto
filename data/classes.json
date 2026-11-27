@@ -1,0 +1,37 @@
+{
+  "classes": {
+    "vanguard": {
+      "name": "선봉",
+      "title": "방패 없는 전열",
+      "desc": "튼튼한 몸으로 정면에서 버티는 근접 전사. 넓은 호를 그리는 장검.",
+      "color": "#5a7fc0",
+      "weapon": "장검",
+      "startAttrs": { "str": 2, "agi": 0, "wis": 0, "vit": 2 },
+      "bonus": { "maxHp": 30, "def": 2 },
+      "moveSpeedMul": 1,
+      "attack": { "rangeMul": 1, "arcMul": 1, "cooldownMul": 1, "staminaMul": 1 }
+    },
+    "tracker": {
+      "name": "추적자",
+      "title": "재 속의 사냥꾼",
+      "desc": "빠르고 가볍다. 짧은 단검으로 연타하며 치명타를 노린다.",
+      "color": "#3f7a5a",
+      "weapon": "단검",
+      "startAttrs": { "str": 0, "agi": 4, "wis": 0, "vit": 0 },
+      "bonus": { "maxStamina": 25, "crit": 0.08, "maxHp": -10 },
+      "moveSpeedMul": 1.1,
+      "attack": { "rangeMul": 0.85, "arcMul": 0.9, "cooldownMul": 0.78, "staminaMul": 0.8 }
+    },
+    "igniter": {
+      "name": "점화술사",
+      "title": "불씨를 다루는 자",
+      "desc": "연약하지만 강하다. 불씨 지팡이로 좁고 긴 범위를 태운다.",
+      "color": "#8a4f7a",
+      "weapon": "불씨 지팡이",
+      "startAttrs": { "str": 0, "agi": 0, "wis": 4, "vit": 0 },
+      "bonus": { "atkPct": 0.08, "def": -1, "maxHp": -15 },
+      "moveSpeedMul": 1,
+      "attack": { "rangeMul": 1.35, "arcMul": 0.65, "cooldownMul": 1.1, "staminaMul": 1 }
+    }
+  }
+}

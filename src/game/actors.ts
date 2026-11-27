@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export function makePlayerMesh(): { root: THREE.Group; sword: THREE.Group } {
+export function makePlayerMesh(): { root: THREE.Group; sword: THREE.Group; cloth: THREE.MeshStandardMaterial } {
   const root = new THREE.Group();
   const cloth = new THREE.MeshStandardMaterial({ color: "#4f6a94", roughness: 0.8 });
   const skin = new THREE.MeshStandardMaterial({ color: "#d9b38c", roughness: 0.7 });
@@ -29,7 +29,7 @@ export function makePlayerMesh(): { root: THREE.Group; sword: THREE.Group } {
 
   for (const o of [body, head, scarf, core, blade]) o.castShadow = true;
   root.add(body, head, scarf, core, sword);
-  return { root, sword };
+  return { root, sword, cloth };
 }
 
 export function makeEnemyMesh(color: string, eyeColor: string, size: number, ai = "melee") {

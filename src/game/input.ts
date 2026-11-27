@@ -1,11 +1,13 @@
+import { $ } from "./core";
 import * as THREE from "three";
 import { cam, keys, renderer } from "./core";
 import { releaseCharge, startCharge, toggleLockOn, tryAttack, tryDodge } from "./player";
 import { interact } from "./sanctuary";
 import { toggleCharPanel, toggleInvPanel } from "./panels";
 
+const selecting = () => $("classSelect").classList.contains("open");
 addEventListener("keydown", (e) => {
-  if (e.repeat) return;
+  if (e.repeat || selecting()) return;
   keys.add(e.code);
   if (e.code === "KeyJ") tryAttack();
   if (e.code === "KeyK") startCharge();
@@ -23,6 +25,7 @@ export const canvas = renderer.domElement;
 canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 export let dragging = false;
 canvas.addEventListener("mousedown", (e) => {
+  if (selecting()) return;
   if (e.button === 0) tryAttack();
   if (e.button === 2) startCharge();
   if (e.button === 1) { dragging = true; e.preventDefault(); }

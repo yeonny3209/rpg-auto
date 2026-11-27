@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { addGear, classGear, classAttack, classMoveMul, classDef, classStartAttrs, isClassId, NEUTRAL_ATTACK, type ClassId, type ClassAttack } from "../logic/classes";
 import prog from "../../data/progression.json";
 import combatCfg from "../../data/combat.json";
 import { buildWorld } from "./world";
@@ -8,7 +9,7 @@ import { buildBeacons, setLit, type Beacon } from "./beacons";
 import wdata from "../../data/world.json";
 import { engraveBonus, type Trace } from "../logic/embers";
 import { type LevelState } from "../logic/progression";
-import { derive, emptyAttrs, type Attrs } from "../logic/stats";
+import { derive, emptyAttrs, ATTR_KEYS, type Attrs } from "../logic/stats";
 import { serialize, deserialize } from "../logic/save";
 import { generateItem, equipmentStats, ITEM_CFG, type Item, type Equipment } from "../logic/items";
 import { makeStamina } from "../logic/stamina";
@@ -40,7 +41,7 @@ export const AC = combatCfg.attack, HC = combatCfg.heavy, DC = combatCfg.dodge, 
 
 
 // ---------- 플레이어 ----------
-export const { root: playerMesh, sword } = makePlayerMesh();
+export const { root: playerMesh, sword, cloth: playerCloth } = makePlayerMesh();
 scene.add(playerMesh);
 export const playerLight = new THREE.PointLight("#ffb366", 6, 7, 1.5);
 playerLight.position.y = 1.4;
@@ -72,14 +73,28 @@ export const player = {
   embers: { held: 0, banked: 0 },
   respawnBeacon: "lastLight",
   trace: null as Trace | null,
+  cls: null as ClassId | null,
+  moveMul: 1,
+  atkMod: NEUTRAL_ATTACK as ClassAttack,
   crit: AC.critChance,
   dodgeCostMul: 1,
 };
 export const PLAYER_RADIUS = 0.4;
 
+// 클래스 지정 (몸 색 + 능력치). 새로 고른 것이면 시작 속성도 배분한다.
+export function setClass(id: ClassId | null, fresh: boolean) {
+  player.cls = id;
+  if (id) {
+    playerCloth.color.set(classDef(id).color);
+    sword.scale.z = classDef(id).attack.rangeMul; // 단검은 짧게, 지팡이는 길게
+    if (fresh && ATTR_KEYS.every((k) => player.attrs[k] === 0)) player.attrs = classStartAttrs(id);
+  }
+  applyDerived(fresh);
+}
+
 // 레벨·속성 → 능력치 반영
 export function applyDerived(fullHeal: boolean) {
-  const gear = equipmentStats(player.equipment);
+  const gear = addGear(equipmentStats(player.equipment), classGear(player.cls));
   const eb = engraveBonus(player.embers.banked);
   gear.atkPct += eb.atkPct;
   gear.maxHp += eb.maxHp;
@@ -90,6 +105,8 @@ export function applyDerived(fullHeal: boolean) {
   player.def = d.def;
   player.crit = d.critChance;
   player.dodgeCostMul = d.dodgeCostMul;
+  player.moveMul = classMoveMul(player.cls);
+  player.atkMod = classAttack(player.cls);
   player.stamina.max = d.maxStamina;
   player.hp = fullHeal ? d.maxHp : Math.max(1, Math.round(d.maxHp * hpRatio));
 }
@@ -99,7 +116,7 @@ export const SAVE_KEY = "emberlands.save";
 export function saveGame() {
   try {
     localStorage.setItem(SAVE_KEY, serialize({ level: player.lv.level, exp: player.lv.exp, statPoints: player.lv.statPoints, attrs: player.attrs, gold: player.gold, inventory: player.inventory, equipment: player.equipment,
-      embers: player.embers, litBeacons: beacons.filter((b) => b.lit).map((b) => b.def.id), respawnBeacon: player.respawnBeacon, trace: player.trace }));
+      embers: player.embers, litBeacons: beacons.filter((b) => b.lit).map((b) => b.def.id), respawnBeacon: player.respawnBeacon, trace: player.trace, classId: player.cls }));
   } catch { /* 저장 불가 환경(시크릿 모드 등)은 무시 */ }
 }
 export function loadGame(): boolean {
@@ -116,11 +133,16 @@ export function loadGame(): boolean {
   player.lv = { level: d.level, exp: d.exp, statPoints: d.statPoints };
   player.attrs = d.attrs;
   player.gold = d.gold;
+  setClass(d.classId, false);
   return true;
 }
 export const loaded = new URLSearchParams(location.search).has("fresh") ? false : loadGame();
 if (!loaded) player.equipment = { weapon: generateItem(Math.random, 1, { baseId: "rustySword", rarity: "common" }) };
 applyDerived(true);
+{ // 테스트·스크린샷용: ?class=tracker 로 선택 화면을 건너뛴다
+  const q = new URLSearchParams(location.search).get("class");
+  if (!player.cls && isClassId(q)) setClass(q, true);
+}
 export const rb = beacons.find((b) => b.def.id === player.respawnBeacon && b.lit);
 if (rb) player.pos.copy(rb.pos).add(new THREE.Vector3(0, 0, 3));
 setInterval(saveGame, 10000);

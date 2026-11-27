@@ -76,7 +76,7 @@ describe("items", () => {
   it("아이템은 저장/불러오기 왕복", () => {
     const rng = mulberry(8);
     const it = generateItem(rng, 3, { rarity: "epic" });
-    const s = deserialize(serialize({ level: 2, exp: 0, statPoints: 0, attrs: { str: 0, agi: 0, wis: 0, vit: 0 }, gold: 0, inventory: [it], equipment: { weapon: it }, embers: { held: 0, banked: 0 }, litBeacons: [], respawnBeacon: "lastLight", trace: null }))!;
+    const s = deserialize(serialize({ level: 2, exp: 0, statPoints: 0, attrs: { str: 0, agi: 0, wis: 0, vit: 0 }, gold: 0, inventory: [it], equipment: { weapon: it }, embers: { held: 0, banked: 0 }, litBeacons: [], respawnBeacon: "lastLight", trace: null, classId: null }))!;
     expect(s.inventory[0]).toEqual(it);
     expect(s.equipment.weapon).toEqual(it);
   });

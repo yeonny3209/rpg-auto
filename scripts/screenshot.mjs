@@ -46,7 +46,10 @@ try {
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   page.on("pageerror", (e) => errors.push(String(e)));
   await page.goto(`http://localhost:${port}/`);
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(1500);
+  await shot(page, "00-class-select.png");
+  await page.click('.class-card[data-id="vanguard"]');
+  await page.waitForTimeout(800);
   await shot(page, "01-start.png");
 
   // 약공격으로 기어다니는 것 처치
@@ -173,11 +176,25 @@ try {
   await page.evaluate(() => { for (const e of window.__game.enemies) e.attackCd = 0; });
 
   // 저장/불러오기: 새로고침 후 레벨·속성 유지 확인
-  const before = await page.evaluate(() => { window.__game.save(); const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold, inv: p.inventory.length, eq: Object.keys(p.equipment).sort(), embers: p.embers, lit: window.__game.beacons.filter((b) => b.lit).length }; });
+  const before = await page.evaluate(() => { window.__game.save(); const p = window.__game.player; return { cls: p.cls, level: p.lv.level, attrs: p.attrs, gold: p.gold, inv: p.inventory.length, eq: Object.keys(p.equipment).sort(), embers: p.embers, lit: window.__game.beacons.filter((b) => b.lit).length }; });
   await page.reload();
   await page.waitForTimeout(1500);
-  const after = await page.evaluate(() => { const p = window.__game.player; return { level: p.lv.level, attrs: p.attrs, gold: p.gold, inv: p.inventory.length, eq: Object.keys(p.equipment).sort(), embers: p.embers, lit: window.__game.beacons.filter((b) => b.lit).length }; });
+  const after = await page.evaluate(() => { const p = window.__game.player; return { cls: p.cls, level: p.lv.level, attrs: p.attrs, gold: p.gold, inv: p.inventory.length, eq: Object.keys(p.equipment).sort(), embers: p.embers, lit: window.__game.beacons.filter((b) => b.lit).length }; });
   console.log("save/load", JSON.stringify(before) === JSON.stringify(after) ? "OK" : `MISMATCH ${JSON.stringify(before)} vs ${JSON.stringify(after)}`);
+
+  // 클래스 3종: ?fresh&class= 로 시작해 능력치·공격 특성·보이는 색을 확인
+  for (const id of ["tracker", "igniter"]) {
+    await page.goto(`http://localhost:${port}/?fresh&class=${id}`);
+    await page.waitForTimeout(1500);
+    console.log(`class ${id}:`, JSON.stringify(await page.evaluate(() => { const p = window.__game.player; return { cls: p.cls, hp: p.maxHp, atk: p.atk, def: p.def, st: p.stamina.max, crit: +p.crit.toFixed(3), move: p.moveMul, mod: p.atkMod, attrs: p.attrs }; })));
+    await shot(page, `15-class-${id}.png`);
+  }
+  await page.goto(`http://localhost:${port}/?fresh`);
+  await page.waitForTimeout(800);
+  console.log("select overlay without class:", await page.evaluate(() => document.getElementById("classSelect").classList.contains("open")));
+  await page.keyboard.press("Digit2");
+  await page.waitForTimeout(300);
+  console.log("pressed 2 ->", await page.evaluate(() => window.__game.player.cls));
 
   const state = await page.evaluate(() => {
     const g = window.__game, p = g.player;

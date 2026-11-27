@@ -71,3 +71,20 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1218; fon
 #prompt b { display: inline-block; padding: 0 6px; margin-right: 6px; border: 1px solid #ffcc66; border-radius: 3px; color: #ffcc66; }
 #minimap { position: absolute; right: 16px; top: 16px; width: 170px; height: 170px; }
 #beaconCount { position: absolute; right: 16px; top: 192px; width: 170px; text-align: center; font-size: 13px; color: #ffcc66; text-shadow: 0 1px 2px #000; }
+
+/* 클래스 선택 (시작 화면) */
+#classSelect { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 22px; background: radial-gradient(ellipse at center, #1b1410ee, #0a0b0fF2); z-index: 20; }
+#classSelect.open { display: flex; }
+#classSelect h1 { margin: 0; font-size: 40px; color: #ffb347; text-shadow: 0 0 20px #ff8a2a88; letter-spacing: 4px; }
+#classSelect .sub { color: #a8b0bd; font-size: 15px; margin-top: -12px; }
+#classSelect .cards { display: flex; gap: 18px; }
+.class-card { width: 250px; padding: 18px; background: #141a24; border: 2px solid #3a4352; border-radius: 10px; cursor: pointer; transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s; text-align: left; color: inherit; font: inherit; }
+.class-card:hover, .class-card:focus-visible { transform: translateY(-4px); border-color: var(--c); box-shadow: 0 0 22px var(--c); outline: none; }
+.class-card .emblem { width: 44px; height: 44px; border-radius: 50%; background: var(--c); box-shadow: 0 0 14px var(--c); margin-bottom: 10px; }
+.class-card h2 { margin: 0; font-size: 24px; color: #fff; }
+.class-card .ttl { color: #ffb347; font-size: 13px; margin-bottom: 8px; }
+.class-card .desc { font-size: 13px; color: #cfc6b4; line-height: 1.5; min-height: 58px; }
+.class-card ul { list-style: none; padding: 0; margin: 10px 0 0; font-size: 13px; color: #d9d2c2; }
+.class-card li { padding: 2px 0; }
+.class-card li b { color: #ffcc66; }
+.class-card .key { margin-top: 10px; font-size: 12px; color: #6f7886; }

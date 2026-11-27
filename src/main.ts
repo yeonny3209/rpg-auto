@@ -12,6 +12,7 @@ import { fadedMat, updateCamera, updateOcclusion } from "./game/camera";
 import "./game/input";
 import "./game/hud";
 import "./game/panels";
+import "./game/classSelect";
 
 const clock = new THREE.Clock();
 function frame() {
@@ -19,7 +20,7 @@ function frame() {
   const t = clock.elapsedTime;
   // 히트스톱: 잠깐 게임 시간을 멈춘다 (카메라·이펙트는 계속)
   let dt = realDt;
-  const paused = document.querySelector("#charPanel.open, #invPanel.open") !== null;
+  const paused = document.querySelector("#charPanel.open, #invPanel.open, #classSelect.open") !== null;
   if (paused) dt = 0; // 창을 열면 게임 시간 정지
   else if (fx.hitstop > 0) {
     fx.hitstop -= realDt;

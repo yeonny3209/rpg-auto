@@ -1,3 +1,4 @@
+import { classDef } from "../logic/classes";
 import prog from "../../data/progression.json";
 import { sfx } from "./sfx";
 import { derive, allocate, ATTR_KEYS, type AttrKey } from "../logic/stats";
@@ -102,7 +103,7 @@ export function renderCharPanel() {
   const d = derive(player.lv.level, player.attrs);
   const A = prog.attributes as Record<AttrKey, { name: string; desc: string }>;
   el.innerHTML = `
-    <h3>점화자 · Lv ${player.lv.level}</h3>
+    <h3>${player.cls ? classDef(player.cls).name : "점화자"} · Lv ${player.lv.level}</h3>
     <div class="pts">남은 포인트: <b>${player.lv.statPoints}</b></div>
     ${ATTR_KEYS.map((k) => `
       <div class="attr"><span class="nm">${A[k].name}</span><span class="val">${player.attrs[k]}</span>

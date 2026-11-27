@@ -49,13 +49,14 @@ export function tryDodge() {
 
 export function tryAttack() {
   if (player.dead || player.attackCd > 0 || player.dodgeT !== null || player.charging) return;
-  if (!spend(player.stamina, AC.staminaCost)) return flashStamina();
+  const cm = player.atkMod;
+  if (!spend(player.stamina, AC.staminaCost * cm.staminaMul)) return flashStamina();
   faceTarget();
   player.attackKind = "light";
   player.attackT = AC.time;
-  player.attackCd = AC.cooldown;
+  player.attackCd = AC.cooldown * cm.cooldownMul;
   sfx.swing();
-  strike(AC.range, AC.arcDeg, 1, AC.poiseDamage, AC.hitstop, false);
+  strike(AC.range * cm.rangeMul, AC.arcDeg * cm.arcMul, 1, AC.poiseDamage, AC.hitstop, false);
 }
 
 export function startCharge() {
@@ -76,7 +77,7 @@ export function releaseCharge() {
   player.attackT = HC.time;
   player.attackCd = HC.cooldown;
   sfx.heavySwing();
-  strike(HC.range, HC.arcDeg, dmgMul, poiseDmg, HC.hitstop, true);
+  strike(HC.range * player.atkMod.rangeMul, HC.arcDeg * player.atkMod.arcMul, dmgMul, poiseDmg, HC.hitstop, true);
 }
 
 export function strike(range: number, arcDeg: number, mul: number, poiseDmg: number, hitstop: number, heavy: boolean) {
@@ -191,7 +192,7 @@ export function updatePlayer(dt: number) {
   const moving = dir.lengthSq() > 0;
   if (moving) {
     dir.normalize();
-    let speed = prog.base.moveSpeed;
+    let speed = prog.base.moveSpeed * player.moveMul;
     if (player.attackT > 0) speed *= 0.35;
     if (player.charging) speed *= HC.moveSlow;
     player.pos.addScaledVector(dir, speed * dt);

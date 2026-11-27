@@ -2,8 +2,9 @@
 import { ATTR_KEYS, type Attrs } from "./stats";
 import { SLOT_IDS, type Equipment, type Item } from "./items";
 import type { EmberState, Trace } from "./embers";
+import { isClassId, DEFAULT_CLASS, type ClassId } from "./classes";
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export interface SaveData {
   version: number;
@@ -18,6 +19,7 @@ export interface SaveData {
   litBeacons: string[];
   respawnBeacon: string;
   trace: Trace | null;
+  classId: ClassId | null;
   savedAt: number;
 }
 
@@ -35,6 +37,8 @@ const isItem = (it: any): it is Item =>
 function migrate(o: any): any {
   if (o.version === 1) o = { ...o, version: 2, inventory: [], equipment: {} };
   if (o.version === 2) o = { ...o, version: 3, embers: { held: 0, banked: 0 }, litBeacons: [], respawnBeacon: "lastLight", trace: null };
+  // v3 저장은 클래스 개념이 없던 때의 것 → 선봉으로 이어간다
+  if (o.version === 3) o = { ...o, version: 4, classId: DEFAULT_CLASS };
   return o;
 }
 
@@ -58,10 +62,11 @@ export function deserialize(raw: string | null, maxLevel = 40, invCap = 30): Sav
   const respawnBeacon = typeof o.respawnBeacon === "string" ? o.respawnBeacon : "lastLight";
   const t = o.trace;
   const trace: Trace | null = t && typeof t.x === "number" && typeof t.z === "number" && isNum(t.amount, 1) ? { x: t.x, z: t.z, amount: Math.floor(t.amount) } : null;
+  const classId: ClassId | null = isClassId(o.classId) ? o.classId : null;
   const attrs = Object.fromEntries(ATTR_KEYS.map((k) => [k, Math.floor(o.attrs[k])])) as Attrs;
   return {
     version: SAVE_VERSION, level: o.level, exp: o.exp, statPoints: Math.floor(o.statPoints), attrs, gold: Math.floor(o.gold),
-    inventory, equipment, embers: { held: Math.floor(o.embers.held), banked: Math.floor(o.embers.banked) }, litBeacons, respawnBeacon, trace,
+    inventory, equipment, embers: { held: Math.floor(o.embers.held), banked: Math.floor(o.embers.banked) }, litBeacons, respawnBeacon, trace, classId,
     savedAt: isNum(o.savedAt) ? o.savedAt : 0,
   };
 }
