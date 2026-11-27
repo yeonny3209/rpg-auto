@@ -7,7 +7,7 @@ import { onDeath } from "../logic/embers";
 import { sfx } from "./sfx";
 import { computeDamage, rollRange } from "../logic/combat";
 import { gainExp } from "../logic/progression";
-import { rollDrop } from "../logic/items";
+import { rollDrop, generateItem, type RarityId } from "../logic/items";
 import { spend, regen } from "../logic/stamina";
 import { skillsFor, castBlock, spendCast, gainEmber, tickSkills, tickBuff, applyBuff, EMBER, CAST_LOCK } from "../logic/skills";
 import { resolveCircle } from "../logic/collision";
@@ -19,6 +19,7 @@ import { spawnLoot } from "./loot";
 import { renderCharPanel } from "./panels";
 import { reportQuest } from "./questflow";
 import { tutorialEvent } from "./tutorial";
+import { bossCfg } from "../logic/boss";
 
 export function moveInput(): THREE.Vector3 {
   const f = camForward();
@@ -184,7 +185,7 @@ export function hitEnemy(e: Enemy, amount: number, crit: boolean, heavy: boolean
 export function killEnemy(e: Enemy) {
   e.state = "dead";
   e.t = 0;
-  e.respawnT = 8;
+  e.respawnT = e.boss ? bossCfg("boarKing").respawnSec : 8;
   e.hpBar.visible = false;
   if (cam.target === e) cam.target = null;
   fx.burst(e.pos.clone().setY(e.pos.y + (0.6)), e.def.eyeColor, 18, 5);
@@ -199,8 +200,9 @@ export function killEnemy(e: Enemy) {
   player.embers = { ...player.embers, held: player.embers.held + e.def.embers };
   floater(e.pos.clone().setY(e.pos.y + (2.2)), `+${e.def.exp} EXP  ◆${gold}  ✦${e.def.embers}`, "exp");
   if (r.levelsGained > 0) onLevelUp();
-  const drop = rollDrop(Math.random, e.def.level, e.def.dropChance);
+  const drop = e.boss ? generateItem(Math.random, e.def.level + 2, { rarity: bossCfg("boarKing").guaranteedRarity as RarityId }) : rollDrop(Math.random, e.def.level, e.def.dropChance);
   if (drop) spawnLoot(drop, e.pos);
+  if (e.boss) { toast(`${e.def.name} 쓰러뜨림!`); fx.addShake(1); }
 }
 
 export function onLevelUp() {

@@ -20,7 +20,7 @@ import { updateNpcs, npcs } from "./game/npcs";
 import { renderQuestLog } from "./game/questflow";
 import { dialogPrimary, openDialog, closeDialog } from "./game/dialog";
 import { killEnemy } from "./game/player";
-import { createEnemy } from "./game/enemies";
+import { createEnemy, bossOf } from "./game/enemies";
 import { heightAt } from "./logic/terrain";
 
 const clock = new THREE.Clock();
@@ -65,6 +65,7 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   enemies,
   cam,
   attack: tryAttack,
+  boss: bossOf,
   tutorial: tutorialState,
   heightAt,
   npcs,

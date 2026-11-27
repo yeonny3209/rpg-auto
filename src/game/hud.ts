@@ -43,7 +43,7 @@ export function drawMinimap() {
     mctx.fillStyle = color;
     mctx.beginPath(); mctx.arc(px, py, r, 0, Math.PI * 2); mctx.fill();
   };
-  for (const e of enemies) if (e.state !== "dead") dot(e.pos.x, e.pos.z, e.def.ai === "charger" ? 3 : 2, e.state === "chase" || e.state === "windup" ? "#ff5a4a" : "#a05a6a");
+  for (const e of enemies) if (e.state !== "dead") dot(e.pos.x, e.pos.z, e.boss ? 5 : e.def.ai === "charger" ? 3 : 2, e.boss ? "#ff3a1a" : e.state === "chase" || e.state === "windup" ? "#ff5a4a" : "#a05a6a");
   for (const l of loots) dot(l.group.position.x, l.group.position.z, 2.5, rarityOf(l.item.rarity).color);
   if (player.trace) dot(player.trace.x, player.trace.z, 3.5, "#ff8a2a");
   for (const b of beacons) {
@@ -77,6 +77,16 @@ function syncSkillBar() {
 }
 export function updateHud() {
   syncSkillBar();
+  { // 보스 체력바: 전투 중인 보스가 있을 때만
+    const boss = enemies.find((x) => x.boss && x.state !== "dead" && x.state !== "wander");
+    const bb = $("bossBar");
+    bb.style.display = boss ? "block" : "none";
+    if (boss) {
+      $("bossName").textContent = `${boss.def.name}${boss.boss!.phase === 2 ? "  — 분노" : ""}`;
+      $("bossFill").style.width = `${Math.max(0, boss.hp / boss.def.hp) * 100}%`;
+      $("bossPoise").style.width = `${Math.max(0, boss.poise.value / boss.def.poise) * 100}%`;
+    }
+  }
   const list = skillsFor(player.cls);
   $("emFill").style.width = `${(player.sk.ember / EMBER.max) * 100}%`;
   $("skillbar").querySelectorAll<HTMLElement>(".skill").forEach((el, i) => {

@@ -263,6 +263,26 @@ try {
   tutSteps.push(`beacon ${await tut()}`);
   console.log("tutorial:", tutSteps.join(" | "));
 
+  // 보스: 접근 → 패턴(돌진/내려찍기/투척) 관찰 → 2페이즈 → 처치 → 드롭
+  await page.evaluate(() => { const g = window.__game, b = g.boss(); g.player.pos.set(b.pos.x + 10, 0, b.pos.z + 3); g.player.hp = g.player.maxHp = 5000; for (const e of g.enemies) e.attackCd = e.boss ? 0 : 99; });
+  const seen = new Set(), states = new Set(); let slamShot = false, phase2 = false;
+  for (let i = 0; i < 160 && seen.size < 3; i++) {
+    await page.waitForTimeout(100);
+    const r = await page.evaluate(() => { const b = window.__game.boss(); return { st: b.state, p: b.boss.pattern, ring: b.boss.ring.visible, ph: b.boss.phase }; });
+    states.add(`${r.st}/${r.p}`);
+    if (r.st === "windup" && r.p) seen.add(r.p);
+    if (r.ring && !slamShot) { slamShot = true; await shot(page, "21-boss-slam.png"); }
+  }
+  console.log("boss patterns seen:", [...seen].join(","), "| states:", [...states].join(" "));
+  await page.evaluate(() => { const b = window.__game.boss(); b.hp = b.def.hp * 0.45; });
+  await page.waitForTimeout(500);
+  console.log("boss phase2:", await page.evaluate(() => window.__game.boss().boss.phase), "bar:", await page.evaluate(() => document.getElementById("bossBar").style.display));
+  await shot(page, "22-boss-phase2.png");
+  await page.evaluate(() => { const g = window.__game, b = g.boss(); g.player.hp = g.player.maxHp; g.kill(b); });
+  await page.waitForTimeout(400);
+  console.log("boss dead:", JSON.stringify(await page.evaluate(() => { const g = window.__game, b = g.boss(); return { state: b.state, respawn: b.respawnT, bar: document.getElementById("bossBar").style.display, loot: g.player.inventory.length }; })));
+  await page.evaluate(() => { const g = window.__game; g.player.hp = g.player.maxHp = 100; g.player.pos.set(0, 0, 3); });
+
   // 퀘스트 흐름: 사제 대화(수락) → 처치 5 → 보고(보상) → 다음 퀘스트 제안
   const near = (id) => page.evaluate((id) => { const g = window.__game, n = g.npcs.find((x) => x.def.id === id); g.player.pos.set(n.pos.x - 1.8, 0, n.pos.z - 0.6); }, id);
   await near("priest");

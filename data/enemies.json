@@ -80,5 +80,34 @@
     "size": 1.05,
     "dropChance": 0.6,
     "embers": 10
+  },
+  "boarKing": {
+    "name": "재뿔 멧돼지왕",
+    "ai": "boss",
+    "spawnWeight": 0,
+    "level": 6,
+    "hp": 720,
+    "atk": 20,
+    "def": 8,
+    "exp": 420,
+    "gold": [
+      90,
+      140
+    ],
+    "poise": 260,
+    "moveSpeed": 3.2,
+    "aggroRange": 16,
+    "attackRange": 4.5,
+    "attackCooldown": 1.4,
+    "windup": 0.8,
+    "recover": 0.9,
+    "color": "#5a3a2a",
+    "eyeColor": "#ff5a2a",
+    "size": 2.1,
+    "dropChance": 1,
+    "embers": 150,
+    "projectileSpeed": 10,
+    "chargeSpeed": 16,
+    "chargeTime": 0.7
   }
 }

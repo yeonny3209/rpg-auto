@@ -132,3 +132,11 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1218; fon
 #tutorial .tc { color: #9fe0a0; }
 #tutorial.flash { box-shadow: 0 0 18px #ffb347; }
 .class-card { display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; }
+
+/* 보스 체력바 */
+#bossBar { position: absolute; top: 118px; left: 50%; transform: translateX(-50%); width: 520px; display: none; text-align: center; }
+#bossName { font-size: 16px; font-weight: 800; color: #ffcc9a; text-shadow: 0 0 8px #000; margin-bottom: 4px; letter-spacing: 1px; }
+#bossBar .bb { height: 14px; background: #1a0f0d; border: 1px solid #7a3a2a; border-radius: 3px; overflow: hidden; }
+#bossFill { height: 100%; background: linear-gradient(90deg, #8f1d12, #e2553c); }
+#bossBar .bp { height: 4px; margin-top: 2px; background: #1a1a1a; }
+#bossPoise { height: 100%; background: #d9c36a; }
