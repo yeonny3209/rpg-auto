@@ -2,13 +2,13 @@ import * as THREE from "three";
 import { castSkill } from "./game/player";
 import { updateBeacons } from "./game/beacons";
 import { generateItem } from "./logic/items";
-import { $, beacons, cam, camForward, camera, fx, loaded, player, renderer, saveGame, scene, toast, world } from "./game/core";
+import { $, beacons, cam, env, camForward, camera, fx, loaded, player, renderer, saveGame, scene, toast, world } from "./game/core";
 import { enemies, type Enemy, updateEnemies, updateProjectiles } from "./game/enemies";
 import { hurtPlayer, releaseCharge, startCharge, toggleLockOn, tryAttack, tryDodge, updatePlayer } from "./game/player";
 import { interact, updateBeacon, updateTrace } from "./game/sanctuary";
 import { spawnLoot, updateLoot } from "./game/loot";
 import { spendPoint, toggleCharPanel, toggleInvPanel } from "./game/panels";
-import { drawMinimap, updateFloaters, updateHud } from "./game/hud";
+import { drawMinimap, updateDarkness, updateFloaters, updateHud } from "./game/hud";
 import { fadedMat, updateCamera, updateOcclusion } from "./game/camera";
 import "./game/input";
 import "./game/hud";
@@ -50,6 +50,7 @@ function frame() {
   renderer.render(scene, camera);
   updateFloaters(realDt);
   updateHud();
+  updateDarkness(realDt);
   drawMinimap();
   requestAnimationFrame(frame);
 }
@@ -85,6 +86,8 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   spendPoint,
   save: saveGame,
   beacons,
+  env,
+  scene,
   interact,
   hurt: hurtPlayer,
   fadedCount: () => fadedMat.size,

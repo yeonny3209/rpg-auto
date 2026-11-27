@@ -29,6 +29,7 @@ document.getElementById("app")!.appendChild(renderer.domElement);
 export const scene = new THREE.Scene();
 export const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 200);
 export const world = buildWorld(scene);
+export const env = { dark: 0 }; // 어둠 정도(0~1), 매 프레임 hud에서 갱신
 export const beacons: Beacon[] = buildBeacons(scene, world.ruinMat, world.obstacles);
 export const BC = wdata.beacon, EC = wdata.embers;
 export const fx = new Fx(scene);

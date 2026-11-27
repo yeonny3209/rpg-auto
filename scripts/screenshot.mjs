@@ -330,6 +330,15 @@ try {
   console.log("shop:", JSON.stringify({ shopBefore, afterBuy, afterSell }));
   await page.keyboard.press("Escape");
 
+  // 어둠: 마을에서는 0, 먼 곳(남서쪽)에서는 올라감
+  const darkHome = await page.evaluate(() => { const g = window.__game; g.player.pos.set(0, 0, 3); return g.env ? g.env.dark : null; });
+  await page.evaluate(() => { const g = window.__game; g.player.pos.set(-30, 0, -30); g.player.hp = g.player.maxHp = 500; g.enemies.forEach((e) => (e.attackCd = 99)); });
+  await page.waitForTimeout(2500);
+  const darkFar = await page.evaluate(() => ({ dark: window.__game.env.dark, tag: document.getElementById("darkTag").textContent, fogFar: window.__game.scene.fog.far }));
+  console.log("darkness:", JSON.stringify({ darkHome, darkFar }));
+  await shot(page, "24-darkness.png");
+  await page.evaluate(() => window.__game.player.pos.set(0, 0, 3));
+
   const state = await page.evaluate(() => {
     const g = window.__game, p = g.player;
     const ch = g.enemies.find((e) => e.id === "ashCharger" && e.hp < e.def.hp);

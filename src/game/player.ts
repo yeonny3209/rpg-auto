@@ -12,7 +12,8 @@ import { spend, regen } from "../logic/stamina";
 import { skillsFor, castBlock, spendCast, gainEmber, tickSkills, tickBuff, applyBuff, EMBER, CAST_LOCK } from "../logic/skills";
 import { resolveCircle } from "../logic/collision";
 import { hitPoise, isStaggered, heavyMultipliers } from "../logic/poise";
-import { $, AC, DC, HC, PC, PLAYER_RADIUS, applyDerived, beacons, cam, camForward, camera, flashStamina, floater, fx, keys, player, playerLight, playerMesh, saveGame, sword, toast, ui, world } from "./core";
+import { $, AC, DC, HC, PC, PLAYER_RADIUS, applyDerived, beacons, cam, env, camForward, camera, flashStamina, floater, fx, keys, player, playerLight, playerMesh, saveGame, sword, toast, ui, world } from "./core";
+import { damageMulAt } from "../logic/darkness";
 import { enemies, type Enemy } from "./enemies";
 import { syncTrace } from "./sanctuary";
 import { spawnLoot } from "./loot";
@@ -324,8 +325,9 @@ export function updatePlayer(dt: number) {
   playerMesh.rotation.y = player.facing;
 }
 
-export function hurtPlayer(amount: number) {
+export function hurtPlayer(rawAmount: number) {
   if (player.dead) return;
+  const amount = Math.max(1, Math.round(rawAmount * damageMulAt(env.dark)));
   player.hp = Math.max(0, player.hp - amount);
   player.hurtT = 0.2;
   player.charging = false;

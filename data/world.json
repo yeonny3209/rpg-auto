@@ -68,5 +68,12 @@
       "inner": 5,
       "outer": 12
     }
+  },
+  "darkness": {
+    "safeRadius": 24,
+    "fullRadius": 60,
+    "maxDamageMul": 1.35,
+    "fogFar": 70,
+    "fogFarDark": 34
   }
 }

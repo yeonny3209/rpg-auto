@@ -2,7 +2,9 @@ import { skillsFor, castBlock, EMBER } from "../logic/skills";
 import { engrave, engraveBonus, nextLevelProgress } from "../logic/embers";
 import { expToNext } from "../logic/progression";
 import { rarityOf } from "../logic/items";
-import { $, BC, HC, beacons, cam, camera, floaters, player, ui } from "./core";
+import { $, BC, HC, beacons, cam, camera, env, floaters, player, scene, ui } from "./core";
+import * as THREE from "three";
+import { darknessAt, fogFarAt } from "../logic/darkness";
 import { enemies } from "./enemies";
 import { nearBeacon } from "./sanctuary";
 import { loots } from "./loot";
@@ -75,6 +77,15 @@ function syncSkillBar() {
   const list = skillsFor(player.cls);
   $("skillbar").innerHTML = list.map((sk, i) => `<div class="skill" data-i="${i}" style="--c:${sk.color}" title="${sk.desc}"><span class="k">${i + 1}</span><span class="n">${sk.name}</span><span class="c">${sk.cost}</span><div class="cd"></div></div>`).join("");
 }
+export function updateDarkness(dt: number) {
+  const lit = beacons.filter((b) => b.lit).map((b) => b.def);
+  const target = darknessAt(player.pos.x, player.pos.z, lit);
+  env.dark += (target - env.dark) * Math.min(1, dt * 2); // 부드럽게 변화
+  if (scene.fog instanceof THREE.Fog) scene.fog.far = fogFarAt(env.dark);
+  $("darkTag").style.opacity = String(Math.min(1, env.dark * 1.5));
+  $("darkTag").textContent = env.dark > 0.15 ? `어둠 ${Math.round(env.dark * 100)}% · 받는 피해 +${Math.round(env.dark * 35)}%` : "";
+}
+
 export function updateHud() {
   syncSkillBar();
   { // 보스 체력바: 전투 중인 보스가 있을 때만
