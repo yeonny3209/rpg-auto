@@ -8,9 +8,10 @@ import { computeDamage, rollRange } from "../logic/combat";
 import { gainExp } from "../logic/progression";
 import { rollDrop } from "../logic/items";
 import { spend, regen } from "../logic/stamina";
+import { skillsFor, castBlock, spendCast, gainEmber, tickSkills, tickBuff, applyBuff, EMBER, CAST_LOCK } from "../logic/skills";
 import { resolveCircle } from "../logic/collision";
 import { hitPoise, isStaggered, heavyMultipliers } from "../logic/poise";
-import { $, AC, DC, HC, PC, PLAYER_RADIUS, applyDerived, beacons, cam, camForward, camera, flashStamina, floater, fx, keys, player, playerMesh, saveGame, sword, toast, ui, world } from "./core";
+import { $, AC, DC, HC, PC, PLAYER_RADIUS, applyDerived, beacons, cam, camForward, camera, flashStamina, floater, fx, keys, player, playerLight, playerMesh, saveGame, sword, toast, ui, world } from "./core";
 import { enemies, type Enemy } from "./enemies";
 import { syncTrace } from "./sanctuary";
 import { spawnLoot } from "./loot";
@@ -56,7 +57,7 @@ export function tryAttack() {
   player.attackT = AC.time;
   player.attackCd = AC.cooldown * cm.cooldownMul;
   sfx.swing();
-  strike(AC.range * cm.rangeMul, AC.arcDeg * cm.arcMul, 1, AC.poiseDamage, AC.hitstop, false);
+  if (strike(AC.range * cm.rangeMul, AC.arcDeg * cm.arcMul, 1, AC.poiseDamage, AC.hitstop, false) > 0) gainEmber(player.sk, EMBER.gainLight);
 }
 
 export function startCharge() {
@@ -77,13 +78,16 @@ export function releaseCharge() {
   player.attackT = HC.time;
   player.attackCd = HC.cooldown;
   sfx.heavySwing();
-  strike(HC.range * player.atkMod.rangeMul, HC.arcDeg * player.atkMod.arcMul, dmgMul, poiseDmg, HC.hitstop, true);
+  if (strike(HC.range * player.atkMod.rangeMul, HC.arcDeg * player.atkMod.arcMul, dmgMul, poiseDmg, HC.hitstop, true) > 0) gainEmber(player.sk, EMBER.gainHeavy);
 }
 
-export function strike(range: number, arcDeg: number, mul: number, poiseDmg: number, hitstop: number, heavy: boolean) {
+export interface StrikeOpts { critAdd?: number; skill?: boolean }
+/** 부채꼴 타격. 맞힌 적 수를 반환한다. */
+export function strike(range: number, arcDeg: number, mul: number, poiseDmg: number, hitstop: number, heavy: boolean, opts: StrikeOpts = {}): number {
   const fwd = new THREE.Vector3(Math.sin(player.facing), 0, Math.cos(player.facing));
   const arc = Math.cos((arcDeg / 2) * (Math.PI / 180));
-  let hitAny = false;
+  let hits = 0;
+  const buffed = player.buff.t > 0;
   for (const e of enemies) {
     if (e.state === "dead") continue;
     const to = e.pos.clone().sub(player.pos).setY(0);
@@ -91,15 +95,66 @@ export function strike(range: number, arcDeg: number, mul: number, poiseDmg: num
     if (d > range + e.def.size * 0.6) continue;
     if (d > 0.3 && to.normalize().dot(fwd) < arc) continue;
     const staggered = isStaggered(e.poise);
-    const r = computeDamage({ atk: player.atk, def: e.def.def, skillMul: mul, critChance: player.crit, staggered });
+    const r = computeDamage({ atk: player.atk * (buffed ? player.buff.atkMul : 1), def: e.def.def, skillMul: mul * (opts.skill ? player.skillPower : 1), critChance: player.crit + (buffed ? player.buff.crit : 0) + (opts.critAdd ?? 0), staggered });
     const broke = hitPoise(e.poise, poiseDmg, { ...PC, max: e.def.poise });
     hitEnemy(e, r.amount, r.crit || staggered, heavy, broke);
-    hitAny = true;
+    hits++;
   }
-  if (hitAny) {
+  if (hits > 0) {
     fx.addHitstop(hitstop);
     fx.addShake(heavy ? 0.7 : 0.35);
     heavy ? sfx.heavyHit() : sfx.hit();
+  }
+  return hits;
+}
+
+// ---------- 스킬 (1~4) ----------
+export function castSkill(slot: number) {
+  const list = skillsFor(player.cls);
+  const sk = list[slot];
+  if (!sk || player.dead || player.dodgeT !== null || player.dash || player.charging) return;
+  const why = castBlock(player.sk, slot, list);
+  if (why === "ember") { floater(player.pos.clone().setY(2.3), "잔불 부족", "hurt"); return; }
+  if (why === "cooldown" || !spendCast(player.sk, slot, list)) return;
+  faceTarget();
+  const fwd = new THREE.Vector3(Math.sin(player.facing), 0, Math.cos(player.facing));
+  player.attackKind = "heavy";
+  player.attackT = CAST_LOCK;
+  player.attackCd = Math.max(player.attackCd, CAST_LOCK * 0.6);
+  floater(player.pos.clone().setY(2.5), sk.name, "exp");
+  const opts: StrikeOpts = { critAdd: sk.critAdd, skill: true };
+  switch (sk.type) {
+    case "arc":
+      sfx.heavySwing();
+      fx.burst(player.pos.clone().addScaledVector(fwd, sk.range! * 0.5).setY(1), sk.color, 18, 6);
+      strike(sk.range!, sk.arcDeg!, sk.mul!, sk.poise!, HC.hitstop, true, opts);
+      break;
+    case "ring":
+      sfx.heavySwing();
+      fx.burst(player.pos.clone().setY(0.5), sk.color, 44, 8);
+      fx.addShake(0.5);
+      strike(sk.range!, 360, sk.mul!, sk.poise!, HC.hitstop, true, opts);
+      break;
+    case "dash": {
+      sfx.dodge();
+      const dir = moveInput();
+      if (dir.lengthSq() === 0) dir.copy(fwd);
+      dir.normalize();
+      player.facing = Math.atan2(dir.x, dir.z);
+      player.dash = { dir, t: sk.time!, speed: sk.dist! / sk.time!, skill: sk };
+      if (sk.invuln) player.skillInvT = sk.invuln;
+      break;
+    }
+    case "buff":
+      sfx.ignite();
+      if (sk.heal) {
+        const before = player.hp;
+        player.hp = Math.min(player.maxHp, player.hp + player.maxHp * sk.heal);
+        floater(player.pos.clone().setY(2.1), `+${Math.round(player.hp - before)}`, "exp");
+      }
+      applyBuff(player.buff, sk);
+      fx.burst(player.pos.clone().setY(1), sk.color, 26, 5);
+      break;
   }
 }
 
@@ -127,6 +182,7 @@ export function killEnemy(e: Enemy) {
   if (cam.target === e) cam.target = null;
   fx.burst(e.pos.clone().setY(0.6), e.def.eyeColor, 18, 5);
   fx.burst(e.pos.clone().setY(0.6), "#2a2433", 10, 3);
+  gainEmber(player.sk, EMBER.gainKill);
   sfx.kill();
   const gold = rollRange(e.def.gold as [number, number]);
   player.gold += gold;
@@ -170,6 +226,28 @@ export function updatePlayer(dt: number) {
   ui.stFlash = Math.max(0, ui.stFlash - dt);
   player.dodgeCd = Math.max(0, player.dodgeCd - dt);
   if (player.charging) player.chargeT = Math.min(HC.maxCharge, player.chargeT + dt);
+  tickSkills(player.sk, dt);
+  tickBuff(player.buff, dt);
+  player.skillInvT = Math.max(0, player.skillInvT - dt);
+  playerLight.intensity = player.buff.t > 0 ? 11 : 6;
+
+  // 스킬 돌진: 입력을 무시하고 짧게 쇄도, 끝나면 타격 판정
+  if (player.dash) {
+    const d = player.dash;
+    const step = Math.min(dt, d.t);
+    player.pos.addScaledVector(d.dir, d.speed * step);
+    resolveCircle(player.pos, PLAYER_RADIUS, world.obstacles);
+    d.t -= dt;
+    playerMesh.position.copy(player.pos);
+    playerMesh.rotation.y = player.facing;
+    if (step > 0) fx.burst(player.pos.clone().setY(0.4), d.skill.color, 2, 2);
+    if (d.t <= 0) {
+      player.dash = null;
+      const sk = d.skill;
+      if (sk.mul) strike(sk.range!, sk.arcDeg!, sk.mul, sk.poise ?? 30, HC.hitstop, true, { critAdd: sk.critAdd, skill: true });
+    }
+    return;
+  }
 
   // 회피 구르기: 이동 입력 무시, 빠르게 미끄러지며 한 바퀴 구름
   if (player.dodgeT !== null) {

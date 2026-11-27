@@ -109,6 +109,36 @@ try {
   await page.waitForTimeout(1500);
   await shot(page, "07-spitter.png");
 
+  // 스킬: 잔불 게이지 소모·쿨타임·버프·돌진
+  await page.evaluate(() => { const g = window.__game; g.cam.target = null; for (const e of g.enemies) e.attackCd = 99; g.player.hp = g.player.maxHp; g.player.stamina.value = g.player.stamina.max; g.player.attackCd = 0; g.player.sk.ember = 100; g.player.sk.cds.fill(0); });
+  await approach(page, "ashCrawler", 2);
+  await page.waitForTimeout(100);
+  const sk1 = await page.evaluate(() => {
+    const g = window.__game, e = g.nearest("ashCrawler"), hp0 = e.hp, em0 = g.player.sk.ember;
+    g.cast(0);
+    const r = { dmg: hp0 - e.hp, killed: e.state === "dead", ember: [em0, g.player.sk.ember], cd: +g.player.sk.cds[0].toFixed(2) };
+    g.cast(0); // 쿨타임 중 재시전: 변화 없어야 함
+    r.ember2 = g.player.sk.ember;
+    return r;
+  });
+  console.log("skill cleave:", JSON.stringify(sk1));
+  await page.waitForTimeout(450);
+  await page.evaluate(() => { const g = window.__game; g.player.attackCd = 0; g.cast(3); });
+  await page.waitForTimeout(300);
+  console.log("skill buff:", JSON.stringify(await page.evaluate(() => { const p = window.__game.player; return { buff: p.buff.t > 7, atkMul: p.buff.atkMul, hp: Math.round(p.hp) }; })));
+  await page.evaluate(() => { const g = window.__game; g.player.attackCd = 0; g.player.pos.set(0, 0, 3); });
+  const d0 = await page.evaluate(() => window.__game.player.pos.clone());
+  await page.evaluate(() => window.__game.cast(2));
+  await page.waitForTimeout(500);
+  console.log("skill dash moved:", await page.evaluate((d0) => +window.__game.player.pos.distanceTo(d0).toFixed(1), d0));
+  await page.evaluate(() => { const g = window.__game; g.player.sk.ember = 60; g.player.attackCd = 0; });
+  await approach(page, "ashCharger", 2.5);
+  await page.evaluate(() => { window.__game.cast(1); });
+  await page.waitForTimeout(120);
+  await shot(page, "07b-skill.png");
+  await page.evaluate(() => { const p = window.__game.player; p.buff.t = 0; p.buff.atkMul = 1; p.dash = null; p.sk.cds.fill(0); p.attackCd = 0; });
+  await page.waitForTimeout(600);
+
   // 캐릭터 창: 포인트 배분
   await page.evaluate(() => { const g = window.__game; g.cam.target = null; g.toggleCharPanel(); });
   await page.click('#charPanel button[data-k="str"]');

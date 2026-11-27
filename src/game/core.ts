@@ -12,7 +12,8 @@ import { type LevelState } from "../logic/progression";
 import { derive, emptyAttrs, ATTR_KEYS, type Attrs } from "../logic/stats";
 import { serialize, deserialize } from "../logic/save";
 import { generateItem, equipmentStats, ITEM_CFG, type Item, type Equipment } from "../logic/items";
-import { makeStamina } from "../logic/stamina";
+import { makeStamina, isInvulnerable } from "../logic/stamina";
+import { makeSkillState, noBuff, type SkillDef } from "../logic/skills";
 import { type Enemy } from "./enemies";
 
 // ---------- 기본 세팅 ----------
@@ -74,12 +75,19 @@ export const player = {
   respawnBeacon: "lastLight",
   trace: null as Trace | null,
   cls: null as ClassId | null,
+  sk: makeSkillState(),
+  buff: noBuff(),
+  skillPower: 1,
+  skillInvT: 0, // 스킬로 얻은 무적 시간
+  dash: null as null | { dir: THREE.Vector3; t: number; speed: number; skill: SkillDef },
   moveMul: 1,
   atkMod: NEUTRAL_ATTACK as ClassAttack,
   crit: AC.critChance,
   dodgeCostMul: 1,
 };
 export const PLAYER_RADIUS = 0.4;
+/** 회피 무적 프레임 또는 스킬 무적 */
+export const playerInvulnerable = () => isInvulnerable(player.dodgeT, DC.iframe) || player.skillInvT > 0;
 
 // 클래스 지정 (몸 색 + 능력치). 새로 고른 것이면 시작 속성도 배분한다.
 export function setClass(id: ClassId | null, fresh: boolean) {
@@ -105,6 +113,7 @@ export function applyDerived(fullHeal: boolean) {
   player.def = d.def;
   player.crit = d.critChance;
   player.dodgeCostMul = d.dodgeCostMul;
+  player.skillPower = d.skillPower;
   player.moveMul = classMoveMul(player.cls);
   player.atkMod = classAttack(player.cls);
   player.stamina.max = d.maxStamina;

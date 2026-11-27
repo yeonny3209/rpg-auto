@@ -8,7 +8,7 @@ import { isInvulnerable } from "../logic/stamina";
 import { resolveCircle } from "../logic/collision";
 import { makePoise, tickPoise, isStaggered, type Poise } from "../logic/poise";
 import { weightedPick } from "../logic/spawn";
-import { DC, PC, camera, floater, fx, player, scene, world } from "./core";
+import { playerInvulnerable, DC, PC, camera, floater, fx, player, scene, world } from "./core";
 import { hurtPlayer } from "./player";
 
 // ---------- 적 ----------
@@ -96,7 +96,7 @@ export function updateProjectiles(dt: number) {
     let gone = p.life <= 0;
     const dx = p.mesh.position.x - player.pos.x, dz = p.mesh.position.z - player.pos.z;
     if (!gone && !player.dead && dx * dx + dz * dz < 0.55 * 0.55) {
-      if (isInvulnerable(player.dodgeT, DC.iframe)) floater(player.pos.clone().setY(2), "회피!", "exp");
+      if (playerInvulnerable()) floater(player.pos.clone().setY(2), "회피!", "exp");
       else hurtPlayer(p.dmg);
       gone = true;
     }
@@ -177,7 +177,7 @@ export function updateEnemies(dt: number) {
           e.attackCd = e.def.attackCooldown;
           if (e.def.ai === "melee") {
             if (enemyAttackHits(e, dist)) {
-              if (isInvulnerable(player.dodgeT, DC.iframe)) floater(player.pos.clone().setY(2), "회피!", "exp");
+              if (playerInvulnerable()) floater(player.pos.clone().setY(2), "회피!", "exp");
               else hurtPlayer(computeDamage({ atk: e.def.atk, def: player.def }).amount);
             }
             e.state = "recover";
@@ -196,7 +196,7 @@ export function updateEnemies(dt: number) {
         e.pos.addScaledVector(e.chargeDir, (e.def.chargeSpeed ?? 12) * dt);
         if (!e.hitPlayer && !player.dead && dist < e.def.size + 0.6) {
           e.hitPlayer = true;
-          if (isInvulnerable(player.dodgeT, DC.iframe)) floater(player.pos.clone().setY(2), "회피!", "exp");
+          if (playerInvulnerable()) floater(player.pos.clone().setY(2), "회피!", "exp");
           else {
             hurtPlayer(computeDamage({ atk: e.def.atk, def: player.def }).amount);
             player.pos.addScaledVector(e.chargeDir, 1.5);

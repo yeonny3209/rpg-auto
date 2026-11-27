@@ -88,3 +88,18 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1218; fon
 .class-card li { padding: 2px 0; }
 .class-card li b { color: #ffcc66; }
 .class-card .key { margin-top: 10px; font-size: 12px; color: #6f7886; }
+
+/* 잔불 게이지 · 스킬바 */
+.bar.em { height: 8px; width: 220px; }
+.bar.em > div { background: linear-gradient(90deg, #c2521a, #ffb347); }
+.bar.em span { display: none; }
+#skillbar { position: absolute; left: 50%; bottom: 48px; transform: translateX(-50%); display: flex; gap: 8px; }
+.skill { position: relative; width: 74px; height: 62px; background: #141a24ee; border: 2px solid #3a4352; border-radius: 8px; overflow: hidden; text-align: center; padding-top: 6px; }
+.skill .k { position: absolute; top: 2px; left: 6px; font-size: 11px; color: #8f98a6; }
+.skill .n { display: block; margin-top: 14px; font-size: 11px; line-height: 1.15; color: #e8dfcc; padding: 0 3px; }
+.skill .c { position: absolute; bottom: 2px; right: 6px; font-size: 11px; color: #ffb347; font-weight: 700; }
+.skill .cd { position: absolute; left: 0; right: 0; bottom: 0; background: #000b; height: 0; }
+.skill.ready { border-color: var(--c); box-shadow: 0 0 10px var(--c); }
+.skill.noem .c { color: #c0392b; }
+#buffTag { position: absolute; left: 50%; bottom: 116px; transform: translateX(-50%); font-size: 13px; color: #ffcc66; text-shadow: 0 0 8px #ff8a2a; display: none; }
+#classSelect .cards { align-items: stretch; }

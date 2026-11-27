@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { castSkill } from "./game/player";
 import { updateBeacons } from "./game/beacons";
 import { generateItem } from "./logic/items";
 import { $, beacons, cam, camForward, camera, fx, loaded, player, renderer, saveGame, scene, toast, world } from "./game/core";
@@ -54,6 +55,7 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   enemies,
   cam,
   attack: tryAttack,
+  cast: castSkill,
   dodge: tryDodge,
   startCharge,
   releaseCharge,

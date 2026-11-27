@@ -1,7 +1,7 @@
 import { $ } from "./core";
 import * as THREE from "three";
 import { cam, keys, renderer } from "./core";
-import { releaseCharge, startCharge, toggleLockOn, tryAttack, tryDodge } from "./player";
+import { castSkill, releaseCharge, startCharge, toggleLockOn, tryAttack, tryDodge } from "./player";
 import { interact } from "./sanctuary";
 import { toggleCharPanel, toggleInvPanel } from "./panels";
 
@@ -9,6 +9,8 @@ const selecting = () => $("classSelect").classList.contains("open");
 addEventListener("keydown", (e) => {
   if (e.repeat || selecting()) return;
   keys.add(e.code);
+  const slot = ["Digit1", "Digit2", "Digit3", "Digit4"].indexOf(e.code);
+  if (slot >= 0) castSkill(slot);
   if (e.code === "KeyJ") tryAttack();
   if (e.code === "KeyK") startCharge();
   if (e.code === "Space") { e.preventDefault(); tryDodge(); }

@@ -1,0 +1,24 @@
+{
+  "ember": { "max": 100, "gainLight": 8, "gainHeavy": 16, "gainKill": 10, "idleBeforeDecay": 6, "decayPerSec": 4 },
+  "castLock": 0.35,
+  "skills": {
+    "vanguard": [
+      { "id": "vg_cleave", "name": "불씨 가르기", "desc": "전방을 크게 베어 강한 피해", "type": "arc", "cost": 25, "cooldown": 4, "mul": 2.2, "range": 3.4, "arcDeg": 140, "poise": 40, "color": "#ffb347" },
+      { "id": "vg_slam", "name": "대지 강타", "desc": "주변 전체에 충격파, 그로기 유발", "type": "ring", "cost": 35, "cooldown": 8, "mul": 1.6, "range": 4.4, "poise": 70, "color": "#e08a3c" },
+      { "id": "vg_charge", "name": "돌진 베기", "desc": "앞으로 쇄도하며 베기", "type": "dash", "cost": 30, "cooldown": 7, "dist": 6, "time": 0.22, "mul": 2.0, "range": 3, "arcDeg": 110, "poise": 35, "color": "#ffd27a" },
+      { "id": "vg_resolve", "name": "타오르는 결의", "desc": "8초간 공격력 +35%, HP 20% 회복", "type": "buff", "cost": 50, "cooldown": 20, "atkMul": 1.35, "crit": 0, "duration": 8, "heal": 0.2, "color": "#ff7a3c" }
+    ],
+    "tracker": [
+      { "id": "tr_stab", "name": "급소 찌르기", "desc": "좁은 범위에 치명적인 일격", "type": "arc", "cost": 15, "cooldown": 2.5, "mul": 2.4, "range": 3, "arcDeg": 60, "poise": 25, "critAdd": 0.5, "color": "#9cff6c" },
+      { "id": "tr_shadow", "name": "그림자 걸음", "desc": "짧게 질주하며 잠시 무적", "type": "dash", "cost": 20, "cooldown": 6, "dist": 8, "time": 0.2, "invuln": 0.35, "color": "#7fdc8a" },
+      { "id": "tr_whirl", "name": "낙엽 소용돌이", "desc": "몸을 돌려 주변을 벤다", "type": "ring", "cost": 30, "cooldown": 6, "mul": 1.5, "range": 3.4, "poise": 30, "color": "#c0e27a" },
+      { "id": "tr_focus", "name": "사냥꾼의 집중", "desc": "8초간 치명타 +30%, 공격력 +10%", "type": "buff", "cost": 45, "cooldown": 18, "atkMul": 1.1, "crit": 0.3, "duration": 8, "heal": 0, "color": "#6cff8c" }
+    ],
+    "igniter": [
+      { "id": "ig_bolt", "name": "불씨 화살", "desc": "멀리 있는 적을 꿰뚫는 불꽃", "type": "arc", "cost": 20, "cooldown": 3, "mul": 2.5, "range": 9, "arcDeg": 18, "poise": 30, "color": "#ff9a3c" },
+      { "id": "ig_burst", "name": "화염 폭발", "desc": "주변을 불태우는 폭발", "type": "ring", "cost": 40, "cooldown": 9, "mul": 2.0, "range": 5, "poise": 60, "color": "#ff6a2a" },
+      { "id": "ig_mend", "name": "재의 위로", "desc": "HP 30% 회복", "type": "buff", "cost": 35, "cooldown": 14, "atkMul": 1, "crit": 0, "duration": 0, "heal": 0.3, "color": "#ffe9a8" },
+      { "id": "ig_ignite", "name": "점화", "desc": "6초간 공격력 +50%", "type": "buff", "cost": 50, "cooldown": 18, "atkMul": 1.5, "crit": 0, "duration": 6, "heal": 0, "color": "#ff5a2a" }
+    ]
+  }
+}

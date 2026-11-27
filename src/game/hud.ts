@@ -1,3 +1,4 @@
+import { skillsFor, castBlock, EMBER } from "../logic/skills";
 import { engrave, engraveBonus, nextLevelProgress } from "../logic/embers";
 import { expToNext } from "../logic/progression";
 import { rarityOf } from "../logic/items";
@@ -66,7 +67,26 @@ export function drawMinimap() {
   mctx.beginPath(); mctx.arc(R, R, R - 1, 0, Math.PI * 2); mctx.stroke();
 }
 
+let skillBarCls: string | null = "__none__";
+function syncSkillBar() {
+  if (skillBarCls === player.cls) return;
+  skillBarCls = player.cls;
+  const list = skillsFor(player.cls);
+  $("skillbar").innerHTML = list.map((sk, i) => `<div class="skill" data-i="${i}" style="--c:${sk.color}" title="${sk.desc}"><span class="k">${i + 1}</span><span class="n">${sk.name}</span><span class="c">${sk.cost}</span><div class="cd"></div></div>`).join("");
+}
 export function updateHud() {
+  syncSkillBar();
+  const list = skillsFor(player.cls);
+  $("emFill").style.width = `${(player.sk.ember / EMBER.max) * 100}%`;
+  $("skillbar").querySelectorAll<HTMLElement>(".skill").forEach((el, i) => {
+    const sk = list[i];
+    el.classList.toggle("ready", castBlock(player.sk, i, list) === "none");
+    el.classList.toggle("noem", player.sk.ember < sk.cost);
+    (el.querySelector(".cd") as HTMLElement).style.height = `${(player.sk.cds[i] / sk.cooldown) * 100}%`;
+  });
+  const bt = $("buffTag");
+  bt.style.display = player.buff.t > 0 ? "block" : "none";
+  if (player.buff.t > 0) bt.textContent = `🔥 강화 ${player.buff.t.toFixed(1)}s`;
   $("stFill").style.width = `${(player.stamina.value / player.stamina.max) * 100}%`;
   $("stFill").parentElement!.classList.toggle("empty", ui.stFlash > 0);
   $("lvl").textContent = String(player.lv.level);
