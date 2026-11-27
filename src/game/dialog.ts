@@ -1,5 +1,9 @@
 // NPC 대화창: 제안(수락) / 진행 중 / 보고(보상) / 잡담. F·Enter·Space = 확인, Esc = 닫기.
 import { $, player, saveGame, toast } from "./core";
+import { enhanceCost, tryEnhance, canEnhance, successChanceOf, plusOf, ENH } from "../logic/enhance";
+import { SLOT_IDS, type Item, type SlotId } from "../logic/items";
+import { applyDerived } from "./core";
+import { renderCharPanel } from "./panels";
 import { buyPrice, sellPrice, makeStock, tryBuy, trySell } from "../logic/shop";
 import { ITEM_CFG } from "../logic/items";
 import { itemTooltip, renderInvPanel } from "./panels";
@@ -12,6 +16,7 @@ import { tutorialEvent } from "./tutorial";
 
 let current: Npc | null = null;
 let shopMode = false;
+let enhMode = false;
 let shopLevel = 1;
 export const dialogOpen = () => $("dialog").classList.contains("open");
 
@@ -57,9 +62,46 @@ function renderShop() {
   $("dialog").querySelector<HTMLElement>('[data-act="back"]')!.addEventListener("click", () => { shopMode = false; render(); });
 }
 
+const label = (it: Item) => (plusOf(it) ? `+${plusOf(it)} ` : "") + it.name;
+
+function renderEnhance() {
+  type Ref = { it: Item; slot?: SlotId; idx?: number };
+  const refs: Ref[] = [
+    ...SLOT_IDS.filter((s) => player.equipment[s]).map((s) => ({ it: player.equipment[s]!, slot: s })),
+    ...player.inventory.map((it, idx) => ({ it, idx })),
+  ];
+  const row = (r: Ref, i: number) => {
+    const c = rarityOf(r.it.rarity).color;
+    const info = canEnhance(r.it) ? `◆ ${enhanceCost(r.it)} · ${Math.round(successChanceOf(r.it) * 100)}%` : "최대";
+    return `<div class="shop-row" data-i="${i}" style="border-color:${c}"><span style="color:${c}">${r.slot ? "[장착] " : ""}${label(r.it)}</span><span class="sp">${info}</span></div>`;
+  };
+  $("dialog").innerHTML = `<div class="dn">${current!.def.name} <span class="dr">강화 · 보유 ◆ ${player.gold}</span></div>
+    <div class="shop-h">장비를 클릭하면 강화를 시도한다. 실패해도 단계는 내려가지 않고 골드만 든다. (최대 +${ENH.maxPlus})</div>
+    <div class="shop-cols" style="grid-template-columns:1fr">${refs.length ? refs.map(row).join("") : '<div class="shop-empty">강화할 장비가 없다</div>'}</div>
+    <div id="shopTip" class="tooltip">마우스를 올리면 정보가 보인다.</div>
+    <div class="db"><button data-act="back">돌아가기 <kbd>Esc</kbd></button></div>`;
+  const tip = $("shopTip");
+  $("dialog").querySelectorAll<HTMLElement>(".shop-row").forEach((el) => {
+    const r = refs[Number(el.dataset.i)];
+    el.addEventListener("mouseenter", () => (tip.innerHTML = itemTooltip(r.it)));
+    el.addEventListener("click", () => {
+      const res = tryEnhance(player.gold, r.it, Math.random);
+      if (!res.ok) return toast(res.reason === "max" ? "이미 최대 강화다" : "골드가 부족하다");
+      player.gold = res.gold;
+      if (r.slot) player.equipment = { ...player.equipment, [r.slot]: res.item };
+      else player.inventory = player.inventory.map((x, i) => (i === r.idx ? res.item : x));
+      if (res.success) { sfx.levelUp(); toast(`강화 성공! ${label(res.item)}`); } else { sfx.hurt(); toast("강화 실패… 골드만 사라졌다"); }
+      applyDerived(false);
+      saveGame(); renderInvPanel(); renderCharPanel(); renderEnhance();
+    });
+  });
+  $("dialog").querySelector<HTMLElement>('[data-act="back"]')!.addEventListener("click", () => { enhMode = false; render(); });
+}
+
 function render() {
   if (!current) return;
   if (shopMode) return renderShop();
+  if (enhMode) return renderEnhance();
   const d = dialogFor(current.def, player.quests);
   const q = d.quest;
   const primary = d.kind === "offer" ? "수락" : d.kind === "turnin" ? "보상 받기" : "닫기";
@@ -69,10 +111,11 @@ function render() {
       `<div class="dqr">보상: ${rewardText(q)}</div></div>` : "";
   $("dialog").innerHTML = `<div class="dn">${current.def.name} <span class="dr">${current.def.role}</span></div>
     <div class="dt">${d.text}</div>${objectives}
-    <div class="db">${current.def.id === "merchant" ? `<button data-act="shop">거래</button>` : ""}<button data-act="primary">${primary} <kbd>F</kbd></button>${d.kind === "offer" ? `<button data-act="close">다음에 <kbd>Esc</kbd></button>` : ""}</div>`;
+    <div class="db">${current.def.id === "merchant" ? `<button data-act="shop">거래</button>` : ""}${current.def.id === "smith" ? `<button data-act="enh">강화</button>` : ""}<button data-act="primary">${primary} <kbd>F</kbd></button>${d.kind === "offer" ? `<button data-act="close">다음에 <kbd>Esc</kbd></button>` : ""}</div>`;
   $("dialog").querySelectorAll<HTMLElement>("button").forEach((b) =>
     b.addEventListener("click", () => {
       if (b.dataset.act === "shop") { shopMode = true; shopLevel = player.lv.level; render(); }
+      else if (b.dataset.act === "enh") { enhMode = true; render(); }
       else if (b.dataset.act === "primary") dialogPrimary();
       else closeDialog();
     }));
@@ -87,11 +130,12 @@ export function openDialog(npc: Npc) {
 export function closeDialog() {
   current = null;
   shopMode = false;
+  enhMode = false;
   $("dialog").classList.remove("open");
 }
 export function dialogPrimary() {
   if (!current) return;
-  if (shopMode) { shopMode = false; render(); return; }
+  if (shopMode || enhMode) { shopMode = enhMode = false; render(); return; }
   const d = dialogFor(current.def, player.quests);
   if (d.kind === "offer" && d.quest) {
     const next = accept(player.quests, d.quest.id);

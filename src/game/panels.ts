@@ -21,7 +21,7 @@ export function itemTooltip(it: Item, compare?: Item): string {
     return `<div>${formatStat(k, v)}${diff}</div>`;
   });
   const slot = slotsFor(it.kind).map((s) => ITEM_CFG.slotNames[s]).join("/");
-  return `<div class="tt-name" style="color:${r.color}">${it.name}</div>
+  return `<div class="tt-name" style="color:${r.color}">${it.plus ? `+${it.plus} ` : ""}${it.name}</div>
     <div class="tt-sub">${r.name} · ${slot} · 아이템 레벨 ${it.ilvl}</div>${lines.join("")}
     ${it.affixes.length ? `<div class="tt-sub">부가옵션 ${it.affixes.length}개 포함</div>` : ""}
     ${compare ? `<div class="tt-sub">착용 중: ${compare.name} (점수 ${Math.round(itemScore(compare))} → ${Math.round(itemScore(it))})</div>` : ""}`;
@@ -36,7 +36,7 @@ export function renderInvPanel() {
       <div class="slots">${SLOT_IDS.map((s) => {
         const it = eq[s];
         return `<div class="slot ${it ? "filled" : ""}" data-slot="${s}" style="${it ? `border-color:${rarityOf(it.rarity).color}` : ""}">
-          <span class="sl">${ITEM_CFG.slotNames[s]}</span><span class="sn" style="${it ? `color:${rarityOf(it.rarity).color}` : ""}">${it ? it.name : "—"}</span></div>`;
+          <span class="sl">${ITEM_CFG.slotNames[s]}</span><span class="sn" style="${it ? `color:${rarityOf(it.rarity).color}` : ""}">${it ? (it.plus ? `+${it.plus} ` : "") + it.name : "—"}</span></div>`;
       }).join("")}</div>
       <div class="grid">${Array.from({ length: ITEM_CFG.inventorySize }, (_, i) => {
         const it = player.inventory[i];

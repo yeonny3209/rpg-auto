@@ -328,6 +328,24 @@ try {
   await page.waitForTimeout(200);
   const afterSell = await page.evaluate(() => ({ gold: window.__game.player.gold, inv: window.__game.player.inventory.length }));
   console.log("shop:", JSON.stringify({ shopBefore, afterBuy, afterSell }));
+  await page.click('#dialog .shop-row[data-act="buy"]');
+  await page.waitForTimeout(150);
+  await page.keyboard.press("Escape");
+
+  // 강화: 대장장이 → 강화 → 반복 시도
+  await page.evaluate(() => { window.__game.player.gold = 3000; });
+  await near("smith");
+  await page.waitForTimeout(400);
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(300);
+  await page.click('#dialog button[data-act="enh"]');
+  await page.waitForTimeout(300);
+  const enhBefore = await page.evaluate(() => ({ gold: window.__game.player.gold, plus: window.__game.player.inventory[0]?.plus ?? 0 }));
+  for (let i = 0; i < 6; i++) { await page.click('#dialog .shop-row >> nth=0'); await page.waitForTimeout(120); }
+  const enhAfter = await page.evaluate(() => ({ gold: window.__game.player.gold, plus: window.__game.player.inventory[0]?.plus ?? 0, eqPlus: Object.values(window.__game.player.equipment).map((i) => i && (i.plus ?? 0)) }));
+  console.log("enhance:", JSON.stringify({ enhBefore, enhAfter }));
+  await page.hover('#dialog .shop-row >> nth=0');
+  await shot(page, "25-enhance.png");
   await page.keyboard.press("Escape");
 
   // 어둠: 마을에서는 0, 먼 곳(남서쪽)에서는 올라감

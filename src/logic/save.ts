@@ -30,10 +30,11 @@ export function serialize(d: Omit<SaveData, "version" | "savedAt">, now = Date.n
 }
 
 const isNum = (v: unknown, min = 0) => typeof v === "number" && Number.isFinite(v) && v >= min;
+const okEnh = (it: any) => (it.plus === undefined && it.base === undefined) || (Number.isInteger(it.plus) && it.plus >= 1 && it.plus <= 10 && it.base && typeof it.base === "object" && Object.values(it.base).every((v) => isNum(v)));
 const isItem = (it: any): it is Item =>
   it && typeof it.uid === "string" && typeof it.baseId === "string" && typeof it.name === "string" && typeof it.kind === "string" &&
   typeof it.rarity === "string" && isNum(it.ilvl, 1) && it.stats && typeof it.stats === "object" && Array.isArray(it.affixes) &&
-  Object.values(it.stats).every((v) => isNum(v));
+  Object.values(it.stats).every((v) => isNum(v)) && okEnh(it);
 
 /** 이전 버전 → 현재 버전 */
 function migrate(o: any): any {

@@ -18,6 +18,8 @@ export interface Item {
   ilvl: number;
   stats: Stats; // 기본 + 부가옵션 합산
   affixes: { id: StatKey; value: number }[];
+  plus?: number; // 강화 단계(없으면 0)
+  base?: Stats; // 강화 전 스탯(강화된 아이템만)
 }
 
 export const RARITIES = data.rarities as { id: RarityId; name: string; color: string; weight: number; affixes: [number, number]; statMul: number }[];
