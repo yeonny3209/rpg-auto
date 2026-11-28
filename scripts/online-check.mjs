@@ -63,6 +63,28 @@ try {
   await sleep(500); await a.keyboard.press("KeyF");
   await c.waitForFunction(() => window.__game.beacons.find((b) => b.def.id === "bridgeLamp").lit, null, { timeout: 10000 });
   report.beaconShared = true;
+  // 함께 사냥: A가 먼저 때려 담당이 되고, C의 공격은 A에게 전달되며, 처치하면 둘 다 보상을 받는다
+  const idx = await a.evaluate(() => window.__game.enemies.findIndex((e) => e.id === "ashCrawler" && Math.hypot(e.home.x - 10, e.home.z - 11) < 1));
+  report.coopIdx = idx;
+  const near = (pg) => pg.evaluate((i) => { const e = window.__game.enemies[i]; window.__game.player.pos.set(e.pos.x + 1.5, 0, e.pos.z); }, idx);
+  await near(a); await near(c);
+  const hp0 = await a.evaluate((i) => window.__game.enemies[i].hp, idx);
+  await a.evaluate((i) => window.__game.hit(window.__game.enemies[i], 10, false, false, false), idx);
+  await c.waitForFunction((i) => window.__game.enemies[i].owner === "테스터", idx, { timeout: 10000 });
+  await c.evaluate((i) => window.__game.hit(window.__game.enemies[i], 7, false, false, false), idx);
+  await a.waitForFunction(([i, h]) => window.__game.enemies[i].hp <= h - 17, [idx, hp0], { timeout: 10000 });
+  report.ownerHpAfterTwoHits = await a.evaluate((i) => window.__game.enemies[i].hp, idx);
+  await sleep(600);
+  report.mirrorHp = await c.evaluate((i) => window.__game.enemies[i].hp, idx);
+  const g0 = [await a.evaluate(() => window.__game.player.gold), await c.evaluate(() => window.__game.player.gold)];
+  const x0 = [await a.evaluate(() => window.__game.player.lv.exp), await c.evaluate(() => window.__game.player.lv.exp)];
+  await c.evaluate((i) => window.__game.hit(window.__game.enemies[i], 9999, false, false, false), idx); // 마지막 일격은 C
+  await a.waitForFunction((i) => window.__game.enemies[i].state === "dead", idx, { timeout: 10000 });
+  await c.waitForFunction((i) => window.__game.enemies[i].state === "dead", idx, { timeout: 10000 });
+  await sleep(400);
+  const g1 = [await a.evaluate(() => window.__game.player.gold), await c.evaluate(() => window.__game.player.gold)];
+  const x1 = [await a.evaluate(() => window.__game.player.lv.exp), await c.evaluate(() => window.__game.player.lv.exp)];
+  report.coopKill = { goldGain: [g1[0] - g0[0], g1[1] - g0[1]], expGain: [x1[0] - x0[0], x1[1] - x0[1]] };
   await c.screenshot({ path: join(outDir, "43-friend-view.png") });
   await c.close();
 

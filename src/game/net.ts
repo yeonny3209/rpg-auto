@@ -6,6 +6,10 @@ import { heightAt } from "../logic/terrain";
 import { beacons } from "./core";
 import { setLit } from "./beacons";
 import { reportQuest } from "./questflow";
+import { coop } from "./coop";
+import { enemies, applyRemoteHit, applyKill, setOwner, applyStream, ownedStates, releaseAll } from "./enemies";
+import { hurtPlayer } from "./player";
+import { playerInvulnerable, floater } from "./core";
 
 const COLORS: Record<string, string> = { vanguard: "#c0583a", tracker: "#5aa07a", igniter: "#ffb347", "": "#9aa3b2" };
 interface Remote { group: THREE.Group; tx: number; tz: number; try: number; name: string; hp: number; bar: THREE.Mesh }
@@ -101,13 +105,19 @@ function connect() {
   const sock = new WebSocket(url);
   ws = sock;
   sock.onopen = () => {
-    posTimer = window.setInterval(sendPos, 100);
+    posTimer = window.setInterval(() => { sendPos(); sendEnemies(); }, 100);
   };
   sock.onmessage = (ev) => {
     let m: any; try { m = JSON.parse(ev.data); } catch { return; }
-    if (m.t === "hello") { me = m.you; applyPlayers(m.players); applyLit(m.lit ?? []); for (const b of beacons) if (b.lit) reportBeaconLit(b.def.id); addChat("", `접속자 ${m.players.length}명 — Enter로 채팅`); }
+    if (m.t === "hello") { me = m.you; coop.me = me; coop.connected = true; for (const [i, by] of Object.entries(m.owners ?? {})) setOwner(+i, by as string); applyPlayers(m.players); applyLit(m.lit ?? []); for (const b of beacons) if (b.lit) reportBeaconLit(b.def.id); addChat("", `접속자 ${m.players.length}명 — Enter로 채팅`); }
     else if (m.t === "snap") applyPlayers(m.players);
     else if (m.t === "beacon") applyLit([m.id], m.by);
+    else if (m.t === "own") setOwner(m.i, m.by);
+    else if (m.t === "free") setOwner(m.i, null);
+    else if (m.t === "es") applyStream(m.list);
+    else if (m.t === "hit") { const e = enemies[m.i]; if (e && e.owner === me) applyRemoteHit(e, m.amount, !!m.broke, m.by); }
+    else if (m.t === "kill") applyKill(m.i, m.by);
+    else if (m.t === "phit") { if (playerInvulnerable()) floater(player.pos.clone().setY(player.pos.y + 2), "회피!", "exp"); else hurtPlayer(m.amount); }
     else if (m.t === "leave") drop(m.name);
     else if (m.t === "chat") addChat(m.from, m.text);
     else if (m.t === "kicked") { wantOn = false; toast(`접속 종료: ${m.why}`); }
@@ -115,10 +125,15 @@ function connect() {
   };
   sock.onclose = () => {
     if (ws === sock) ws = null;
-    window.clearInterval(posTimer); clearAll(); me = "";
+    window.clearInterval(posTimer); clearAll(); me = ""; coop.connected = false; coop.me = ""; releaseAll();
     if (wantOn) { window.clearTimeout(retry); retry = window.setTimeout(connect, 3000); }
   };
   sock.onerror = () => sock.close();
+}
+function sendEnemies() {
+  if (!ws || ws.readyState !== 1) return;
+  const list = ownedStates();
+  if (list.length) ws.send(JSON.stringify({ t: "es", list }));
 }
 function sendPos() {
   if (!ws || ws.readyState !== 1 || !player.cls) return;
@@ -136,6 +151,9 @@ addEventListener("ember-auth", (e) => {
   if (wantOn && ws) return;
   wantOn = true; connect();
 });
+
+coop.send = (m) => { if (ws?.readyState === 1) ws.send(JSON.stringify(m)); };
+coop.others = () => [...remotes.values()].map((r) => ({ name: r.name, x: r.group.position.x, z: r.group.position.z }));
 
 export function updateRemotes(dt: number) {
   const k = Math.min(1, dt * 10);

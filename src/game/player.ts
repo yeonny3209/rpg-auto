@@ -1,3 +1,4 @@
+import { coop } from "./coop";
 import * as THREE from "three";
 import { heightAt } from "../logic/terrain";
 import prog from "../../data/progression.json";
@@ -171,6 +172,14 @@ export function castSkill(slot: number) {
 }
 
 export function hitEnemy(e: Enemy, amount: number, crit: boolean, heavy: boolean, broke: boolean) {
+  if (coop.connected && e.owner !== null && e.owner !== coop.me) { // 다른 사람이 담당하는 적: 피드백만 보이고 피해는 담당자에게 전달
+    e.flashT = 0.12;
+    floater(e.pos.clone().setY(e.pos.y + (1.6 + e.def.size * 0.4)), String(amount), crit ? "crit" : "");
+    fx.burst(e.pos.clone().setY(e.pos.y + 0.8), "#ffb347", heavy ? 10 : 5, heavy ? 5 : 3.5);
+    coop.send({ t: "hit", i: e.idx, amount, broke });
+    return;
+  }
+  if (coop.connected) { e.contrib.add(coop.me); if (e.owner === null && !e.claimSent) { e.claimSent = true; coop.send({ t: "claim", i: e.idx }); } }
   e.hp -= amount;
   e.flashT = 0.12;
   floater(e.pos.clone().setY(e.pos.y + (1.6 + e.def.size * 0.4)), String(amount), crit ? "crit" : "");
@@ -186,7 +195,14 @@ export function hitEnemy(e: Enemy, amount: number, crit: boolean, heavy: boolean
   if (e.hp <= 0) killEnemy(e);
 }
 
-export function killEnemy(e: Enemy) {
+/** reward=false면 연출만(함께 사냥에서 기여하지 않은 사람). silent=true면 서버에 알리지 않는다(서버가 알려 준 처치). */
+export function killEnemy(e: Enemy, opt: { reward?: boolean; silent?: boolean } = {}) {
+  const reward = opt.reward ?? true;
+  if (coop.connected && !opt.silent) { // 내가 처치를 확정: 담당이 아니면 먼저 담당을 잡고(같은 연결이라 순서 보장) 기여자와 함께 알린다
+    if (e.owner !== coop.me) coop.send({ t: "claim", i: e.idx });
+    coop.send({ t: "kill", i: e.idx, by: [...new Set([...e.contrib, coop.me])] });
+  }
+  e.kills++; e.contrib.clear(); e.owner = null; e.mirror = null; e.claimSent = false;
   e.state = "dead";
   e.t = 0;
   e.respawnT = e.boss ? bossCfg(e.id as BossId).respawnSec : 8;
@@ -194,10 +210,12 @@ export function killEnemy(e: Enemy) {
   if (cam.target === e) cam.target = null;
   fx.burst(e.pos.clone().setY(e.pos.y + (0.6)), e.def.eyeColor, 18, 5);
   fx.burst(e.pos.clone().setY(e.pos.y + (0.6)), "#2a2433", 10, 3);
+  sfx.kill();
+  if (e.boss) { toast(`${e.def.name} 쓰러뜨림!`); fx.addShake(1); }
+  if (!reward) return;
   gainEmber(player.sk, EMBER.gainKill);
   reportQuest("kill", e.id);
   reportBounty(e.id);
-  sfx.kill();
   const gold = rollRange(e.def.gold as [number, number]);
   player.gold += gold;
   const r = gainExp(player.lv, e.def.exp);
@@ -214,7 +232,6 @@ export function killEnemy(e: Enemy) {
     if (res.added) got.push(`${MATS[m.id].name} ×${res.added}`);
   }
   if (got.length) floater(e.pos.clone().setY(e.pos.y + 3), got.join("  "), "exp");
-  if (e.boss) { toast(`${e.def.name} 쓰러뜨림!`); fx.addShake(1); }
 }
 
 export function onLevelUp() {

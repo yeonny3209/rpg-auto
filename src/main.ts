@@ -21,7 +21,7 @@ import { tutorialState } from "./game/tutorial";
 import { updateNpcs, npcs } from "./game/npcs";
 import { renderQuestLog } from "./game/questflow";
 import { dialogPrimary, openDialog, closeDialog } from "./game/dialog";
-import { killEnemy } from "./game/player";
+import { killEnemy, hitEnemy } from "./game/player";
 import { createEnemy, bossOf } from "./game/enemies";
 import { heightAt } from "./logic/terrain";
 
@@ -78,6 +78,7 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   dialogPrimary,
   closeDialog,
   kill: killEnemy,
+  hit: hitEnemy,
   spawn: (id: string, x: number, z: number) => createEnemy(id as any, new THREE.Vector3(x, 0, z)),
   cast: castSkill,
   dodge: tryDodge,
