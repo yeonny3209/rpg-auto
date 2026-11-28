@@ -57,6 +57,12 @@ try {
   await a.keyboard.press("Enter"); await a.keyboard.type("안녕 친구야"); await a.keyboard.press("Enter");
   await c.waitForFunction(() => [...document.querySelectorAll("#chatLog .cl")].some((e) => e.textContent.includes("테스터: 안녕 친구야")), null, { timeout: 10000 });
   report.chat = "ok";
+  // 봉화 공유: A가 숲 어귀 봉화를 밝히면 C의 월드에서도 켜진다
+  report.beaconBefore = await c.evaluate(() => window.__game.beacons.find((b) => b.def.id === "bridgeLamp").lit);
+  await a.evaluate(() => { const b = window.__game.beacons.find((x) => x.def.id === "bridgeLamp"); window.__game.player.pos.set(b.pos.x + 1.5, 0, b.pos.z); });
+  await sleep(500); await a.keyboard.press("KeyF");
+  await c.waitForFunction(() => window.__game.beacons.find((b) => b.def.id === "bridgeLamp").lit, null, { timeout: 10000 });
+  report.beaconShared = true;
   await c.screenshot({ path: join(outDir, "43-friend-view.png") });
   await c.close();
 

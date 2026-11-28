@@ -1,3 +1,4 @@
+import { reportBeaconLit } from "./net";
 import { regionAt } from "../logic/regions";
 import * as THREE from "three";
 import { heightAt } from "../logic/terrain";
@@ -36,6 +37,7 @@ export function interact() {
     player.lv = r.state;
     toast(`봉화 점화 — ${b.def.name}`);
     reportQuest("beacon", b.def.id);
+    reportBeaconLit(b.def.id);
     floater(b.pos.clone().setY(b.pos.y + (3)), `+${BC.lightExp} EXP`, "exp");
     fx.burst(b.pos.clone().setY(b.pos.y + (1.6)), "#ffcc66", 40, 7);
     fx.addShake(0.4);

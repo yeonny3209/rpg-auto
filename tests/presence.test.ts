@@ -82,6 +82,36 @@ describe("접속자 공유", () => {
     expect(conns.filter((c) => c.got.some((m) => m.t === "full")).length + full.length).toBeGreaterThan(0);
     for (const c of conns) c.ws.close();
   });
+  it("봉화 점화는 모두에게 공유되고, 나중에 들어온 사람도 받는다. 이상한 id는 무시", async () => {
+    const a = connect(await account("봉화가")), b = connect(await account("봉화나"));
+    await Promise.all([a.open, b.open]);
+    a.ws.send(JSON.stringify({ t: "beacon", id: "mireGate" }));
+    a.ws.send(JSON.stringify({ t: "beacon", id: "../etc" }));
+    a.ws.send(JSON.stringify({ t: "beacon", id: 5 }));
+    const m = await b.until((x) => x.t === "beacon" && x.id === "mireGate");
+    expect(m.by).toBe("봉화가");
+    await new Promise((r) => setTimeout(r, 100));
+    expect(b.got.filter((x) => x.t === "beacon").length).toBe(1);
+    const c = connect(await account("봉화다")); await c.open;
+    expect((await c.until((x) => x.t === "hello")).lit).toContain("mireGate");
+    a.ws.close(); b.ws.close(); c.ws.close();
+  });
+  it("공유 월드는 파일로 보존된다", async () => {
+    const fs = await import("node:fs"), os = await import("node:os"), path = await import("node:path");
+    const f = path.join(os.tmpdir(), "world-" + Date.now() + ".json");
+    const s2 = createApp({}); const p2 = attachPresence(s2, { tickMs: 20, worldFile: f });
+    await new Promise<void>((r) => s2.listen(0, "127.0.0.1", r));
+    const port2 = (s2.address() as AddressInfo).port;
+    const tok = (await (await fetch(`http://127.0.0.1:${port2}/api/register`, { method: "POST", body: JSON.stringify({ name: "저장자", password: "secret1" }) })).json()).token;
+    const ws = new WebSocket(`ws://127.0.0.1:${port2}/ws?token=${tok}`);
+    await new Promise((r) => ws.on("open", r));
+    ws.send(JSON.stringify({ t: "beacon", id: "savedOne" }));
+    await new Promise((r) => setTimeout(r, 150));
+    ws.close(); p2.close(); await new Promise((r) => s2.close(r));
+    const s3 = createApp({}); const p3 = attachPresence(s3, { worldFile: f });
+    expect([...p3.lit]).toContain("savedOne");
+    p3.close(); fs.rmSync(f);
+  });
   it("cleanText", () => {
     expect(cleanText("")).toBeNull(); expect(cleanText(5)).toBeNull(); expect(cleanText(" a\u0001b ")).toBe("a b");
   });

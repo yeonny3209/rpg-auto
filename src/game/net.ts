@@ -3,6 +3,9 @@
 import * as THREE from "three";
 import { $, player, scene, toast } from "./core";
 import { heightAt } from "../logic/terrain";
+import { beacons } from "./core";
+import { setLit } from "./beacons";
+import { reportQuest } from "./questflow";
 
 const COLORS: Record<string, string> = { vanguard: "#c0583a", tracker: "#5aa07a", igniter: "#ffb347", "": "#9aa3b2" };
 interface Remote { group: THREE.Group; tx: number; tz: number; try: number; name: string }
@@ -49,6 +52,18 @@ function drop(name: string) {
   scene.remove(r.group); r.group.traverse((o: any) => { o.geometry?.dispose?.(); o.material?.map?.dispose?.(); o.material?.dispose?.(); });
   remotes.delete(name);
 }
+/** 다른 사람이 밝힌(또는 서버에 기록된) 봉화를 내 월드에도 켠다. 점화 보상(경험치)은 없고 퀘스트 진행만 인정한다. */
+function applyLit(ids: string[], by?: string) {
+  for (const id of ids) {
+    const b = beacons.find((x) => x.def.id === id);
+    if (!b || b.lit) continue;
+    setLit(b, true, !!by);
+    reportQuest("beacon", id);
+    if (by) toast(`${by}님이 봉화를 밝혔다 — ${b.def.name}`);
+  }
+}
+/** 내가 봉화를 밝혔을 때 서버에 알린다 */
+export function reportBeaconLit(id: string) { if (ws?.readyState === 1) ws.send(JSON.stringify({ t: "beacon", id })); }
 function clearAll() { for (const n of [...remotes.keys()]) drop(n); }
 
 // ---------- 채팅 ----------
@@ -88,8 +103,9 @@ function connect() {
   };
   sock.onmessage = (ev) => {
     let m: any; try { m = JSON.parse(ev.data); } catch { return; }
-    if (m.t === "hello") { me = m.you; applyPlayers(m.players); addChat("", `접속자 ${m.players.length}명 — Enter로 채팅`); }
+    if (m.t === "hello") { me = m.you; applyPlayers(m.players); applyLit(m.lit ?? []); for (const b of beacons) if (b.lit) reportBeaconLit(b.def.id); addChat("", `접속자 ${m.players.length}명 — Enter로 채팅`); }
     else if (m.t === "snap") applyPlayers(m.players);
+    else if (m.t === "beacon") applyLit([m.id], m.by);
     else if (m.t === "leave") drop(m.name);
     else if (m.t === "chat") addChat(m.from, m.text);
     else if (m.t === "kicked") { wantOn = false; toast(`접속 종료: ${m.why}`); }
