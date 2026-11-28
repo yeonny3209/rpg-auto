@@ -5,6 +5,7 @@ import { scatterSpots, SCATTER } from "../logic/scatter";
 import { REGIONS, regionAt, regionById, pointInRegion } from "../logic/regions";
 import wdata from "../../data/world.json";
 import { buildForestDecor } from "./forestDecor";
+import { buildDesertDecor } from "./desertDecor";
 
 /** 결정론적 난수 (월드 배치 재현용) */
 export function mulberry32(seed: number) {
@@ -93,7 +94,7 @@ export function buildWorld(scene: THREE.Scene): World {
     bush.setMatrixAt(i, m.compose(p.set(pt.x, heightAt(pt.x, pt.z), pt.z), q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), frng() * 6.28), s.set(k, k * (0.7 + frng() * 0.9), k)));
   }
   scene.add(bush);
-  const clearR = (x: number, z: number) => wdata.beacons.some((b) => Math.hypot(b.x - x, b.z - z) < 7) || Math.hypot(x - (forest.x - forest.r), z) < 10;
+  const clearR = (x: number, z: number) => wdata.beacons.some((b) => Math.hypot(b.x - x, b.z - z) < 7) || Math.hypot(x - (forest.x - forest.r), z) < 10 || Math.hypot(x - (forest.x + forest.r), z) < 12; // 숲 양쪽 통로 입구
   const treeCount = 70;
   const fTrunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.18, 0.34, 1, 6).translate(0, 0.5, 0), new THREE.MeshStandardMaterial({ color: "#4a3a2c", roughness: 1, flatShading: true }), treeCount);
   const fCrown = new THREE.InstancedMesh(new THREE.ConeGeometry(1.1, 3.2, 7).translate(0, 1.6, 0), new THREE.MeshStandardMaterial({ color: "#25402f", roughness: 1, flatShading: true }), treeCount);
@@ -112,6 +113,8 @@ export function buildWorld(scene: THREE.Scene): World {
   scene.add(fTrunk, fCrown);
 
   buildForestDecor(scene, obstacles, clearR);
+  const dRg = regionById("glassDesert");
+  buildDesertDecor(scene, obstacles, (x, z) => clearR(x, z) || Math.hypot(x - (dRg.x - dRg.r), z) < 10);
 
   // 바위와 폐허 기둥
   const rockMat = new THREE.MeshStandardMaterial({ color: "#6b6f75", roughness: 0.95, flatShading: true });

@@ -61,3 +61,31 @@ describe("권장 레벨 위험도", () => {
     expect(dangerOf(regionById("ashenPlains"), 1)).toBe("safe");
   });
 });
+
+describe("지역 3 유리 사막", () => {
+  it("숲과 사막을 잇는 통로가 있고 양쪽이 이어진다", async () => {
+    const { BRIDGES } = await import("../src/logic/regions");
+    expect(BRIDGES).toHaveLength(2);
+    const f = regionById("sunkenForest"), d = regionById("glassDesert");
+    expect(walkable((f.x + d.x) / 2, 0)).toBe(true);
+    expect(walkable((f.x + d.x) / 2, 7.5)).toBe(true);
+    expect(walkable((f.x + d.x) / 2, 8.5 + 12)).toBe(false);
+    expect(regionAt(d.x, d.z).id).toBe("glassDesert");
+  });
+  it("서버 좌표 한계(±400) 안에 들어온다", () => {
+    for (const r of REGIONS) expect(Math.abs(r.x) + r.r).toBeLessThanOrEqual(400);
+  });
+  it("적 풀·보스·봉화가 데이터로 존재한다", async () => {
+    const d = regionById("glassDesert");
+    for (const id of d.enemies) expect((enemies as Record<string, unknown>)[id]).toBeDefined();
+    const bosses = (await import("../data/bosses.json")).default as Record<string, { home: { x: number; z: number } }>;
+    expect(walkable(bosses.glassColossus.home.x, bosses.glassColossus.home.z)).toBe(true);
+    expect(regionAt(bosses.glassColossus.home.x, bosses.glassColossus.home.z).id).toBe("glassDesert");
+    for (const id of ["desertGate", "glassShrine"]) { const b = world.beacons.find((x) => x.id === id)!; expect(walkable(b.x, b.z)).toBe(true); }
+  });
+  it("사막 적이 숲 적보다 강하다(레벨·체력)", () => {
+    const E = enemies as Record<string, { level: number; hp: number }>;
+    const maxForest = Math.max(...regionById("sunkenForest").enemies.map((i) => E[i].level));
+    for (const id of regionById("glassDesert").enemies) expect(E[id].level).toBeGreaterThan(maxForest);
+  });
+});

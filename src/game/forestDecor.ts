@@ -43,9 +43,13 @@ export function buildForestDecor(scene: THREE.Scene, obstacles: Circle[], avoid:
     scene.add(d);
   }
 
-  // 관문: 통로가 숲에 닿는 곳에 기둥 2개와 들보, 매달린 등불
-  const gx = forest.x - forest.r + 2, hw = 9.5;
-  const wood = new THREE.MeshStandardMaterial({ color: "#6a5240", emissive: "#2a1c10", emissiveIntensity: 0.6, roughness: 1, flatShading: true });
+  const { gateX: gx, gateHalf: hw } = buildGate(scene, obstacles, forest.x - forest.r + 2, 9.5, { wood: "#6a5240", glow: "#2a1c10" });
+  return { gateX: gx, gateHalf: hw, mushrooms: n };
+}
+
+/** 통로가 지역에 닿는 곳의 관문(기둥 2개 + 들보 + 등불). 지역마다 색만 바꿔 쓴다. */
+export function buildGate(scene: THREE.Scene, obstacles: Circle[], gx: number, hw: number, pal: { wood: string; glow: string }) {
+  const wood = new THREE.MeshStandardMaterial({ color: pal.wood, emissive: pal.glow, emissiveIntensity: 0.6, roughness: 1, flatShading: true });
   const lampMat = new THREE.MeshStandardMaterial({ color: "#ffd38a", emissive: "#ff9a3c", emissiveIntensity: 2.2 });
   const g = new THREE.Group();
   for (const side of [-1, 1]) {
@@ -60,5 +64,5 @@ export function buildForestDecor(scene: THREE.Scene, obstacles: Circle[], avoid:
   const beam = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, hw * 2 + 1.4), wood);
   beam.position.set(gx, heightAt(gx, 0) + 9, 0); beam.castShadow = true; g.add(beam);
   scene.add(g);
-  return { gateX: gx, gateHalf: hw, mushrooms: n };
+  return { gateX: gx, gateHalf: hw };
 }

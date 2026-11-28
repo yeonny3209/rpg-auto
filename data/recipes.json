@@ -153,5 +153,59 @@
         "rarity": "epic"
       }
     }
+  },
+  {
+    "id": "glassWeapon",
+    "name": "유리 단조 무기 (희귀)",
+    "needs": {
+      "glassShard": 8,
+      "emberCore": 2
+    },
+    "gold": 420,
+    "gives": {
+      "item": {
+        "kinds": [
+          "weapon"
+        ],
+        "rarity": "rare"
+      }
+    }
+  },
+  {
+    "id": "glassArmor",
+    "name": "유리 단조 방어구 (희귀)",
+    "needs": {
+      "glassShard": 6,
+      "emberCore": 2
+    },
+    "gold": 380,
+    "gives": {
+      "item": {
+        "kinds": [
+          "head",
+          "body",
+          "hands",
+          "feet"
+        ],
+        "rarity": "rare"
+      }
+    }
+  },
+  {
+    "id": "eyeRing",
+    "name": "거상의 눈 반지 (영웅)",
+    "needs": {
+      "glassShard": 10,
+      "colossusEye": 1
+    },
+    "gold": 650,
+    "gives": {
+      "item": {
+        "kinds": [
+          "ring"
+        ],
+        "rarity": "epic"
+      }
+    }
   }
 ]

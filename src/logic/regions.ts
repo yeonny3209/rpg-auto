@@ -3,14 +3,13 @@ import data from "../../data/regions.json";
 
 export interface Region { id: string; name: string; x: number; z: number; r: number; enemies: string[]; count: number; ground: string[]; fog: string; recommendedLevel: number }
 export const REGIONS = data.regions as Region[];
-export const BRIDGE = data.bridge;
+export const BRIDGES = data.bridges as { from: string; to: string; halfWidth: number }[];
+export const BRIDGE = BRIDGES[0]; // 첫 통로(하위 호환)
 export const regionById = (id: string): Region => REGIONS.find((r) => r.id === id) ?? REGIONS[0];
 
-const seg = () => ({ a: regionById(BRIDGE.from), b: regionById(BRIDGE.to) });
-
 /** 점에서 통로 중심선(두 지역 중심을 잇는 선분)까지 거리와 가장 가까운 점 */
-function nearestOnBridge(x: number, z: number) {
-  const { a, b } = seg();
+function nearestOnBridge(x: number, z: number, br: { from: string; to: string }) {
+  const a = regionById(br.from), b = regionById(br.to);
   const dx = b.x - a.x, dz = b.z - a.z, len2 = dx * dx + dz * dz;
   const t = Math.min(1, Math.max(0, ((x - a.x) * dx + (z - a.z) * dz) / len2));
   const px = a.x + dx * t, pz = a.z + dz * t;
@@ -19,7 +18,7 @@ function nearestOnBridge(x: number, z: number) {
 
 export function walkable(x: number, z: number): boolean {
   if (REGIONS.some((r) => Math.hypot(x - r.x, z - r.z) <= r.r)) return true;
-  return nearestOnBridge(x, z).d <= BRIDGE.halfWidth;
+  return BRIDGES.some((br) => nearestOnBridge(x, z, br).d <= br.halfWidth);
 }
 
 const EPS = 1e-6; // 경계 위 부동소수 오차로 다시 불가 판정이 나지 않게 살짝 안쪽으로
@@ -32,8 +31,10 @@ export function clampWalkable(x: number, z: number): { x: number; z: number } {
     const d = Math.hypot(x - r.x, z - r.z), rr = r.r - EPS;
     if (d - r.r < bd) { bd = d - r.r; best = { x: r.x + ((x - r.x) / d) * rr, z: r.z + ((z - r.z) / d) * rr }; }
   }
-  const n = nearestOnBridge(x, z), over = n.d - BRIDGE.halfWidth;
-  if (over < bd) best = { x: n.px + ((x - n.px) / n.d) * (BRIDGE.halfWidth - EPS), z: n.pz + ((z - n.pz) / n.d) * (BRIDGE.halfWidth - EPS) };
+  for (const br of BRIDGES) {
+    const n = nearestOnBridge(x, z, br), over = n.d - br.halfWidth;
+    if (over < bd) { bd = over; best = { x: n.px + ((x - n.px) / n.d) * (br.halfWidth - EPS), z: n.pz + ((z - n.pz) / n.d) * (br.halfWidth - EPS) }; }
+  }
   return best;
 }
 

@@ -39,11 +39,38 @@
       ],
       "fog": "#12241f",
       "recommendedLevel": 7
+    },
+    {
+      "id": "glassDesert",
+      "name": "유리 사막",
+      "x": 320,
+      "z": 0,
+      "r": 62,
+      "enemies": [
+        "glassScuttler",
+        "shardSpitter",
+        "duneRusher"
+      ],
+      "count": 12,
+      "ground": [
+        "#9c8660",
+        "#b39c70",
+        "#d7c595"
+      ],
+      "fog": "#2b2417",
+      "recommendedLevel": 13
     }
   ],
-  "bridge": {
-    "from": "ashenPlains",
-    "to": "sunkenForest",
-    "halfWidth": 8
-  }
+  "bridges": [
+    {
+      "from": "ashenPlains",
+      "to": "sunkenForest",
+      "halfWidth": 8
+    },
+    {
+      "from": "sunkenForest",
+      "to": "glassDesert",
+      "halfWidth": 8
+    }
+  ]
 }

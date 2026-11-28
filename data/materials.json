@@ -42,5 +42,19 @@
     "max": 10,
     "price": 0,
     "desc": "늪의 어미가 남기는 심장. 가장 좋은 장비 제작 재료"
+  },
+  "glassShard": {
+    "name": "유리 파편",
+    "type": "material",
+    "max": 99,
+    "price": 14,
+    "desc": "사막의 적에게서만 나오는 날카로운 유리 조각. 사막 단조 재료"
+  },
+  "colossusEye": {
+    "name": "거상의 눈",
+    "type": "material",
+    "max": 10,
+    "price": 0,
+    "desc": "유리 거상이 남기는 맑은 결정. 최상급 장비 제작 재료"
   }
 }

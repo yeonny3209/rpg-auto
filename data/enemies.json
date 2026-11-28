@@ -262,5 +262,129 @@
       "mireSap": 1.0,
       "mireHeart": 1.0
     }
+  },
+  "glassScuttler": {
+    "name": "유리 전갈",
+    "ai": "melee",
+    "spawnWeight": 6,
+    "level": 13,
+    "hp": 130,
+    "atk": 22,
+    "def": 8,
+    "exp": 50,
+    "gold": [
+      8,
+      16
+    ],
+    "poise": 50,
+    "moveSpeed": 3.8,
+    "aggroRange": 11,
+    "attackRange": 1.6,
+    "attackCooldown": 1.1,
+    "windup": 0.38,
+    "recover": 0.4,
+    "color": "#8a7a52",
+    "eyeColor": "#7df2ff",
+    "size": 0.85,
+    "dropChance": 0.35,
+    "embers": 14,
+    "matDrops": {
+      "glassShard": 0.35
+    }
+  },
+  "shardSpitter": {
+    "name": "파편 사수",
+    "ai": "ranged",
+    "spawnWeight": 4,
+    "level": 14,
+    "hp": 95,
+    "atk": 28,
+    "def": 6,
+    "exp": 62,
+    "gold": [
+      10,
+      20
+    ],
+    "poise": 30,
+    "moveSpeed": 2.3,
+    "aggroRange": 15,
+    "attackRange": 11,
+    "preferredRange": 9,
+    "attackCooldown": 1.8,
+    "windup": 0.6,
+    "recover": 0.4,
+    "projectileSpeed": 12,
+    "color": "#6c6b7a",
+    "eyeColor": "#9cf4ff",
+    "size": 0.65,
+    "dropChance": 0.4,
+    "embers": 18,
+    "matDrops": {
+      "glassShard": 0.4
+    }
+  },
+  "duneRusher": {
+    "name": "모래 폭주자",
+    "ai": "charger",
+    "spawnWeight": 2,
+    "level": 15,
+    "hp": 300,
+    "atk": 42,
+    "def": 13,
+    "exp": 115,
+    "gold": [
+      16,
+      34
+    ],
+    "poise": 120,
+    "moveSpeed": 2.2,
+    "aggroRange": 12,
+    "attackRange": 8.5,
+    "attackCooldown": 2.8,
+    "windup": 0.75,
+    "recover": 1.1,
+    "chargeSpeed": 15,
+    "chargeTime": 0.65,
+    "color": "#7a5f3a",
+    "eyeColor": "#ffe27a",
+    "size": 1.25,
+    "dropChance": 0.7,
+    "embers": 40,
+    "matDrops": {
+      "glassShard": 0.6
+    }
+  },
+  "glassColossus": {
+    "name": "유리 거상",
+    "ai": "boss",
+    "spawnWeight": 0,
+    "level": 18,
+    "hp": 3400,
+    "atk": 58,
+    "def": 22,
+    "exp": 2200,
+    "gold": [
+      380,
+      560
+    ],
+    "poise": 650,
+    "moveSpeed": 3.2,
+    "aggroRange": 17,
+    "attackRange": 4.8,
+    "attackCooldown": 1.4,
+    "windup": 0.8,
+    "recover": 0.9,
+    "color": "#7fb6c4",
+    "eyeColor": "#ffffff",
+    "size": 2.6,
+    "dropChance": 1,
+    "embers": 700,
+    "projectileSpeed": 12,
+    "chargeSpeed": 17,
+    "chargeTime": 0.7,
+    "matDrops": {
+      "glassShard": 1.0,
+      "colossusEye": 1.0
+    }
   }
 }

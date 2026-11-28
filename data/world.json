@@ -52,6 +52,21 @@
       "z": 26,
       "litAtStart": false,
       "major": true
+    },
+    {
+      "id": "desertGate",
+      "name": "사막 어귀 봉화",
+      "x": 255,
+      "z": 0,
+      "litAtStart": false
+    },
+    {
+      "id": "glassShrine",
+      "name": "부서진 유리 사당 봉화",
+      "x": 322,
+      "z": 26,
+      "litAtStart": false,
+      "major": true
     }
   ],
   "beacon": {
