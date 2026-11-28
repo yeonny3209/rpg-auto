@@ -1,0 +1,20 @@
+# Fly.io 예시 설정. 앱 이름(app)은 전 세계에서 유일해야 하니 바꿔서 쓸 것.
+app = "emberlands-yourname"
+primary_region = "nrt"
+
+[build]
+
+[env]
+  PORT = "8080"
+  DATA_DIR = "/data"
+
+[mounts]
+  source = "emberdata"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0

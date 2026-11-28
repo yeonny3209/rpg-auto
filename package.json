@@ -8,7 +8,9 @@
     "preview": "vite preview --port 4173",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "shot": "node scripts/screenshot.mjs"
+    "shot": "node scripts/screenshot.mjs",
+    "server": "node server/index.mjs",
+    "online-check": "node scripts/online-check.mjs"
   },
   "repository": {
     "type": "git",
