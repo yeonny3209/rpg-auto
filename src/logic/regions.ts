@@ -54,3 +54,9 @@ export function pointInRegion(r: Region, rng: () => number, minFromCenter = 12, 
 export function weightsFor(regionId: string, enemyData: Record<string, { spawnWeight: number }>): Record<string, number> {
   return Object.fromEntries(regionById(regionId).enemies.map((id) => [id, enemyData[id]?.spawnWeight ?? 0]));
 }
+
+/** 지역 권장 레벨 대비 위험도: 권장보다 3 이상 낮으면 deadly, 1 이상 낮으면 risky */
+export function dangerOf(rg: Region, level: number): "safe" | "risky" | "deadly" {
+  const gap = rg.recommendedLevel - level;
+  return gap >= 3 ? "deadly" : gap >= 1 ? "risky" : "safe";
+}

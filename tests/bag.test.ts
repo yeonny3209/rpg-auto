@@ -128,3 +128,20 @@ describe("숲 전용 드롭 (matDrops)", () => {
     }
   });
 });
+
+describe("숲 단조 제작", () => {
+  it("늪 수액 + 불씨핵으로 희귀 무기를 만든다", async () => {
+    const { craft, RECIPES } = await import("../src/logic/crafting");
+    const r = RECIPES.find((x) => x.id === "mireWeapon")!;
+    const ok = craft(r, { mireSap: 8, emberCore: 1 }, 300, [], 8, () => 0.3);
+    expect(ok.ok).toBe(true);
+    if (ok.ok) { expect(ok.bag.mireSap).toBeUndefined(); expect(ok.gold).toBe(40); expect(ok.inv).toHaveLength(1); }
+    expect(craft(r, { mireSap: 7, emberCore: 1 }, 300, [], 8, () => 0.3).ok).toBe(false);
+  });
+  it("늪의 심장 반지는 심장이 있어야 한다", async () => {
+    const { craft, RECIPES } = await import("../src/logic/crafting");
+    const r = RECIPES.find((x) => x.id === "heartRing")!;
+    expect(craft(r, { mireSap: 10 }, 999, [], 8, () => 0.3).ok).toBe(false);
+    expect(craft(r, { mireSap: 10, mireHeart: 1 }, 999, [], 8, () => 0.3).ok).toBe(true);
+  });
+});

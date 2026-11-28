@@ -493,8 +493,11 @@ try {
   });
   await page.evaluate(() => { const g = window.__game; g.player.hp = g.player.maxHp = 900; g.enemies.forEach((e) => (e.attackCd = 99)); g.player.pos.set(125, 0, -6); });
   await page.waitForTimeout(3500);
-  const forestInfo = await page.evaluate(() => ({ zone: document.getElementById("zoneTag").textContent, fog: window.__game.scene.fog.color.getHexString(), pos: [Math.round(window.__game.player.pos.x), Math.round(window.__game.player.pos.z)] }));
-  console.log("forest:", JSON.stringify({ out, forestInfo }));
+  const forestToast = await page.evaluate(() => [...document.querySelectorAll("#toasts *, .toast")].map((e) => e.textContent).filter((t) => t.includes("권장")).slice(-1)[0] ?? null);
+  await page.evaluate(() => { const g = window.__game; g.player.bag = { ...g.player.bag, mireSap: 7, emberCore: 2 }; g.player.gold = Math.max(g.player.gold, 600); });
+  await page.waitForTimeout(400);
+  const forestInfo = await page.evaluate(() => ({ matTag: document.getElementById("matTag").textContent, zone: document.getElementById("zoneTag").textContent, fog: window.__game.scene.fog.color.getHexString(), pos: [Math.round(window.__game.player.pos.x), Math.round(window.__game.player.pos.z)] }));
+  console.log("forest:", JSON.stringify({ out, forestInfo, forestToast }));
   await shot(page, "31-forest.png");
   // 빠른이동: 숲 어귀 봉화 점화 → T → 마지막 등불로
   const trav = await page.evaluate(async () => {

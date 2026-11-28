@@ -50,3 +50,14 @@ describe("regions", () => {
     for (const b of world.beacons) expect(walkable(b.x, b.z), b.id).toBe(true);
   });
 });
+
+describe("권장 레벨 위험도", () => {
+  it("권장보다 낮을수록 위험", async () => {
+    const { regionById, dangerOf } = await import("../src/logic/regions");
+    const f = regionById("sunkenForest");
+    expect(dangerOf(f, 7)).toBe("safe"); expect(dangerOf(f, 12)).toBe("safe");
+    expect(dangerOf(f, 6)).toBe("risky"); expect(dangerOf(f, 5)).toBe("risky");
+    expect(dangerOf(f, 4)).toBe("deadly"); expect(dangerOf(f, 1)).toBe("deadly");
+    expect(dangerOf(regionById("ashenPlains"), 1)).toBe("safe");
+  });
+});

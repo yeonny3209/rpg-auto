@@ -4,10 +4,10 @@ import { castBlock, EMBER } from "../logic/skills";
 import { engrave, engraveBonus, nextLevelProgress } from "../logic/embers";
 import { expToNext } from "../logic/progression";
 import { rarityOf } from "../logic/items";
-import { $, BC, HC, beacons, cam, camera, env, floaters, player, scene, ui } from "./core";
+import { $, toast, BC, HC, beacons, cam, camera, env, floaters, player, scene, ui } from "./core";
 import * as THREE from "three";
 import { darknessAt, fogFarAt } from "../logic/darkness";
-import { regionAt } from "../logic/regions";
+import { regionAt, dangerOf } from "../logic/regions";
 import { enemies } from "./enemies";
 import { nearBeacon } from "./sanctuary";
 import { loots } from "./loot";
@@ -94,7 +94,11 @@ export function updateDarkness(dt: number) {
     fogTarget.set(rg.fog);
     if (scene.fog instanceof THREE.Fog) scene.fog.color.lerp(fogTarget, Math.min(1, dt * 1.5));
     if (scene.background instanceof THREE.Color) scene.background.lerp(fogTarget, Math.min(1, dt * 1.5));
-    if (rg.name !== regionNow) { regionNow = rg.name; $("zoneTag").textContent = `${rg.name} · 권장 Lv ${rg.recommendedLevel}`; }
+    if (rg.name !== regionNow) {
+      const first = regionNow === ""; regionNow = rg.name; $("zoneTag").textContent = `${rg.name} · 권장 Lv ${rg.recommendedLevel}`;
+      const dg = dangerOf(rg, player.lv.level);
+      if (!first && dg !== "safe") toast(dg === "deadly" ? `${rg.name}: 권장 Lv ${rg.recommendedLevel} — 지금은 매우 위험해` : `${rg.name}: 권장 Lv ${rg.recommendedLevel} — 조금 버거울 수 있어`);
+    }
   }
   $("darkTag").style.opacity = String(Math.min(1, env.dark * 1.5));
   $("darkTag").textContent = env.dark > 0.15 ? `어둠 ${Math.round(env.dark * 100)}% · 받는 피해 +${Math.round(env.dark * 35)}%` : "";
