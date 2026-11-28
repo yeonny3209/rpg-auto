@@ -33,6 +33,7 @@ export interface Enemy {
   respawnT: number;
   chargeDir: THREE.Vector3;
   hitPlayer: boolean;
+  chargeHit?: Set<string>; // 이번 돌진에서 이미 맞힌 다른 접속자
   hpBar: THREE.Mesh;
   home: THREE.Vector3; // 태어난 곳(재생성 지역 판정용)
   // --- 함께 사냥: idx는 모든 접속자가 같은 번호(시드 배치), owner가 AI를 돌리고 나머지는 mirror로 따라간다
@@ -239,7 +240,7 @@ function updateBossState(e: Enemy, dt: number, dist: number, dirTo: THREE.Vector
           e.state = "recover"; e.t = 0;
         } else {
           e.chargeDir.set(Math.sin(yaw), 0, Math.cos(yaw));
-          e.hitPlayer = false;
+          e.hitPlayer = false; e.chargeHit = undefined;
           e.state = "attack"; e.t = 0;
         }
       }
@@ -253,6 +254,13 @@ function updateBossState(e: Enemy, dt: number, dist: number, dirTo: THREE.Vector
         e.hitPlayer = true;
         if (playerInvulnerable()) floater(player.pos.clone().setY(player.pos.y + 2), "회피!", "exp");
         else { bossHit(e, params.mul); player.pos.addScaledVector(e.chargeDir, 2); }
+      }
+      if (coop.connected && e.owner === coop.me) { // 돌진 경로에서 닿은 다른 접속자도 한 번씩 맞힌다
+        for (const o of coop.others()) {
+          if (e.chargeHit?.has(o.name) || Math.hypot(o.x - e.pos.x, o.z - e.pos.z) >= e.def.size + 0.8) continue;
+          (e.chargeHit ??= new Set()).add(o.name);
+          coop.send({ t: "phit", to: o.name, amount: computeDamage({ atk: e.def.atk * params.mul, def: player.def }).amount, enemy: e.id });
+        }
       }
       if (e.t % 0.06 < dt) fx.burst(e.pos.clone().setY(e.pos.y + 0.3), "#6b6157", 3, 2);
       const hitWall = resolveCircle(e.pos, e.def.size * 0.8, world.obstacles);
