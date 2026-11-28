@@ -20,7 +20,7 @@ function rngOf(seed: number) {
 /** 이 시드·레벨의 제안 목록(같은 입력이면 항상 같다). 서로 다른 템플릿으로 뽑는다. */
 export function makeOffers(seed: number, level: number): Offer[] {
   const r = rngOf(seed);
-  const pool = [...cfg.templates];
+  const pool = cfg.templates.filter((t) => ((t as { minLevel?: number }).minLevel ?? 1) <= level);
   const out: Offer[] = [];
   for (let i = 0; i < cfg.offers && pool.length; i++) {
     const t = pool.splice(Math.floor(r() * pool.length), 1)[0];

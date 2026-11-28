@@ -11,7 +11,7 @@ describe("의뢰 제안", () => {
     expect(makeOffers(6, 4)).not.toEqual(a);
   });
   it("레벨이 높을수록 목표와 보상이 크다", () => {
-    const lo = makeOffers(7, 1), hi = makeOffers(7, 20);
+    const lo = makeOffers(7, 8), hi = makeOffers(7, 20); // 같은 템플릿 풀(숲 의뢰 해금 레벨 이상)에서 비교
     for (let i = 0; i < lo.length; i++) { expect(hi[i].tpl).toBe(lo[i].tpl); expect(hi[i].goal).toBeGreaterThan(lo[i].goal); expect(hi[i].gold).toBeGreaterThan(lo[i].gold); }
   });
   it("처치 대상은 실제 적이고 보상은 양수, 비급은 가끔만", () => {
@@ -75,5 +75,18 @@ describe("저장 정리", () => {
     expect(s.active!.progress).toBe(o.goal);
     expect(s.seed).toBe(3); expect(s.done).toBe(2);
     expect(sanitizeBounty({ seed: 3, active: { ...o, type: "collect", target: "junk" } }).active).toBeNull();
+  });
+});
+
+describe("숲 의뢰 (minLevel)", () => {
+  it("낮은 레벨에는 숲 의뢰가 나오지 않는다", async () => {
+    const { makeOffers } = await import("../src/logic/bounty");
+    for (let seed = 1; seed < 60; seed++) for (const o of makeOffers(seed, 3)) expect(["huntLeech", "huntSpore", "huntBrute", "gatherSap"]).not.toContain(o.tpl);
+  });
+  it("레벨 8이면 숲 의뢰가 나올 수 있다", async () => {
+    const { makeOffers } = await import("../src/logic/bounty");
+    const seen = new Set<string>();
+    for (let seed = 1; seed < 80; seed++) for (const o of makeOffers(seed, 8)) seen.add(o.tpl);
+    expect(seen.has("gatherSap") || seen.has("huntLeech")).toBe(true);
   });
 });
