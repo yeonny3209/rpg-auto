@@ -227,6 +227,9 @@ function updateBossState(e: Enemy, dt: number, dist: number, dirTo: THREE.Vector
           fx.addShake(0.9);
           sfx.heavyHit();
           if (inSlam(dist, params.radius!)) bossHit(e, params.mul);
+          if (coop.connected && e.owner === coop.me) { // 내가 담당한 보스의 내려찍기는 범위 안 다른 접속자도 맞힌다(회피 판정은 맞은 쪽)
+            for (const o of coop.others()) if (inSlam(Math.hypot(o.x - e.pos.x, o.z - e.pos.z), params.radius!)) coop.send({ t: "phit", to: o.name, amount: computeDamage({ atk: e.def.atk * params.mul, def: player.def }).amount, enemy: e.id });
+          }
           e.attackCd = cooldownFor(id, b.phase);
           e.state = "recover"; e.t = 0;
         } else if (p === "spit") {
