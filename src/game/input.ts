@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { cam, keys, renderer } from "./core";
 import { castSkill, releaseCharge, startCharge, toggleLockOn, tryAttack, tryDodge, drinkPotion } from "./player";
 import { interact } from "./sanctuary";
-import { dialogOpen, dialogPrimary, closeDialog } from "./dialog";
+import { dialogOpen, dialogPrimary, closeDialog, openTravel } from "./dialog";
 import { toggleCharPanel, toggleInvPanel } from "./panels";
 
 const selecting = () => $("classSelect").classList.contains("open") || dialogOpen();
@@ -25,6 +25,7 @@ addEventListener("keydown", (e) => {
   if (e.code === "KeyC") toggleCharPanel();
   if (e.code === "KeyI") toggleInvPanel();
   if (e.code === "KeyF" || e.code === "KeyR") interact();
+  if (e.code === "KeyT") openTravel();
 });
 addEventListener("keyup", (e) => {
   keys.delete(e.code);

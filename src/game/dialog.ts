@@ -21,6 +21,9 @@ import { sfx } from "./sfx";
 import { rarityOf, type RarityId } from "../logic/items";
 import type { Npc } from "./npcs";
 import { tutorialEvent } from "./tutorial";
+import { travelTargets } from "../logic/travel";
+import { nearBeacon } from "./sanctuary";
+import { beacons } from "./core";
 
 let current: Npc | null = null;
 let shopMode = false;
@@ -312,6 +315,31 @@ export function openDialog(npc: Npc) {
   current = npc;
   $("dialog").classList.add("open");
   render();
+}
+// 빠른이동: 밝힌 봉화 곁에서 T. NPC 없이 같은 대화창을 쓴다.
+export function openTravel() {
+  const here = nearBeacon(4);
+  if (!here || !here.lit) return toast("밝혀진 봉화 곁에서만 이동할 수 있다");
+  const list = () => travelTargets(beacons.map((b) => ({ id: b.def.id, name: b.def.name, x: b.pos.x, z: b.pos.z, lit: b.lit })), here.def.id, player.gold);
+  const draw = () => {
+    const t = list();
+    $("dialog").innerHTML = `<div class="dn">${here.def.name} <span class="dr">빠른이동 · 보유 ◆ ${player.gold}</span></div>
+      <div class="shop-cols"><div style="grid-column:1 / -1">${t.length ? t.map((x) => `<div class="shop-row${x.affordable ? "" : " soldout"}" data-id="${x.id}"><span>${x.name}</span><span class="sp">◆ ${x.cost}</span></div>`).join("") : `<div class="dt">이동할 수 있는 다른 봉화가 없다. 봉화를 더 밝혀라.</div>`}</div></div>
+      <div class="hint">Esc 닫기</div>`;
+    $("dialog").querySelectorAll<HTMLElement>(".shop-row[data-id]").forEach((row) => row.addEventListener("click", () => {
+      const x = list().find((y) => y.id === row.dataset.id);
+      const dest = beacons.find((b) => b.def.id === row.dataset.id);
+      if (!x || !dest) return;
+      if (!x.affordable) return toast("골드가 부족하다");
+      player.gold -= x.cost;
+      player.pos.set(dest.pos.x + 2, 0, dest.pos.z + 2);
+      player.respawnBeacon = dest.def.id;
+      sfx.ignite(); toast(`${dest.def.name}(으)로 이동 — ◆${x.cost}`);
+      saveGame(); closeDialog();
+    }));
+  };
+  $("dialog").classList.add("open");
+  draw();
 }
 export function closeDialog() {
   current = null;

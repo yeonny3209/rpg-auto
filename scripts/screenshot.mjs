@@ -496,6 +496,18 @@ try {
   const forestInfo = await page.evaluate(() => ({ zone: document.getElementById("zoneTag").textContent, fog: window.__game.scene.fog.color.getHexString(), pos: [Math.round(window.__game.player.pos.x), Math.round(window.__game.player.pos.z)] }));
   console.log("forest:", JSON.stringify({ out, forestInfo }));
   await shot(page, "31-forest.png");
+  // 빠른이동: 숲 어귀 봉화 점화 → T → 마지막 등불로
+  const trav = await page.evaluate(async () => {
+    const g = window.__game, b = g.beacons.find((x) => x.def.id === "bridgeLamp"), home = g.beacons.find((x) => x.def.id === "lastLight");
+    b.lit = true; g.player.gold = 500; g.player.pos.set(b.pos.x + 1.5, 0, b.pos.z);
+    return { gold: g.player.gold };
+  });
+  await page.keyboard.press("KeyT"); await page.waitForTimeout(300);
+  await shot(page, "32-travel.png");
+  const rows = await page.evaluate(() => [...document.querySelectorAll("#dialog .shop-row")].map((e) => e.textContent));
+  await page.click('#dialog .shop-row[data-id="lastLight"]'); await page.waitForTimeout(300);
+  const afterTravel = await page.evaluate(() => ({ gold: window.__game.player.gold, x: Math.round(window.__game.player.pos.x), z: Math.round(window.__game.player.pos.z), open: document.getElementById("dialog").classList.contains("open") }));
+  console.log("travel:", JSON.stringify({ trav, rows, afterTravel }));
   await page.evaluate(() => window.__game.player.pos.set(0, 0, 3));
 
   const state = await page.evaluate(() => {
