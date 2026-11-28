@@ -1,0 +1,54 @@
+{
+  "minLevel": 15,
+  "cost": 500,
+  "specs": {
+    "guardian": {
+      "cls": "vanguard", "name": "수호기사", "desc": "방패 같은 몸. 단단해지고 버티는 스킬을 얻는다.",
+      "bonus": { "def": 6, "maxHp": 60 },
+      "skills": [
+        { "replaces": "vg_charge", "id": "gd_rush", "name": "방벽 돌진", "desc": "몸으로 밀고 들어가 그로기를 크게 쌓는다", "type": "dash", "cost": 30, "cooldown": 7, "dist": 6, "time": 0.22, "mul": 1.6, "range": 3, "arcDeg": 120, "poise": 95, "invuln": 0.3, "color": "#8fb4ff" },
+        { "replaces": "vg_resolve", "id": "gd_oath", "name": "수호의 맹세", "desc": "10초간 공격력 +15%, HP 40% 회복", "type": "buff", "cost": 50, "cooldown": 22, "atkMul": 1.15, "crit": 0, "duration": 10, "heal": 0.4, "color": "#a8c8ff" }
+      ]
+    },
+    "berserker": {
+      "cls": "vanguard", "name": "광전사", "desc": "방패를 버린 양손 검. 공격력과 치명이 오른다.",
+      "bonus": { "atkPct": 0.12, "maxHp": 20, "crit": 0.04 },
+      "skills": [
+        { "replaces": "vg_slam", "id": "bs_wrath", "name": "분노의 내려치기", "desc": "주변을 크게 쪼개는 강타", "type": "ring", "cost": 40, "cooldown": 9, "mul": 2.5, "range": 4.6, "poise": 90, "color": "#ff5a3c" },
+        { "replaces": "vg_resolve", "id": "bs_frenzy", "name": "광폭화", "desc": "8초간 공격력 +70%", "type": "buff", "cost": 45, "cooldown": 22, "atkMul": 1.7, "crit": 0.1, "duration": 8, "heal": 0, "color": "#ff3a2a" }
+      ]
+    },
+    "sniper": {
+      "cls": "tracker", "name": "저격수", "desc": "거리를 두고 약점을 꿰뚫는다. 치명타가 크게 오른다.",
+      "bonus": { "crit": 0.1, "atkPct": 0.06 },
+      "skills": [
+        { "replaces": "tr_stab", "id": "sn_snipe", "name": "약점 사격", "desc": "멀리서 한 점을 꿰뚫는 치명 일격", "type": "arc", "cost": 25, "cooldown": 4, "mul": 3.4, "range": 12, "arcDeg": 12, "poise": 40, "critAdd": 0.6, "color": "#c8ff8a" },
+        { "replaces": "tr_focus", "id": "sn_aim", "name": "정조준", "desc": "6초간 치명타 +50%, 공격력 +20%", "type": "buff", "cost": 40, "cooldown": 16, "atkMul": 1.2, "crit": 0.5, "duration": 6, "heal": 0, "color": "#d6ff9c" }
+      ]
+    },
+    "shade": {
+      "cls": "tracker", "name": "그림자", "desc": "단검 연계와 회피. 스태미나가 늘고 치명타가 오른다.",
+      "bonus": { "crit": 0.08, "maxStamina": 20 },
+      "skills": [
+        { "replaces": "tr_shadow", "id": "sh_ambush", "name": "암습 질주", "desc": "무적으로 파고들며 적을 벤다", "type": "dash", "cost": 25, "cooldown": 6, "dist": 9, "time": 0.2, "invuln": 0.45, "mul": 2.2, "range": 2.8, "arcDeg": 100, "poise": 40, "color": "#6fe0a0" },
+        { "replaces": "tr_whirl", "id": "sh_storm", "name": "칼날 폭풍", "desc": "주변을 빠르게 베어 낸다", "type": "ring", "cost": 35, "cooldown": 7, "mul": 2.2, "range": 3.6, "poise": 40, "color": "#9cf0b0" }
+      ]
+    },
+    "pyro": {
+      "cls": "igniter", "name": "화염술사", "desc": "넓게 태우는 불길. 공격력과 체력이 오른다.",
+      "bonus": { "atkPct": 0.1, "maxHp": 20 },
+      "skills": [
+        { "replaces": "ig_burst", "id": "py_wave", "name": "불길의 파도", "desc": "넓은 범위를 휩쓰는 화염", "type": "ring", "cost": 45, "cooldown": 9, "mul": 2.8, "range": 6.5, "poise": 80, "color": "#ff7a2a" },
+        { "replaces": "ig_bolt", "id": "py_fan", "name": "불꽃 부채", "desc": "전방을 넓게 태운다", "type": "arc", "cost": 25, "cooldown": 3, "mul": 2.7, "range": 6, "arcDeg": 80, "poise": 40, "color": "#ff9a4a" }
+      ]
+    },
+    "crystal": {
+      "cls": "igniter", "name": "결정술사", "desc": "한 점에 모으는 고화력. 적을 얼려 붙잡는다.",
+      "bonus": { "crit": 0.1, "atkPct": 0.06 },
+      "skills": [
+        { "replaces": "ig_bolt", "id": "cr_lance", "name": "결정 창", "desc": "멀리 꿰뚫는 고화력 일격", "type": "arc", "cost": 30, "cooldown": 5, "mul": 4.0, "range": 11, "arcDeg": 12, "poise": 70, "color": "#9ad8ff" },
+        { "replaces": "ig_ignite", "id": "cr_frost", "name": "서리 결계", "desc": "주변을 얼려 그로기를 크게 쌓는다", "type": "ring", "cost": 40, "cooldown": 10, "mul": 1.4, "range": 5.5, "poise": 150, "color": "#bfe8ff" }
+      ]
+    }
+  }
+}

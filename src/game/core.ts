@@ -1,5 +1,7 @@
 import type { Bag } from "../logic/bag";
 import type { SkillLevels } from "../logic/skillLevel";
+import { specBonus, validSpec, type SpecId } from "../logic/specs";
+import { emptyBounty, type BountyState } from "../logic/bounty";
 import * as THREE from "three";
 import { addGear, classGear, classAttack, classMoveMul, classDef, classStartAttrs, isClassId, NEUTRAL_ATTACK, type ClassId, type ClassAttack } from "../logic/classes";
 import prog from "../../data/progression.json";
@@ -63,6 +65,8 @@ export const player = {
   gold: 0,
   bag: {} as Bag, // 소모품·재료
   skillLv: {} as SkillLevels, // 스킬 수련 단계(2 이상만 기록)
+  spec: null as SpecId | null, // 15레벨 전문화
+  bounty: emptyBounty() as BountyState, // 의뢰 게시판 상태
   potionCd: 0,
   attackT: 0, // 공격 모션 남은 시간
   attackKind: "light" as "light" | "heavy",
@@ -100,6 +104,7 @@ export const playerInvulnerable = () => isInvulnerable(player.dodgeT, DC.iframe)
 // 클래스 지정 (몸 색 + 능력치). 새로 고른 것이면 시작 속성도 배분한다.
 export function setClass(id: ClassId | null, fresh: boolean) {
   player.cls = id;
+  player.spec = validSpec(id, player.spec); // 다른 클래스로 바뀌면 전문화는 사라진다
   if (id) {
     playerCloth.color.set(classDef(id).color);
     sword.scale.z = classDef(id).attack.rangeMul; // 단검은 짧게, 지팡이는 길게
@@ -110,7 +115,7 @@ export function setClass(id: ClassId | null, fresh: boolean) {
 
 // 레벨·속성 → 능력치 반영
 export function applyDerived(fullHeal: boolean) {
-  const gear = addGear(equipmentStats(player.equipment), classGear(player.cls));
+  const gear = addGear(addGear(equipmentStats(player.equipment), classGear(player.cls)), specBonus(validSpec(player.cls, player.spec)));
   const eb = engraveBonus(player.embers.banked);
   gear.atkPct += eb.atkPct;
   gear.maxHp += eb.maxHp;
@@ -133,7 +138,7 @@ export const SAVE_KEY = "emberlands.save";
 export function saveGame() {
   try {
     localStorage.setItem(SAVE_KEY, serialize({ level: player.lv.level, exp: player.lv.exp, statPoints: player.lv.statPoints, attrs: player.attrs, gold: player.gold, inventory: player.inventory, equipment: player.equipment,
-      embers: player.embers, litBeacons: beacons.filter((b) => b.lit).map((b) => b.def.id), respawnBeacon: player.respawnBeacon, trace: player.trace, classId: player.cls, quests: player.quests, bag: player.bag, skillLv: player.skillLv }));
+      embers: player.embers, litBeacons: beacons.filter((b) => b.lit).map((b) => b.def.id), respawnBeacon: player.respawnBeacon, trace: player.trace, classId: player.cls, quests: player.quests, bag: player.bag, skillLv: player.skillLv, spec: player.spec, bounty: player.bounty }));
   } catch { /* 저장 불가 환경(시크릿 모드 등)은 무시 */ }
 }
 export function loadGame(): boolean {
@@ -153,6 +158,8 @@ export function loadGame(): boolean {
   player.quests = d.quests;
   player.bag = d.bag;
   player.skillLv = d.skillLv;
+  player.spec = validSpec(d.classId, d.spec);
+  player.bounty = d.bounty;
   setClass(d.classId, false);
   return true;
 }

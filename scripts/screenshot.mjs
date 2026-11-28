@@ -420,6 +420,52 @@ try {
   console.log("class change:", JSON.stringify({ clsBefore, midCls, clsAfter }));
   await page.keyboard.press("Escape");
 
+  // 전문화: 레벨 15로 올리고 사제 → 전문화 → 첫 갈래 선택 (스킬바가 바뀌어야 함)
+  await page.evaluate(() => { const p = window.__game.player; p.lv = { ...p.lv, level: 15 }; p.gold = 2000; });
+  await near("priest");
+  await page.waitForTimeout(400);
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(300);
+  await page.click('#dialog button[data-act="spec"]');
+  await page.waitForTimeout(250);
+  const specBefore = await page.evaluate(() => ({ spec: window.__game.player.spec, bar: [...document.querySelectorAll("#skillbar .n")].map((e) => e.textContent), gold: window.__game.player.gold }));
+  await page.click('#dialog .shop-row >> nth=0'); await page.waitForTimeout(300);
+  const specAfter = await page.evaluate(() => ({ spec: window.__game.player.spec, bar: [...document.querySelectorAll("#skillbar .n")].map((e) => e.textContent), gold: window.__game.player.gold, maxHp: window.__game.player.maxHp }));
+  console.log("spec:", JSON.stringify({ specBefore, specAfter }));
+  await shot(page, "29-spec.png");
+  await page.keyboard.press("Escape");
+
+  // 의뢰 게시판: 경비대장 → 수락 → 처치 보고 → 완료
+  await near("captain");
+  await page.waitForTimeout(400);
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(300);
+  await page.click('#dialog button[data-act="board"]');
+  await page.waitForTimeout(250);
+  await shot(page, "30-board.png");
+  const offerTexts = await page.evaluate(() => [...document.querySelectorAll("#dialog .shop-row")].map((e) => e.textContent));
+  const goldB = await page.evaluate(() => window.__game.player.gold);
+  await page.click('#dialog .shop-row[data-act="accept"] >> nth=0'); await page.waitForTimeout(200);
+  const acc = await page.evaluate(() => window.__game.player.bounty.active && { type: window.__game.player.bounty.active.type, target: window.__game.player.bounty.active.target, goal: window.__game.player.bounty.active.goal });
+  await page.keyboard.press("Escape");
+  if (acc && acc.type === "kill") {
+    await page.evaluate(() => { const g = window.__game; const e = g.enemies.find((x) => !x.boss && x.state !== "dead"); g.kill(e); });
+    await page.waitForTimeout(200);
+  }
+  const prog = await page.evaluate(() => window.__game.player.bounty.active && window.__game.player.bounty.active.progress);
+  // 목표를 채운 상태로 만들어 보고 흐름을 확인한다(처치/납품 판정 자체는 단위 테스트가 검증)
+  await page.evaluate(() => { const b = window.__game.player.bounty; b.active.progress = b.active.goal; if (b.active.type === "collect") window.__game.player.bag = { ...window.__game.player.bag, ashLump: b.active.goal }; });
+  await near("captain");
+  await page.waitForTimeout(400);
+  await page.keyboard.press("KeyF");
+  await page.waitForTimeout(300);
+  await page.click('#dialog button[data-act="board"]');
+  await page.waitForTimeout(250);
+  await page.click('#dialog .shop-row[data-act="turnin"]'); await page.waitForTimeout(250);
+  const doneB = await page.evaluate(() => ({ gold: window.__game.player.gold, bounty: window.__game.player.bounty }));
+  console.log("board:", JSON.stringify({ offers: offerTexts.length, acc, prog, goldB, doneB }));
+  await page.keyboard.press("Escape");
+
   // 어둠: 마을에서는 0, 먼 곳(남서쪽)에서는 올라감
   const darkHome = await page.evaluate(() => { const g = window.__game; g.player.pos.set(0, 0, 3); return g.env ? g.env.dark : null; });
   await page.evaluate(() => { const g = window.__game; g.player.pos.set(-30, 0, -30); g.player.hp = g.player.maxHp = 500; g.enemies.forEach((e) => (e.attackCd = 99)); });

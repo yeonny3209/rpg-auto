@@ -1,4 +1,5 @@
 // 퀘스트 이벤트 보고·보상 지급·HUD 퀘스트 목록.
+import { reportKill as bountyKill, progressOf } from "../logic/bounty";
 import { $, player, saveGame, toast, floater } from "./core";
 import { progress, questDef, isReady, NPCS, type Rewards } from "../logic/quests";
 import { gainExp } from "../logic/progression";
@@ -40,12 +41,25 @@ export function grantRewards(rw: Rewards) {
   }
 }
 
+/** 의뢰 게시판: 처치 보고 */
+export function reportBounty(enemyId: string) {
+  const next = bountyKill(player.bounty, enemyId);
+  if (next === player.bounty) return;
+  player.bounty = next;
+  const p = progressOf(next, player.bag);
+  if (p?.ready) toast("의뢰 목표 달성 — 경비대장 오르카에게 보고하자");
+  renderQuestLog();
+  saveGame();
+}
+
 export function renderQuestLog() {
   const el = $("questLog");
   const ids = Object.keys(player.quests.active);
-  if (!ids.length) { el.style.display = "none"; return; }
+  const bp = progressOf(player.bounty, player.bag);
+  if (!ids.length && !bp) { el.style.display = "none"; return; }
   el.style.display = "block";
-  el.innerHTML = `<div class="qh">퀘스트</div>` + ids.map((id) => {
+  const bountyHtml = bp ? `<div class="q ${bp.ready ? "ready" : ""}"><div class="qn">${bp.ready ? "✔ " : ""}의뢰: ${player.bounty.active!.name}</div><div class="qo">${bp.ready ? "→ 경비대장 오르카에게 보고" : `진행 ${bp.cur}/${bp.goal}`}</div></div>` : "";
+  el.innerHTML = `<div class="qh">퀘스트</div>` + bountyHtml + ids.map((id) => {
     const q = questDef(id)!;
     const ready = isReady(player.quests, q);
     const who = NPCS.find((n) => n.id === q.turnIn)?.name ?? "";

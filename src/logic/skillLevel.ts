@@ -1,5 +1,6 @@
 // 스킬 수련: 레벨 1~5. 레벨당 효과 +12%, 재사용 대기 -4%. 비용은 비급 + 골드. 수치는 data/skillLevels.json.
 import cfg from "../../data/skillLevels.json";
+import specsData from "../../data/specs.json";
 import { SKILLS, type SkillDef } from "./skills";
 import { bagTake, countOf, type Bag } from "./bag";
 import type { ClassId } from "./classes";
@@ -28,7 +29,7 @@ export function upgradeCost(level: number): { books: number; gold: number } | nu
 
 export type UpgradeResult = { ok: true; lv: SkillLevels; bag: Bag; gold: number } | { ok: false; reason: "max" | "books" | "gold" | "unknown" };
 export function upgradeSkill(lv: SkillLevels, id: string, bag: Bag, gold: number): UpgradeResult {
-  if (!Object.values(SKILLS).some((l) => l.some((s) => s.id === id))) return { ok: false, reason: "unknown" };
+  if (!knownSkill(id)) return { ok: false, reason: "unknown" };
   const cur = levelOf(lv, id), cost = upgradeCost(cur);
   if (!cost) return { ok: false, reason: "max" };
   if (countOf(bag, "skillBook") < cost.books) return { ok: false, reason: "books" };
@@ -37,7 +38,7 @@ export function upgradeSkill(lv: SkillLevels, id: string, bag: Bag, gold: number
 }
 
 export function sanitizeSkillLevels(raw: unknown, cls?: ClassId | null): SkillLevels {
-  const known = new Set(Object.values(SKILLS).flat().map((s) => s.id));
+  const known = new Set([...Object.values(SKILLS).flat().map((s) => s.id), ...Object.values(specsData.specs).flatMap((sp) => sp.skills.map((s) => s.id))]);
   const out: SkillLevels = {};
   if (!raw || typeof raw !== "object") return out;
   for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
@@ -46,4 +47,8 @@ export function sanitizeSkillLevels(raw: unknown, cls?: ClassId | null): SkillLe
     if (n >= 2) out[k] = n;
   }
   return out;
+}
+
+function knownSkill(id: string): boolean {
+  return Object.values(SKILLS).some((l) => l.some((s) => s.id === id)) || Object.values(specsData.specs).some((sp) => sp.skills.some((s) => s.id === id));
 }

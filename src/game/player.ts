@@ -11,7 +11,8 @@ import { computeDamage, rollRange } from "../logic/combat";
 import { gainExp } from "../logic/progression";
 import { rollDrop, generateItem, type RarityId } from "../logic/items";
 import { spend, regen } from "../logic/stamina";
-import { skillsFor, castBlock, spendCast, gainEmber, tickSkills, tickBuff, applyBuff, EMBER, CAST_LOCK } from "../logic/skills";
+import { activeSkills } from "../logic/specs";
+import { castBlock, spendCast, gainEmber, tickSkills, tickBuff, applyBuff, EMBER, CAST_LOCK } from "../logic/skills";
 import { resolveCircle } from "../logic/collision";
 import { hitPoise, isStaggered, heavyMultipliers } from "../logic/poise";
 import { $, AC, DC, HC, PC, PLAYER_RADIUS, applyDerived, beacons, cam, env, camForward, camera, flashStamina, floater, fx, keys, player, playerLight, playerMesh, saveGame, sword, toast, ui, world } from "./core";
@@ -20,7 +21,7 @@ import { enemies, type Enemy } from "./enemies";
 import { syncTrace } from "./sanctuary";
 import { spawnLoot } from "./loot";
 import { renderCharPanel } from "./panels";
-import { reportQuest } from "./questflow";
+import { reportBounty, reportQuest } from "./questflow";
 import { tutorialEvent } from "./tutorial";
 import { bossCfg, type BossId } from "../logic/boss";
 
@@ -120,7 +121,7 @@ export function strike(range: number, arcDeg: number, mul: number, poiseDmg: num
 
 // ---------- 스킬 (1~4) ----------
 export function castSkill(slot: number) {
-  const list = scaledList(skillsFor(player.cls), player.skillLv);
+  const list = scaledList(activeSkills(player.cls, player.spec), player.skillLv);
   const sk = list[slot];
   if (!sk || player.dead || player.dodgeT !== null || player.dash || player.charging) return;
   const why = castBlock(player.sk, slot, list);
@@ -195,6 +196,7 @@ export function killEnemy(e: Enemy) {
   fx.burst(e.pos.clone().setY(e.pos.y + (0.6)), "#2a2433", 10, 3);
   gainEmber(player.sk, EMBER.gainKill);
   reportQuest("kill", e.id);
+  reportBounty(e.id);
   sfx.kill();
   const gold = rollRange(e.def.gold as [number, number]);
   player.gold += gold;

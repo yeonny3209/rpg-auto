@@ -1,0 +1,12 @@
+{
+  "offers": 3,
+  "templates": [
+    { "id": "huntAny", "type": "kill", "target": "*", "name": "재먹이 소탕", "text": "재먹이 {goal}마리 처치", "base": 8, "perLevel": 0.6, "goldPer": 6, "expPer": 10 },
+    { "id": "huntCrawler", "type": "kill", "target": "ashCrawler", "name": "기어다니는 것 사냥", "text": "기어다니는 것 {goal}마리 처치", "base": 6, "perLevel": 0.4, "goldPer": 7, "expPer": 11 },
+    { "id": "huntSpitter", "type": "kill", "target": "ashSpitter", "name": "침 뱉는 것 사냥", "text": "침 뱉는 것 {goal}마리 처치", "base": 5, "perLevel": 0.35, "goldPer": 9, "expPer": 14 },
+    { "id": "huntCharger", "type": "kill", "target": "ashCharger", "name": "돌진하는 것 사냥", "text": "돌진하는 것 {goal}마리 처치", "base": 4, "perLevel": 0.3, "goldPer": 12, "expPer": 18 },
+    { "id": "gatherLump", "type": "collect", "target": "ashLump", "name": "재 덩어리 납품", "text": "재 덩어리 {goal}개 납품", "base": 6, "perLevel": 0.5, "goldPer": 9, "expPer": 8 }
+  ],
+  "goldLevelMul": 0.08,
+  "bookEvery": 3
+}
