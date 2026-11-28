@@ -434,6 +434,14 @@ try {
   console.log("spec:", JSON.stringify({ specBefore, specAfter }));
   await shot(page, "29-spec.png");
   await page.keyboard.press("Escape");
+  // 전문화 스킬 시전 확인: 3·4번 슬롯(교체된 스킬)을 쏴서 쿨다운/에러 없는지
+  const castRes = await page.evaluate(async () => {
+    const g = window.__game; g.player.resource = 999; const out = [];
+    for (const slot of [2, 3]) { g.cast(slot); await new Promise((r) => setTimeout(r, 120)); out.push(slot); }
+    return { cast: out, hp: g.player.hp };
+  });
+  console.log("spec cast:", JSON.stringify(castRes));
+  await page.waitForTimeout(600);
 
   // 의뢰 게시판: 경비대장 → 수락 → 처치 보고 → 완료
   await near("captain");
