@@ -1,14 +1,14 @@
 // 실시간 접속(M8-2a): 로그인 중이면 서버에 연결해 내 위치를 보내고, 다른 접속자를 보여 준다. 채팅 포함.
 // 전투/적은 아직 각자 클라이언트에서 돈다(서버는 위치·채팅 중계만). 서버가 없거나 로그아웃이면 아무것도 하지 않는다.
 import * as THREE from "three";
-import { $, player, scene, toast } from "./core";
+import { $, camera, player, scene, toast } from "./core";
 import { heightAt } from "../logic/terrain";
 import { beacons } from "./core";
 import { setLit } from "./beacons";
 import { reportQuest } from "./questflow";
 
 const COLORS: Record<string, string> = { vanguard: "#c0583a", tracker: "#5aa07a", igniter: "#ffb347", "": "#9aa3b2" };
-interface Remote { group: THREE.Group; tx: number; tz: number; try: number; name: string }
+interface Remote { group: THREE.Group; tx: number; tz: number; try: number; name: string; hp: number; bar: THREE.Mesh }
 const remotes = new Map<string, Remote>();
 let ws: WebSocket | null = null, me = "", wantOn = false, retry: number | undefined, posTimer: number | undefined;
 let auth = { token: "", base: "" };
@@ -24,7 +24,7 @@ function nameSprite(text: string): THREE.Sprite {
   sp.scale.set(2.6, 0.65, 1); sp.position.y = 2.3; sp.renderOrder = 10;
   return sp;
 }
-function makeRemote(p: { name: string; x: number; z: number; ry: number; cls: string }): Remote {
+function makeRemote(p: { name: string; x: number; z: number; ry: number; cls: string; hp?: number }): Remote {
   const group = new THREE.Group();
   const col = new THREE.Color(COLORS[p.cls] ?? COLORS[""]);
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.4, 0.8, 4, 8), new THREE.MeshStandardMaterial({ color: col, roughness: 0.8 }));
@@ -33,18 +33,20 @@ function makeRemote(p: { name: string; x: number; z: number; ry: number; cls: st
   head.position.y = 1.7;
   const nose = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.3), new THREE.MeshStandardMaterial({ color: col }));
   nose.position.set(0, 1.0, 0.42); // 바라보는 방향 표시
-  group.add(body, head, nose, nameSprite(p.name));
+  const bar = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.12), new THREE.MeshBasicMaterial({ color: "#d94a3a", depthTest: false, transparent: true }));
+  bar.position.set(0, 2.05, 0); bar.renderOrder = 11;
+  group.add(body, head, nose, nameSprite(p.name), bar);
   group.position.set(p.x, heightAt(p.x, p.z), p.z);
   group.rotation.y = p.ry;
   scene.add(group);
-  return { group, tx: p.x, tz: p.z, try: p.ry, name: p.name };
+  return { group, tx: p.x, tz: p.z, try: p.ry, name: p.name, hp: p.hp ?? 1, bar };
 }
 function applyPlayers(list: any[]) {
   for (const p of list) {
     if (p.name === me) continue;
     const r = remotes.get(p.name);
     if (!r) remotes.set(p.name, makeRemote(p));
-    else { r.tx = p.x; r.tz = p.z; r.try = p.ry; }
+    else { r.tx = p.x; r.tz = p.z; r.try = p.ry; r.hp = p.hp ?? 1; }
   }
 }
 function drop(name: string) {
@@ -144,6 +146,8 @@ export function updateRemotes(dt: number) {
     g.position.y = heightAt(g.position.x, g.position.z);
     let d = r.try - g.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
     g.rotation.y += d * k;
+    r.bar.scale.x = Math.max(0.02, r.hp); r.bar.position.x = -0.6 * (1 - r.hp);
+    r.bar.quaternion.copy(camera.quaternion).premultiply(g.quaternion.clone().invert()); // 막대가 늘 카메라를 보게
   }
 }
 export const onlineCount = () => (ws?.readyState === 1 ? remotes.size + 1 : 0);
