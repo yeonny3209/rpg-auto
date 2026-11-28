@@ -411,6 +411,111 @@
         "progress": "사당은 숲 안쪽 북동쪽이네. 어미는 땅을 치고 돌진하며, 화가 나면 더 빨라진다더군.",
         "done": "숲에 불이 돌아왔어... 자네는 정말 이 세계의 점화자일세. 다음 길은 내가 더 알아보겠네."
       }
+    },
+    {
+      "id": "main9",
+      "chapter": "3장 · 유리 사막",
+      "name": "사막으로 가는 길",
+      "giver": "priest",
+      "turnIn": "priest",
+      "requires": [
+        "main8"
+      ],
+      "objectives": [
+        {
+          "type": "beacon",
+          "target": "desertGate",
+          "count": 1,
+          "label": "사막 어귀 봉화 점화"
+        }
+      ],
+      "rewards": {
+        "exp": 1800,
+        "gold": 500
+      },
+      "text": {
+        "offer": "숲 너머에 빛이 반짝이는 땅이 있다네. 유리가 된 모래사막이지. 어귀에 봉화를 밝혀 길을 열어 주게.",
+        "progress": "숲의 동쪽 끝, 통로 너머 관문에 봉화가 있다네. 사막의 열기는 숲과 사뭇 다르니 조심하게.",
+        "done": "사막의 입구에 불이 들어왔군. 저 너머엔 훨씬 사나운 것들이 있을 걸세."
+      }
+    },
+    {
+      "id": "main10",
+      "chapter": "3장 · 유리 사막",
+      "name": "유리의 사냥꾼들",
+      "giver": "smith",
+      "turnIn": "smith",
+      "requires": [
+        "main9"
+      ],
+      "objectives": [
+        {
+          "type": "kill",
+          "target": "glassScuttler",
+          "count": 4,
+          "label": "유리 전갈 4마리 처치"
+        },
+        {
+          "type": "kill",
+          "target": "shardSpitter",
+          "count": 3,
+          "label": "파편 사수 3마리 처치"
+        },
+        {
+          "type": "kill",
+          "target": "duneRusher",
+          "count": 2,
+          "label": "모래 폭주자 2마리 처치"
+        }
+      ],
+      "rewards": {
+        "exp": 2600,
+        "gold": 600,
+        "item": {
+          "rarity": "epic"
+        }
+      },
+      "text": {
+        "offer": "사막의 유리 파편으로 만든 장비는 숲의 것보다 훨씬 날카롭지. 사냥해서 파편을 모아 오게. 전갈, 사수, 폭주자 순으로 다 잡아 봐.",
+        "progress": "전갈은 빠르고, 사수는 멀리서 쏘고, 폭주자는 일직선으로 들이받지. 각자 다르게 상대하게.",
+        "done": "좋은 파편이로군! 내 대장간에서 근사한 걸 만들어 주지."
+      }
+    },
+    {
+      "id": "main11",
+      "chapter": "3장 · 유리 사막",
+      "name": "유리 거상",
+      "giver": "priest",
+      "turnIn": "priest",
+      "requires": [
+        "main10"
+      ],
+      "objectives": [
+        {
+          "type": "beacon",
+          "target": "glassShrine",
+          "count": 1,
+          "label": "부서진 유리 사당 봉화 점화"
+        },
+        {
+          "type": "kill",
+          "target": "glassColossus",
+          "count": 1,
+          "label": "유리 거상 처치"
+        }
+      ],
+      "rewards": {
+        "exp": 4200,
+        "gold": 1200,
+        "item": {
+          "rarity": "legendary"
+        }
+      },
+      "text": {
+        "offer": "사막 한가운데 부서진 사당에 대봉화가 있고, 유리 거상이 그곳을 지키고 있네. 가장 단단한 적이야. 준비를 철저히 하게.",
+        "progress": "거상은 땅을 내려치고, 돌진을 몰아치고, 파편을 흩뿌리네. 화가 나면 돌진이 세 번 이어진다더군.",
+        "done": "사막에도 불이 돌아왔어. 자네는 이 땅의 진정한 점화자일세. 다음 길은 북쪽 얼어붙은 성채 쪽이 되겠지."
+      }
     }
   ]
 }

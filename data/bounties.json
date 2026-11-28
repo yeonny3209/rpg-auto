@@ -103,6 +103,42 @@
       "goldPer": 20,
       "expPer": 14,
       "minLevel": 6
+    },
+    {
+      "id": "huntScuttler",
+      "type": "kill",
+      "target": "glassScuttler",
+      "name": "유리 전갈 소탕",
+      "text": "유리 전갈 {goal}마리 처치",
+      "base": 5,
+      "perLevel": 0.3,
+      "goldPer": 24,
+      "expPer": 40,
+      "minLevel": 12
+    },
+    {
+      "id": "huntShard",
+      "type": "kill",
+      "target": "shardSpitter",
+      "name": "파편 사수 사냥",
+      "text": "파편 사수 {goal}마리 처치",
+      "base": 4,
+      "perLevel": 0.25,
+      "goldPer": 30,
+      "expPer": 50,
+      "minLevel": 12
+    },
+    {
+      "id": "gatherShard",
+      "type": "collect",
+      "target": "glassShard",
+      "name": "유리 파편 납품",
+      "text": "유리 파편 {goal}개 납품",
+      "base": 4,
+      "perLevel": 0.3,
+      "goldPer": 34,
+      "expPer": 28,
+      "minLevel": 12
     }
   ],
   "goldLevelMul": 0.08,

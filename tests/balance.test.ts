@@ -91,3 +91,21 @@ describe("지역 2(가라앉은 숲) 난이도", () => {
     expect(avg(FOREST, (e) => (e.gold[0] + e.gold[1]) / 2)).toBeGreaterThan(avg(FIELD, (e) => (e.gold[0] + e.gold[1]) / 2));
   });
 });
+
+describe("지역 3(유리 사막) 난이도", () => {
+  const DESERT = ["glassScuttler", "shardSpitter", "duneRusher"];
+  it("레벨 15 기준 일반 적 처치가 90초를 넘지 않고, 보스는 레벨 18에서 평타만으로 8분 안에 잡힌다", () => {
+    const rows = DESERT.map((k) => ({ k, t: CLASS_IDS.map((id) => Math.round(secondsToKill(id, 15, E[k]))) }));
+    const boss = CLASS_IDS.map((id) => Math.round(secondsToKill(id, 18, E.glassColossus)));
+    console.log("desert ttk:", JSON.stringify({ rows, boss }));
+    for (const r of rows) for (const t of r.t) expect(t).toBeLessThan(90);
+    for (const t of boss) expect(t).toBeLessThan(480);
+  });
+  it("사막 적 한 마리가 주는 경험치로 한 레벨(15→16)에 20~150마리가 필요하다", () => {
+    const w = DESERT.map((k) => E[k].spawnWeight), sum = w.reduce((a, b) => a + b, 0);
+    const kills = expToNext(15) / DESERT.reduce((s, k, i) => s + E[k].exp * (w[i] / sum), 0);
+    console.log("desert kills per level 15:", Math.round(kills));
+    expect(kills).toBeGreaterThan(20);
+    expect(kills).toBeLessThan(150);
+  });
+});

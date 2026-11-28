@@ -125,7 +125,7 @@ export function updateHud() {
     (el.querySelector(".cd") as HTMLElement).style.height = `${(player.sk.cds[i] / sk.cooldown) * 100}%`;
   });
   $("potions").textContent = `${player.bag.potion ?? 0}` + (player.potionCd > 0 ? ` (${player.potionCd.toFixed(0)}s)` : "");
-  $("matTag").textContent = `· 재 ${player.bag.ashLump ?? 0}` + (player.bag.emberCore ? ` · 핵 ${player.bag.emberCore}` : "") + (player.bag.mireSap ? ` · 수액 ${player.bag.mireSap}` : "");
+  $("matTag").textContent = `· 재 ${player.bag.ashLump ?? 0}` + (player.bag.emberCore ? ` · 핵 ${player.bag.emberCore}` : "") + (player.bag.mireSap ? ` · 수액 ${player.bag.mireSap}` : "") + (player.bag.glassShard ? ` · 파편 ${player.bag.glassShard}` : "");
   const bt = $("buffTag");
   bt.style.display = player.buff.t > 0 ? "block" : "none";
   if (player.buff.t > 0) bt.textContent = `🔥 강화 ${player.buff.t.toFixed(1)}s`;
