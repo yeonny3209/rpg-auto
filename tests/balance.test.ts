@@ -67,3 +67,27 @@ describe("레벨업 페이스", () => {
     expect(E.boarKing.exp).toBeGreaterThan(expToNext(5) * 0.5);
   });
 });
+
+describe("지역 2(가라앉은 숲) 난이도", () => {
+  const FOREST = ["mireLeech", "sporeCaster", "bogBrute"];
+  it("레벨 10 기준 일반 적 처치가 60초를 넘지 않고, 보스는 레벨 12에서 평타만으로 5분 안에 잡힌다", () => {
+    const rows = FOREST.map((k) => ({ k, t: CLASS_IDS.map((id) => Math.round(secondsToKill(id, 10, E[k]))) }));
+    const boss = CLASS_IDS.map((id) => Math.round(secondsToKill(id, 12, E.mireMother)));
+    console.log("forest ttk:", JSON.stringify({ rows, boss }));
+    for (const r of rows) for (const t of r.t) expect(t).toBeLessThan(60);
+    for (const t of boss) expect(t).toBeLessThan(300);
+  });
+  it("숲 적 한 마리가 주는 경험치로 한 레벨(10→11)에 20~120마리가 필요하다", () => {
+    const w = FOREST.map((k) => E[k].spawnWeight), sum = w.reduce((a, b) => a + b, 0);
+    const avg = FOREST.reduce((s, k, i) => s + E[k].exp * (w[i] / sum), 0);
+    const kills = expToNext(10) / avg;
+    console.log("forest kills per level 10:", Math.round(kills));
+    expect(kills).toBeGreaterThan(20);
+    expect(kills).toBeLessThan(120);
+  });
+  it("숲 적은 초원 적보다 평균 경험치·골드 보상이 크다", () => {
+    const avg = (ids: string[], f: (e: any) => number) => ids.reduce((s, k) => s + f(E[k]), 0) / ids.length;
+    expect(avg(FOREST, (e) => e.exp)).toBeGreaterThan(avg(FIELD, (e) => e.exp));
+    expect(avg(FOREST, (e) => (e.gold[0] + e.gold[1]) / 2)).toBeGreaterThan(avg(FIELD, (e) => (e.gold[0] + e.gold[1]) / 2));
+  });
+});
