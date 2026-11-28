@@ -135,10 +135,15 @@ export function applyDerived(fullHeal: boolean) {
 
 // ---------- 저장/불러오기 ----------
 export const SAVE_KEY = "emberlands.save";
+export const savedHooks: ((raw: string) => void)[] = []; // 저장될 때마다 호출(온라인 계정이 서버로 올림)
+export const saveGuard = { locked: false }; // 계정 전환 중에는 저장을 막는다(서버 세이브를 덮어쓰지 않게)
 export function saveGame() {
+  if (saveGuard.locked) return;
   try {
-    localStorage.setItem(SAVE_KEY, serialize({ level: player.lv.level, exp: player.lv.exp, statPoints: player.lv.statPoints, attrs: player.attrs, gold: player.gold, inventory: player.inventory, equipment: player.equipment,
-      embers: player.embers, litBeacons: beacons.filter((b) => b.lit).map((b) => b.def.id), respawnBeacon: player.respawnBeacon, trace: player.trace, classId: player.cls, quests: player.quests, bag: player.bag, skillLv: player.skillLv, spec: player.spec, bounty: player.bounty }));
+    const raw = serialize({ level: player.lv.level, exp: player.lv.exp, statPoints: player.lv.statPoints, attrs: player.attrs, gold: player.gold, inventory: player.inventory, equipment: player.equipment,
+      embers: player.embers, litBeacons: beacons.filter((b) => b.lit).map((b) => b.def.id), respawnBeacon: player.respawnBeacon, trace: player.trace, classId: player.cls, quests: player.quests, bag: player.bag, skillLv: player.skillLv, spec: player.spec, bounty: player.bounty });
+    localStorage.setItem(SAVE_KEY, raw);
+    for (const h of savedHooks) h(raw);
   } catch { /* 저장 불가 환경(시크릿 모드 등)은 무시 */ }
 }
 export function loadGame(): boolean {

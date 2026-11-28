@@ -6,8 +6,9 @@ import { interact } from "./sanctuary";
 import { dialogOpen, dialogPrimary, closeDialog, openTravel } from "./dialog";
 import { toggleCharPanel, toggleInvPanel } from "./panels";
 
-const selecting = () => $("classSelect").classList.contains("open") || dialogOpen();
+const selecting = () => $("classSelect").classList.contains("open") || dialogOpen() || !!document.getElementById("acctModal")?.classList.contains("open");
 addEventListener("keydown", (e) => {
+  if ((e.target as HTMLElement | null)?.tagName === "INPUT") return; // 로그인 창에 글자를 칠 때는 게임 키를 무시
   if (dialogOpen()) {
     if (["KeyF", "Enter", "Space"].includes(e.code)) { e.preventDefault(); dialogPrimary(); }
     if (e.code === "Escape") closeDialog();

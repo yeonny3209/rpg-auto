@@ -15,6 +15,7 @@ import "./game/hud";
 import "./game/panels";
 import "./game/classSelect";
 import "./game/dialog";
+import "./game/account";
 import { tutorialState } from "./game/tutorial";
 import { updateNpcs, npcs } from "./game/npcs";
 import { renderQuestLog } from "./game/questflow";
