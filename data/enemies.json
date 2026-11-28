@@ -220,5 +220,34 @@
     "size": 1.15,
     "dropChance": 0.7,
     "embers": 26
+  },
+  "mireMother": {
+    "name": "늪의 어미",
+    "ai": "boss",
+    "spawnWeight": 0,
+    "level": 12,
+    "hp": 1900,
+    "atk": 38,
+    "def": 14,
+    "exp": 1100,
+    "gold": [
+      200,
+      320
+    ],
+    "poise": 420,
+    "moveSpeed": 3.2,
+    "aggroRange": 16,
+    "attackRange": 4.5,
+    "attackCooldown": 1.4,
+    "windup": 0.8,
+    "recover": 0.9,
+    "color": "#2c3b2a",
+    "eyeColor": "#c8ff4a",
+    "size": 2.3,
+    "dropChance": 1,
+    "embers": 380,
+    "projectileSpeed": 10,
+    "chargeSpeed": 16,
+    "chargeTime": 0.7
   }
 }

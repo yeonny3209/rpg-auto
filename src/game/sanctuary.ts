@@ -1,3 +1,4 @@
+import { regionAt } from "../logic/regions";
 import * as THREE from "three";
 import { heightAt } from "../logic/terrain";
 import { setLit, type Beacon } from "./beacons";
@@ -40,8 +41,10 @@ export function interact() {
     fx.addShake(0.4);
     sfx.ignite();
     if (r.levelsGained > 0) onLevelUp();
-    const left = beacons.filter((x) => !x.lit).length;
-    if (left === 0) setTimeout(() => toast(`${wdata.zoneName}의 봉화를 모두 밝혔다!`), 1800);
+    // 지역별로 판정: 같은 지역의 봉화를 모두 밝혔을 때
+    const rg = regionAt(b.pos.x, b.pos.z);
+    const inRegion = beacons.filter((x) => regionAt(x.pos.x, x.pos.z).id === rg.id);
+    if (inRegion.every((x) => x.lit)) setTimeout(() => toast(`${rg.name}의 봉화를 모두 밝혔다!`), 1800);
   } else {
     player.respawnBeacon = b.def.id;
     player.hp = player.maxHp;

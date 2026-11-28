@@ -1,3 +1,4 @@
+import { walkable } from "../src/logic/regions";
 import { describe, it, expect } from "vitest";
 import { phaseOf, patternParams, nextPattern, fanAngles, inSlam, cooldownFor, bossCfg } from "../src/logic/boss";
 import enemies from "../data/enemies.json";
@@ -63,7 +64,7 @@ describe("페이즈·패턴", () => {
   });
   it("홈이 월드 안, 이탈 한계는 양수", () => {
     const c = bossCfg("boarKing");
-    expect(Math.hypot(c.home.x, c.home.z)).toBeLessThan(60);
+    expect(walkable(c.home.x, c.home.z), "boarKing home").toBe(true);
     expect(c.leash).toBeGreaterThan(10);
   });
 });
@@ -80,7 +81,7 @@ describe("모든 보스 공통 규칙 (미니보스 포함)", () => {
       expect(e.ai).toBe("boss");
       expect(e.spawnWeight).toBe(0);
       const c = bossCfg(id);
-      expect(Math.hypot(c.home.x, c.home.z)).toBeLessThan(60);
+      expect(walkable(c.home.x, c.home.z), `${id} home`).toBe(true);
       expect(Object.keys(c.patterns).length).toBeGreaterThanOrEqual(2);
       for (const ph of [1, 2] as const) {
         for (const p of Object.keys(c.patterns) as any[]) expect(patternParams(id, p, ph).windup).toBeGreaterThanOrEqual(0.5);

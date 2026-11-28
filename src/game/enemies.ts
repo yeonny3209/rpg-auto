@@ -11,7 +11,7 @@ import { makePoise, tickPoise, isStaggered, type Poise } from "../logic/poise";
 import { weightedPick } from "../logic/spawn";
 import { playerInvulnerable, DC, PC, camera, floater, fx, player, scene, world } from "./core";
 import { hurtPlayer } from "./player";
-import { bossCfg, phaseOf, patternParams, nextPattern, cooldownFor, fanAngles, inSlam, type PatternId, type Phase, type BossId } from "../logic/boss";
+import { BOSS_IDS, bossCfg, phaseOf, patternParams, nextPattern, cooldownFor, fanAngles, inSlam, type PatternId, type Phase, type BossId } from "../logic/boss";
 
 // ---------- 적 ----------
 export type EnemyId = keyof typeof enemyData;
@@ -81,7 +81,7 @@ export function respawn(e: Enemy) {
 }
 for (const rg of REGIONS) for (let i = 0; i < rg.count; i++) createEnemy(weightedPick(weightsOf(rg.id), Math.random()), spawnPoint(rg.id));
 // 지역 보스: 정해진 자리에서 기다린다
-for (const id of ["boarKing", "cinderWarden"] as const) { const h = bossCfg(id).home; createEnemy(id, new THREE.Vector3(h.x, 0, h.z)); }
+for (const id of BOSS_IDS) { const h = bossCfg(id).home; createEnemy(id, new THREE.Vector3(h.x, 0, h.z)); }
 // 첫 전투가 쉽도록 마을에서 조금 떨어진 곳(약 14m)에 약한 적 둘
 createEnemy("ashCrawler", new THREE.Vector3(10, 0, 11));
 createEnemy("ashCrawler", new THREE.Vector3(-9, 0, 12));

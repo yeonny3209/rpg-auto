@@ -487,8 +487,9 @@ try {
   const out = await page.evaluate(async () => {
     const g = window.__game; g.player.pos.set(0, 0, 400); await new Promise((r) => setTimeout(r, 300));
     const lim = { x: Math.round(g.player.pos.x), z: Math.round(g.player.pos.z) };
-    const forestIds = g.enemies.filter((e) => e.pos.x > 100).map((e) => e.id);
-    return { lim, forest: forestIds.length, kinds: [...new Set(forestIds)] };
+    const forestIds = g.enemies.filter((e) => e.pos.x > 100 && !e.boss).map((e) => e.id);
+    const mm = g.enemies.find((e) => e.id === "mireMother");
+    return { lim, forest: forestIds.length, kinds: [...new Set(forestIds)], boss: mm && { hp: mm.hp, x: Math.round(mm.pos.x), z: Math.round(mm.pos.z) } };
   });
   await page.evaluate(() => { const g = window.__game; g.player.hp = g.player.maxHp = 900; g.enemies.forEach((e) => (e.attackCd = 99)); g.player.pos.set(125, 0, -6); });
   await page.waitForTimeout(3500);
