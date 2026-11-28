@@ -306,6 +306,111 @@
         "progress": "아직이야? 북쪽 폐허, 돌진 전에 땅을 꾹 누르는 거 조심하고.",
         "done": "해냈군! 이 정도면 쓸 만한 장비를 만들 재료가 되겠어."
       }
+    },
+    {
+      "id": "main6",
+      "chapter": "2장 · 가라앉은 숲",
+      "name": "숲으로 가는 길",
+      "giver": "priest",
+      "turnIn": "priest",
+      "requires": [
+        "main5"
+      ],
+      "objectives": [
+        {
+          "type": "beacon",
+          "target": "bridgeLamp",
+          "count": 1,
+          "label": "숲 어귀 봉화 점화"
+        }
+      ],
+      "rewards": {
+        "exp": 700,
+        "gold": 200
+      },
+      "text": {
+        "offer": "멧돼지왕이 쓰러지고 동쪽 길이 열렸네. 그 너머엔 가라앉은 숲이 있지. 어귀의 봉화부터 밝혀 주게. 다리를 건너면 그곳은 어둠이 훨씬 짙다네.",
+        "progress": "숲 어귀 봉화는 동쪽 끝, 길이 좁아지는 곳에 있네. 어둠에 서두르지 말게.",
+        "done": "저 멀리 숲 어귀가 환해졌군! 이제 숲으로 들어갈 수 있겠어."
+      }
+    },
+    {
+      "id": "main7",
+      "chapter": "2장 · 가라앉은 숲",
+      "name": "숲의 사냥꾼들",
+      "giver": "smith",
+      "turnIn": "smith",
+      "requires": [
+        "main6"
+      ],
+      "objectives": [
+        {
+          "type": "kill",
+          "target": "mireLeech",
+          "count": 8,
+          "label": "늪거머리 처치"
+        },
+        {
+          "type": "kill",
+          "target": "sporeCaster",
+          "count": 4,
+          "label": "포자 던지는 것 처치"
+        },
+        {
+          "type": "kill",
+          "target": "bogBrute",
+          "count": 2,
+          "label": "늪 몰이꾼 처치"
+        }
+      ],
+      "rewards": {
+        "exp": 1100,
+        "gold": 350,
+        "item": {
+          "rarity": "epic"
+        }
+      },
+      "text": {
+        "offer": "숲 놈들은 초원 것들과 달라. 거머리는 빠르고, 포자는 멀리서 쏘고, 몰이꾼은 한 방이 무겁지. 세 종류를 솎아 오면 그 재로 쓸 만한 걸 만들어 주지.",
+        "progress": "아직 숲이 시끄럽던데. 몰이꾼은 달려오기 전에 발을 구르니 그때 비켜라.",
+        "done": "좋아, 이 정도면 숲에서도 버틸 몸이군. 이건 약속한 값이야."
+      }
+    },
+    {
+      "id": "main8",
+      "chapter": "2장 · 가라앉은 숲",
+      "name": "늪의 어미",
+      "giver": "priest",
+      "turnIn": "priest",
+      "requires": [
+        "main7"
+      ],
+      "objectives": [
+        {
+          "type": "beacon",
+          "target": "sunkenShrine",
+          "count": 1,
+          "label": "가라앉은 사당 봉화 점화"
+        },
+        {
+          "type": "kill",
+          "target": "mireMother",
+          "count": 1,
+          "label": "늪의 어미 처치"
+        }
+      ],
+      "rewards": {
+        "exp": 2400,
+        "gold": 700,
+        "item": {
+          "rarity": "legendary"
+        }
+      },
+      "text": {
+        "offer": "숲의 중심, 가라앉은 사당에 대봉화가 있네. 그리고 그 곁을 늪의 어미가 지키고 있지. 둘 다 해내면 숲은 다시 숨을 쉴 걸세.",
+        "progress": "사당은 숲 안쪽 북동쪽이네. 어미는 땅을 치고 돌진하며, 화가 나면 더 빨라진다더군.",
+        "done": "숲에 불이 돌아왔어... 자네는 정말 이 세계의 점화자일세. 다음 길은 내가 더 알아보겠네."
+      }
     }
   ]
 }
