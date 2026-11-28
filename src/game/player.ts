@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { heightAt } from "../logic/terrain";
 import prog from "../../data/progression.json";
 import combatCfg from "../../data/combat.json";
-import { WORLD_RADIUS } from "./world";
+import { clampWalkable } from "../logic/regions";
 import { onDeath } from "../logic/embers";
 import { sfx } from "./sfx";
 import { scaledList } from "../logic/skillLevel";
@@ -331,8 +331,7 @@ export function updatePlayer(dt: number) {
   }
   if (cam.target) faceTarget();
   resolveCircle(player.pos, PLAYER_RADIUS, world.obstacles);
-  const lim = WORLD_RADIUS + 8;
-  if (player.pos.length() > lim) player.pos.setLength(lim);
+  { const c = clampWalkable(player.pos.x, player.pos.z); player.pos.x = c.x; player.pos.z = c.z; }
 
   // 검 애니메이션
   if (player.charging) {

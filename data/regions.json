@@ -1,0 +1,11 @@
+{
+  "regions": [
+    { "id": "ashenPlains", "name": "잿빛 초원", "x": 0, "z": 0, "r": 68,
+      "enemies": ["ashCrawler", "ashSpitter", "ashCharger"], "count": 14,
+      "ground": ["#5a6150", "#706a56", "#8a8a78"], "fog": "#1a2230" },
+    { "id": "sunkenForest", "name": "가라앉은 숲", "x": 170, "z": 0, "r": 62,
+      "enemies": ["mireLeech", "sporeCaster", "bogBrute"], "count": 12,
+      "ground": ["#3d6350", "#4a7058", "#73966f"], "fog": "#12241f" }
+  ],
+  "bridge": { "from": "ashenPlains", "to": "sunkenForest", "halfWidth": 8 }
+}

@@ -483,6 +483,20 @@ try {
   await shot(page, "24-darkness.png");
   await page.evaluate(() => window.__game.player.pos.set(0, 0, 3));
 
+  // 지역 2: 이동 제한, 지역별 적, 숲 분위기
+  const out = await page.evaluate(async () => {
+    const g = window.__game; g.player.pos.set(0, 0, 400); await new Promise((r) => setTimeout(r, 300));
+    const lim = { x: Math.round(g.player.pos.x), z: Math.round(g.player.pos.z) };
+    const forestIds = g.enemies.filter((e) => e.pos.x > 100).map((e) => e.id);
+    return { lim, forest: forestIds.length, kinds: [...new Set(forestIds)] };
+  });
+  await page.evaluate(() => { const g = window.__game; g.player.hp = g.player.maxHp = 900; g.enemies.forEach((e) => (e.attackCd = 99)); g.player.pos.set(125, 0, -6); });
+  await page.waitForTimeout(3500);
+  const forestInfo = await page.evaluate(() => ({ zone: document.getElementById("zoneTag").textContent, fog: window.__game.scene.fog.color.getHexString(), pos: [Math.round(window.__game.player.pos.x), Math.round(window.__game.player.pos.z)] }));
+  console.log("forest:", JSON.stringify({ out, forestInfo }));
+  await shot(page, "31-forest.png");
+  await page.evaluate(() => window.__game.player.pos.set(0, 0, 3));
+
   const state = await page.evaluate(() => {
     const g = window.__game, p = g.player;
     const ch = g.enemies.find((e) => e.id === "ashCharger" && e.hp < e.def.hp);

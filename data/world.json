@@ -37,6 +37,21 @@
       "x": 35,
       "z": -12,
       "litAtStart": false
+    },
+    {
+      "id": "bridgeLamp",
+      "name": "숲 어귀 봉화",
+      "x": 105,
+      "z": 0,
+      "litAtStart": false
+    },
+    {
+      "id": "sunkenShrine",
+      "name": "가라앉은 사당 봉화",
+      "x": 172,
+      "z": 26,
+      "litAtStart": false,
+      "major": true
     }
   ],
   "beacon": {

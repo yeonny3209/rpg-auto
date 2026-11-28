@@ -7,6 +7,7 @@ import { rarityOf } from "../logic/items";
 import { $, BC, HC, beacons, cam, camera, env, floaters, player, scene, ui } from "./core";
 import * as THREE from "three";
 import { darknessAt, fogFarAt } from "../logic/darkness";
+import { regionAt } from "../logic/regions";
 import { enemies } from "./enemies";
 import { nearBeacon } from "./sanctuary";
 import { loots } from "./loot";
@@ -81,11 +82,20 @@ function syncSkillBar() {
   const list = scaledList(base, player.skillLv);
   $("skillbar").innerHTML = list.map((sk, i) => { const lv = levelOf(player.skillLv, sk.id); return `<div class="skill" data-i="${i}" style="--c:${sk.color}" title="${sk.desc}"><span class="k">${i + 1}</span><span class="n">${sk.name}</span>${lv > 1 ? `<span class="lv">Lv${lv}</span>` : ""}<span class="c">${sk.cost}</span><div class="cd"></div></div>`; }).join("");
 }
+const fogTarget = new THREE.Color();
+let regionNow = "";
 export function updateDarkness(dt: number) {
   const lit = beacons.filter((b) => b.lit).map((b) => b.def);
   const target = darknessAt(player.pos.x, player.pos.z, lit);
   env.dark += (target - env.dark) * Math.min(1, dt * 2); // 부드럽게 변화
   if (scene.fog instanceof THREE.Fog) scene.fog.far = fogFarAt(env.dark);
+  { // 지역 분위기: 안개·배경색이 지역 색으로 천천히 바뀐다
+    const rg = regionAt(player.pos.x, player.pos.z);
+    fogTarget.set(rg.fog);
+    if (scene.fog instanceof THREE.Fog) scene.fog.color.lerp(fogTarget, Math.min(1, dt * 1.5));
+    if (scene.background instanceof THREE.Color) scene.background.lerp(fogTarget, Math.min(1, dt * 1.5));
+    if (rg.name !== regionNow) { regionNow = rg.name; $("zoneTag").textContent = rg.name; }
+  }
   $("darkTag").style.opacity = String(Math.min(1, env.dark * 1.5));
   $("darkTag").textContent = env.dark > 0.15 ? `어둠 ${Math.round(env.dark * 100)}% · 받는 피해 +${Math.round(env.dark * 35)}%` : "";
 }

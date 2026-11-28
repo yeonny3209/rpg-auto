@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { heightAt } from "../logic/terrain";
 import enemyData from "../../data/enemies.json";
-import { WORLD_RADIUS } from "./world";
+import { REGIONS, regionAt, regionById, pointInRegion, walkable, clampWalkable, weightsFor } from "../logic/regions";
 import { makeEnemyMesh } from "./actors";
 import { sfx } from "./sfx";
 import { computeDamage } from "../logic/combat";
@@ -33,17 +33,17 @@ export interface Enemy {
   chargeDir: THREE.Vector3;
   hitPlayer: boolean;
   hpBar: THREE.Mesh;
+  home: THREE.Vector3; // 태어난 곳(재생성 지역 판정용)
   boss?: BossRt;
 }
 export interface BossRt { pattern: PatternId | null; prev: PatternId | null; combo: number; phase: Phase; home: THREE.Vector3; ring: THREE.Mesh; locked: boolean }
 export const enemies: Enemy[] = [];
 export const ENEMY_COUNT = 14;
-export const weights = Object.fromEntries(Object.entries(enemyData).map(([k, v]) => [k, v.spawnWeight])) as Record<EnemyId, number>;
+export const weightsOf = (region: string) => weightsFor(region, enemyData as any) as Record<EnemyId, number>;
 
-export function spawnPoint(): THREE.Vector3 {
-  const r = 12 + Math.random() * (WORLD_RADIUS - 14);
-  const th = Math.random() * Math.PI * 2;
-  return new THREE.Vector3(Math.cos(th) * r, 0, Math.sin(th) * r);
+export function spawnPoint(region = "ashenPlains"): THREE.Vector3 {
+  const pt = pointInRegion(regionById(region), Math.random, 12, 4);
+  return new THREE.Vector3(pt.x, 0, pt.z);
 }
 
 export const hpBarGeo = new THREE.PlaneGeometry(1, 0.09);
@@ -57,7 +57,7 @@ export function createEnemy(id: EnemyId, pos: THREE.Vector3): Enemy {
   scene.add(mesh.root, hpBar);
   const e: Enemy = {
     id, def, mesh, pos: pos.clone(), hp: def.hp, poise: makePoise({ ...PC, max: def.poise }), state: "wander", t: 0,
-    wanderDir: Math.random() * 6.28, attackCd: 0, flashT: 0, respawnT: 0, chargeDir: new THREE.Vector3(), hitPlayer: false, hpBar,
+    wanderDir: Math.random() * 6.28, attackCd: 0, flashT: 0, respawnT: 0, chargeDir: new THREE.Vector3(), hitPlayer: false, hpBar, home: pos.clone(),
   };
   if (def.ai === "boss") {
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 56), new THREE.MeshBasicMaterial({ color: "#ff3a1a", transparent: true, opacity: 0.4, side: THREE.DoubleSide, depthWrite: false }));
@@ -72,14 +72,14 @@ export function createEnemy(id: EnemyId, pos: THREE.Vector3): Enemy {
 }
 export function respawn(e: Enemy) {
   if (e.boss) { resetBoss(e); e.mesh.root.visible = true; e.mesh.root.scale.setScalar(1); return; }
-  e.pos.copy(spawnPoint());
+  e.pos.copy(spawnPoint(regionAt(e.home.x, e.home.z).id));
   e.hp = e.def.hp;
   e.poise = makePoise({ ...PC, max: e.def.poise });
   e.state = "wander";
   e.mesh.root.visible = true;
   e.mesh.root.scale.setScalar(1);
 }
-for (let i = 0; i < ENEMY_COUNT; i++) createEnemy(weightedPick(weights, Math.random()), spawnPoint());
+for (const rg of REGIONS) for (let i = 0; i < rg.count; i++) createEnemy(weightedPick(weightsOf(rg.id), Math.random()), spawnPoint(rg.id));
 // 지역 보스: 정해진 자리에서 기다린다
 for (const id of ["boarKing", "cinderWarden"] as const) { const h = bossCfg(id).home; createEnemy(id, new THREE.Vector3(h.x, 0, h.z)); }
 // 첫 전투가 쉽도록 마을에서 조금 떨어진 곳(약 14m)에 약한 적 둘
@@ -298,7 +298,7 @@ export function updateEnemies(dt: number) {
         if (Math.random() < dt * 0.4) e.wanderDir = Math.random() * 6.28;
         e.pos.x += Math.sin(e.wanderDir) * e.def.moveSpeed * 0.3 * dt;
         e.pos.z += Math.cos(e.wanderDir) * e.def.moveSpeed * 0.3 * dt;
-        if (e.pos.length() > WORLD_RADIUS) e.wanderDir = Math.atan2(-e.pos.x, -e.pos.z);
+        if (!walkable(e.pos.x, e.pos.z)) { const rg = regionAt(e.pos.x, e.pos.z); e.wanderDir = Math.atan2(rg.x - e.pos.x, rg.z - e.pos.z); }
         if (!player.dead && dist < e.def.aggroRange) e.state = "chase";
         yaw = e.wanderDir;
         break;
@@ -395,6 +395,7 @@ export function updateEnemies(dt: number) {
     }
   }
   for (const e of enemies) if (e.state !== "dead" && e.state !== "attack") resolveCircle(e.pos, e.def.size * 0.8, world.obstacles);
+  for (const e of enemies) if (!e.boss && !walkable(e.pos.x, e.pos.z)) { const c = clampWalkable(e.pos.x, e.pos.z); e.pos.x = c.x; e.pos.z = c.z; }
   // 적끼리 겹침 방지
   for (let i = 0; i < enemies.length; i++)
     for (let j = i + 1; j < enemies.length; j++) {

@@ -2,6 +2,8 @@ import * as THREE from "three";
 import type { Circle } from "../logic/collision";
 import { heightAt } from "../logic/terrain";
 import { scatterSpots, SCATTER } from "../logic/scatter";
+import { REGIONS, regionAt, regionById, pointInRegion } from "../logic/regions";
+import wdata from "../../data/world.json";
 
 /** 결정론적 난수 (월드 배치 재현용) */
 export function mulberry32(seed: number) {
@@ -39,16 +41,21 @@ export function buildWorld(scene: THREE.Scene): World {
   scene.add(moon);
 
   // 잿빛 초원 바닥: 높이 지도(heightAt)로 굴곡을 주고, 정점 색은 얼룩 + 높이에 따라 살짝 밝게
-  const SIZE = (WORLD_RADIUS + 30) * 2;
-  const groundGeo = new THREE.PlaneGeometry(SIZE, SIZE, 150, 150);
+  // 두 지역과 통로를 한 장의 바닥으로 덮는다(가로로 긴 판). 정점 색은 가까운 지역의 팔레트.
+  const minX = Math.min(...REGIONS.map((r) => r.x - r.r)) - 30, maxX = Math.max(...REGIONS.map((r) => r.x + r.r)) + 30;
+  const minZ = Math.min(...REGIONS.map((r) => r.z - r.r)) - 30, maxZ = Math.max(...REGIONS.map((r) => r.z + r.r)) + 30;
+  const gw = maxX - minX, gh = maxZ - minZ;
+  const groundGeo = new THREE.PlaneGeometry(gw, gh, Math.round(gw / 1.2), Math.round(gh / 1.2));
   groundGeo.rotateX(-Math.PI / 2);
+  groundGeo.translate((minX + maxX) / 2, 0, (minZ + maxZ) / 2);
   const rng = mulberry32(7);
   const colors: number[] = [];
   const pos = groundGeo.attributes.position;
-  const a = new THREE.Color("#5a6150"), b = new THREE.Color("#706a56"), hi = new THREE.Color("#8a8a78"), tmp = new THREE.Color();
+  const tmp = new THREE.Color(), pal = new Map(REGIONS.map((r) => [r.id, r.ground.map((c) => new THREE.Color(c))]));
   for (let i = 0; i < pos.count; i++) {
-    const h = heightAt(pos.getX(i), pos.getZ(i));
+    const x = pos.getX(i), z = pos.getZ(i), h = heightAt(x, z);
     pos.setY(i, h);
+    const [a, b, hi] = pal.get(regionAt(x, z).id)!;
     tmp.copy(a).lerp(b, rng()).lerp(hi, Math.max(0, h) * 0.12);
     colors.push(tmp.r, tmp.g, tmp.b);
   }
@@ -72,6 +79,36 @@ export function buildWorld(scene: THREE.Scene): World {
     grass.setMatrixAt(i, m.compose(p, q, s));
   }
   scene.add(grass);
+
+  // 가라앉은 숲: 낮은 덤불(초록)과 키 큰 나무를 지역 안에 흩뿌린다. 봉화·통로 입구 근처는 비운다.
+  const forest = regionById("sunkenForest");
+  const frng = mulberry32(31);
+  const bushGeo = new THREE.ConeGeometry(0.25, 0.9, 5);
+  bushGeo.translate(0, 0.45, 0);
+  const bush = new THREE.InstancedMesh(bushGeo, new THREE.MeshStandardMaterial({ color: "#3f6a4a", roughness: 1 }), 1500);
+  for (let i = 0; i < bush.count; i++) {
+    const pt = pointInRegion(forest, frng, 2, 1);
+    const k = 0.7 + frng() * 1.1;
+    bush.setMatrixAt(i, m.compose(p.set(pt.x, heightAt(pt.x, pt.z), pt.z), q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), frng() * 6.28), s.set(k, k * (0.7 + frng() * 0.9), k)));
+  }
+  scene.add(bush);
+  const clearR = (x: number, z: number) => wdata.beacons.some((b) => Math.hypot(b.x - x, b.z - z) < 7) || Math.hypot(x - (forest.x - forest.r), z) < 10;
+  const treeCount = 70;
+  const fTrunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.18, 0.34, 1, 6).translate(0, 0.5, 0), new THREE.MeshStandardMaterial({ color: "#4a3a2c", roughness: 1, flatShading: true }), treeCount);
+  const fCrown = new THREE.InstancedMesh(new THREE.ConeGeometry(1.1, 3.2, 7).translate(0, 1.6, 0), new THREE.MeshStandardMaterial({ color: "#25402f", roughness: 1, flatShading: true }), treeCount);
+  let placed = 0;
+  for (let tries = 0; placed < treeCount && tries < treeCount * 30; tries++) {
+    const pt = pointInRegion(forest, frng, 8, 3);
+    if (clearR(pt.x, pt.z)) continue;
+    const h = 3 + frng() * 2.5, y = heightAt(pt.x, pt.z), k = 0.8 + frng() * 0.6;
+    fTrunk.setMatrixAt(placed, m.compose(p.set(pt.x, y, pt.z), q.identity(), s.set(1, h, 1)));
+    fCrown.setMatrixAt(placed, m.compose(p.set(pt.x, y + h * 0.7, pt.z), q.identity(), s.set(k, k * 0.9, k)));
+    obstacles.push({ x: pt.x, z: pt.z, r: 0.45 });
+    placed++;
+  }
+  fTrunk.count = fCrown.count = placed;
+  fTrunk.castShadow = fCrown.castShadow = true;
+  scene.add(fTrunk, fCrown);
 
   // 바위와 폐허 기둥
   const rockMat = new THREE.MeshStandardMaterial({ color: "#6b6f75", roughness: 0.95, flatShading: true });
