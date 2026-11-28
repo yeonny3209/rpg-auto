@@ -506,6 +506,14 @@ try {
   await page.waitForTimeout(1800);
   await shot(page, "32-forest-gate.png");
   await page.evaluate(() => { const g = window.__game; g.cam.dist = 15.5; g.cam.height = 10.5; });
+  const mush = await page.evaluate(async () => {
+    const g = window.__game; let found = null;
+    g.scene.traverse((o) => { if (!found && o.isInstancedMesh && o.material.emissive && o.material.emissive.getHexString() === "2fbf8a" && o.count > 0) { const e = o.instanceMatrix.array; found = { n: o.count, x: e[12], z: e[14] }; } });
+    if (found) { g.player.pos.set(found.x - 3, 0, found.z); g.cam.yaw = Math.PI / 2; await new Promise((r) => setTimeout(r, 1500)); }
+    return found;
+  });
+  console.log("mushrooms:", JSON.stringify(mush));
+  await shot(page, "33-forest-mushrooms.png");
   // 빠른이동: 숲 어귀 봉화 점화 → T → 마지막 등불로
   const trav = await page.evaluate(async () => {
     const g = window.__game, b = g.beacons.find((x) => x.def.id === "bridgeLamp"), home = g.beacons.find((x) => x.def.id === "lastLight");
