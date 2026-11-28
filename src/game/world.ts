@@ -4,6 +4,7 @@ import { heightAt } from "../logic/terrain";
 import { scatterSpots, SCATTER } from "../logic/scatter";
 import { REGIONS, regionAt, regionById, pointInRegion } from "../logic/regions";
 import wdata from "../../data/world.json";
+import { buildForestDecor } from "./forestDecor";
 
 /** 결정론적 난수 (월드 배치 재현용) */
 export function mulberry32(seed: number) {
@@ -109,6 +110,8 @@ export function buildWorld(scene: THREE.Scene): World {
   fTrunk.count = fCrown.count = placed;
   fTrunk.castShadow = fCrown.castShadow = true;
   scene.add(fTrunk, fCrown);
+
+  buildForestDecor(scene, obstacles, clearR);
 
   // 바위와 폐허 기둥
   const rockMat = new THREE.MeshStandardMaterial({ color: "#6b6f75", roughness: 0.95, flatShading: true });

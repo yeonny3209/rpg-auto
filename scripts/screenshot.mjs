@@ -502,6 +502,10 @@ try {
   const forestInfo = await page.evaluate(() => ({ matTag: document.getElementById("matTag").textContent, zone: document.getElementById("zoneTag").textContent, fog: window.__game.scene.fog.color.getHexString(), pos: [Math.round(window.__game.player.pos.x), Math.round(window.__game.player.pos.z)] }));
   console.log("forest:", JSON.stringify({ out, forestInfo, forestToast }));
   await shot(page, "31-forest.png");
+  await page.evaluate(() => { const g = window.__game; g.player.pos.set(101, 0, 0); g.cam.yaw = Math.PI / 2; g.cam.dist = 20; g.cam.height = 12; });
+  await page.waitForTimeout(1800);
+  await shot(page, "32-forest-gate.png");
+  await page.evaluate(() => { const g = window.__game; g.cam.dist = 15.5; g.cam.height = 10.5; });
   // 빠른이동: 숲 어귀 봉화 점화 → T → 마지막 등불로
   const trav = await page.evaluate(async () => {
     const g = window.__game, b = g.beacons.find((x) => x.def.id === "bridgeLamp"), home = g.beacons.find((x) => x.def.id === "lastLight");
