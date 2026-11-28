@@ -106,3 +106,25 @@ describe("저장 v5 → v6", () => {
     expect(deserialize(v5)!.skillLv).toEqual({});
   });
 });
+
+describe("숲 전용 드롭 (matDrops)", () => {
+  it("matDrops가 있는 적만 늪 수액을 남긴다", async () => {
+    const { rollMatDrops } = await import("../src/logic/bag");
+    const always = () => 0, never = () => 0.999;
+    expect(rollMatDrops(always, { level: 7, ai: "melee", matDrops: { mireSap: 0.5 } }).some((d) => d.id === "mireSap")).toBe(true);
+    expect(rollMatDrops(never, { level: 7, ai: "melee", matDrops: { mireSap: 0.5 } }).some((d) => d.id === "mireSap")).toBe(false);
+    expect(rollMatDrops(always, { level: 7, ai: "melee" }).some((d) => d.id === "mireSap")).toBe(false);
+  });
+  it("알 수 없는 재료 id는 무시한다", async () => {
+    const { rollMatDrops } = await import("../src/logic/bag");
+    expect(rollMatDrops(() => 0, { level: 1, ai: "melee", matDrops: { nope: 1 } }).some((d) => (d.id as string) === "nope")).toBe(false);
+  });
+  it("숲 적 데이터가 숲 재료를 가리킨다", async () => {
+    const enemies = (await import("../data/enemies.json")).default as Record<string, { matDrops?: Record<string, number> }>;
+    const { isMatId } = await import("../src/logic/bag");
+    for (const id of ["mireLeech", "sporeCaster", "bogBrute", "mireMother"]) {
+      expect(Object.keys(enemies[id].matDrops ?? {}).length).toBeGreaterThan(0);
+      for (const m of Object.keys(enemies[id].matDrops!)) expect(isMatId(m)).toBe(true);
+    }
+  });
+});

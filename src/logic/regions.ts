@@ -1,7 +1,7 @@
 // 지역 정의(원형 지역 + 두 지역을 잇는 통로). 렌더링 무관: 이동 가능 범위, 지역 판정, 지역별 적 풀.
 import data from "../../data/regions.json";
 
-export interface Region { id: string; name: string; x: number; z: number; r: number; enemies: string[]; count: number; ground: string[]; fog: string }
+export interface Region { id: string; name: string; x: number; z: number; r: number; enemies: string[]; count: number; ground: string[]; fog: string; recommendedLevel: number }
 export const REGIONS = data.regions as Region[];
 export const BRIDGE = data.bridge;
 export const regionById = (id: string): Region => REGIONS.find((r) => r.id === id) ?? REGIONS[0];

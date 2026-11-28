@@ -62,7 +62,7 @@ function renderShop() {
         <div class="shop-row" data-act="buyPotion" style="border-color:#7ee8a0"><span style="color:#7ee8a0">${MATS.potion.name} (보유 ${countOf(player.bag, "potion")}/${MATS.potion.max})</span><span class="sp">◆ ${MATS.potion.price}</span></div>
         ${stock.map((it, i) => cell(it, "buy", i, buyPrice(it))).join("")}</div>
       <div><div class="shop-h">판매 (가방 ${player.inventory.length}/${ITEM_CFG.inventorySize})</div>
-        ${(["ashLump"] as MatId[]).filter((id) => countOf(player.bag, id) > 0).map((id) => `<div class="shop-row" data-act="sellMat" data-id="${id}" style="border-color:#8f98a6"><span>${MATS[id].name} ×${countOf(player.bag, id)}</span><span class="sp">개당 ◆ ${MATS[id].price}</span></div>`).join("")}${player.inventory.length ? player.inventory.map((it, i) => cell(it, "sell", i, sellPrice(it))).join("") : '<div class="shop-empty">팔 물건이 없다</div>'}</div>
+        ${(["ashLump", "mireSap"] as MatId[]).filter((id) => countOf(player.bag, id) > 0).map((id) => `<div class="shop-row" data-act="sellMat" data-id="${id}" style="border-color:#8f98a6"><span>${MATS[id].name} ×${countOf(player.bag, id)}</span><span class="sp">개당 ◆ ${MATS[id].price}</span></div>`).join("")}${player.inventory.length ? player.inventory.map((it, i) => cell(it, "sell", i, sellPrice(it))).join("") : '<div class="shop-empty">팔 물건이 없다</div>'}</div>
     </div>
     <div id="shopTip" class="tooltip">물건을 클릭하면 사고 판다. 마우스를 올리면 정보가 보인다.</div>
     <div class="db"><button data-act="back">돌아가기 <kbd>Esc</kbd></button></div>`;

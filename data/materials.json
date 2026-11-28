@@ -28,5 +28,19 @@
     "max": 20,
     "price": 0,
     "desc": "강한 적이 간혹 남기는 비급. 사제에게 가져가 스킬을 수련한다"
+  },
+  "mireSap": {
+    "name": "늪 수액",
+    "type": "material",
+    "max": 99,
+    "price": 9,
+    "desc": "가라앉은 숲의 적에게서만 나오는 끈끈한 수액. 숲 단조 재료"
+  },
+  "mireHeart": {
+    "name": "늪의 심장",
+    "type": "material",
+    "max": 10,
+    "price": 0,
+    "desc": "늪의 어미가 남기는 심장. 가장 좋은 장비 제작 재료"
   }
 }

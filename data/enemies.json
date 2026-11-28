@@ -163,7 +163,10 @@
     "eyeColor": "#d6ff6c",
     "size": 0.75,
     "dropChance": 0.3,
-    "embers": 8
+    "embers": 8,
+    "matDrops": {
+      "mireSap": 0.35
+    }
   },
   "sporeCaster": {
     "name": "포자 던지는 것",
@@ -191,7 +194,10 @@
     "eyeColor": "#ff8cf0",
     "size": 0.6,
     "dropChance": 0.35,
-    "embers": 10
+    "embers": 10,
+    "matDrops": {
+      "mireSap": 0.4
+    }
   },
   "bogBrute": {
     "name": "늪 몰이꾼",
@@ -219,7 +225,10 @@
     "eyeColor": "#ffb03c",
     "size": 1.15,
     "dropChance": 0.7,
-    "embers": 26
+    "embers": 26,
+    "matDrops": {
+      "mireSap": 0.6
+    }
   },
   "mireMother": {
     "name": "늪의 어미",
@@ -248,6 +257,10 @@
     "embers": 380,
     "projectileSpeed": 10,
     "chargeSpeed": 16,
-    "chargeTime": 0.7
+    "chargeTime": 0.7,
+    "matDrops": {
+      "mireSap": 1.0,
+      "mireHeart": 1.0
+    }
   }
 }

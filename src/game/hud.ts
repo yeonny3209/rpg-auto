@@ -94,7 +94,7 @@ export function updateDarkness(dt: number) {
     fogTarget.set(rg.fog);
     if (scene.fog instanceof THREE.Fog) scene.fog.color.lerp(fogTarget, Math.min(1, dt * 1.5));
     if (scene.background instanceof THREE.Color) scene.background.lerp(fogTarget, Math.min(1, dt * 1.5));
-    if (rg.name !== regionNow) { regionNow = rg.name; $("zoneTag").textContent = rg.name; }
+    if (rg.name !== regionNow) { regionNow = rg.name; $("zoneTag").textContent = `${rg.name} · 권장 Lv ${rg.recommendedLevel}`; }
   }
   $("darkTag").style.opacity = String(Math.min(1, env.dark * 1.5));
   $("darkTag").textContent = env.dark > 0.15 ? `어둠 ${Math.round(env.dark * 100)}% · 받는 피해 +${Math.round(env.dark * 35)}%` : "";
@@ -121,7 +121,7 @@ export function updateHud() {
     (el.querySelector(".cd") as HTMLElement).style.height = `${(player.sk.cds[i] / sk.cooldown) * 100}%`;
   });
   $("potions").textContent = `${player.bag.potion ?? 0}` + (player.potionCd > 0 ? ` (${player.potionCd.toFixed(0)}s)` : "");
-  $("matTag").textContent = `· 재 ${player.bag.ashLump ?? 0}` + (player.bag.emberCore ? ` · 핵 ${player.bag.emberCore}` : "");
+  $("matTag").textContent = `· 재 ${player.bag.ashLump ?? 0}` + (player.bag.emberCore ? ` · 핵 ${player.bag.emberCore}` : "") + (player.bag.mireSap ? ` · 수액 ${player.bag.mireSap}` : "");
   const bt = $("buffTag");
   bt.style.display = player.buff.t > 0 ? "block" : "none";
   if (player.buff.t > 0) bt.textContent = `🔥 강화 ${player.buff.t.toFixed(1)}s`;

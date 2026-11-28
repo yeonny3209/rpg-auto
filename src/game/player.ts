@@ -226,7 +226,7 @@ export function killEnemy(e: Enemy, opt: { reward?: boolean; silent?: boolean } 
   const drop = e.boss ? generateItem(Math.random, e.def.level + 2, { rarity: bossCfg(e.id as BossId).guaranteedRarity as RarityId }) : rollDrop(Math.random, e.def.level, e.def.dropChance);
   if (drop) spawnLoot(drop, e.pos);
   const got: string[] = [];
-  for (const m of rollMatDrops(Math.random, { level: e.def.level, ai: e.def.ai, embers: e.def.embers })) {
+  for (const m of rollMatDrops(Math.random, { level: e.def.level, ai: e.def.ai, embers: e.def.embers, matDrops: (e.def as { matDrops?: Record<string, number> }).matDrops })) {
     const res = bagAdd(player.bag, m.id, m.n);
     player.bag = res.bag;
     if (res.added) got.push(`${MATS[m.id].name} ×${res.added}`);

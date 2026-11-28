@@ -46,7 +46,7 @@ export function usePotion(hp: number, maxHp: number, bag: Bag, cooldownLeft: num
 
 /** 적 처치 시 재료·물약 드롭 굴림 */
 export interface MatDrop { id: MatId; n: number }
-export function rollMatDrops(rng: () => number, enemy: { level: number; ai: string; embers?: number }): MatDrop[] {
+export function rollMatDrops(rng: () => number, enemy: { level: number; ai: string; embers?: number; matDrops?: Partial<Record<string, number>> }): MatDrop[] {
   const out: MatDrop[] = [];
   const boss = enemy.ai === "boss";
   if (rng() < (boss ? 1 : 0.3)) out.push({ id: "ashLump", n: boss ? 4 + Math.floor(rng() * 3) : 1 + (rng() < 0.25 ? 1 : 0) });
@@ -56,5 +56,6 @@ export function rollMatDrops(rng: () => number, enemy: { level: number; ai: stri
     if (enemy.level >= 3 && rng() < 0.04) out.push({ id: "emberCore", n: 1 });
     if (enemy.level >= 2 && rng() < 0.03) out.push({ id: "skillBook", n: 1 });
   }
+  for (const [id, chance] of Object.entries(enemy.matDrops ?? {})) if (isMatId(id) && chance !== undefined && rng() < chance) out.push({ id, n: 1 + (!boss && rng() < 0.2 ? 1 : 0) });
   return out;
 }
