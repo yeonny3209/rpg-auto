@@ -38,7 +38,7 @@ export interface Enemy {
   // --- 함께 사냥: idx는 모든 접속자가 같은 번호(시드 배치), owner가 AI를 돌리고 나머지는 mirror로 따라간다
   idx: number;
   owner: string | null;
-  mirror: { tx: number; tz: number; hp: number; st: EState; ry: number } | null;
+  mirror: { tx: number; tz: number; hp: number; st: EState; ry: number; pat?: string } | null;
   contrib: Set<string>;
   kills: number;
   claimSent: boolean;
@@ -325,15 +325,20 @@ export function setOwner(i: number, by: string | null) {
   e.owner = by; e.claimSent = false;
   e.mirror = by && by !== coop.me ? { tx: e.pos.x, tz: e.pos.z, hp: e.hp, st: e.state === "dead" ? "wander" : e.state, ry: e.mesh.root.rotation.y } : null;
 }
-export function applyStream(list: [number, number, number, number, string, number][]) {
-  for (const [i, x, z, hp, st, ry] of list) {
+export function applyStream(list: [number, number, number, number, string, number, string?][]) {
+  for (const [i, x, z, hp, st, ry, pat] of list) {
     const e = enemies[i]; if (!e || !e.mirror || e.state === "dead") continue;
-    Object.assign(e.mirror, { tx: x, tz: z, hp, st: st as EState, ry });
+    if (e.mirror.st !== st) e.t = 0; // 상태가 바뀌면 전조 진행도를 다시 잰다
+    Object.assign(e.mirror, { tx: x, tz: z, hp, st: st as EState, ry, pat });
   }
 }
 /** 담당 중인 적의 상태(스트림용) */
-export function ownedStates(): [number, number, number, number, string, number][] {
-  return enemies.filter((e) => e.owner === coop.me && e.state !== "dead").map((e) => [e.idx, +e.pos.x.toFixed(2), +e.pos.z.toFixed(2), Math.round(e.hp), e.state, +e.mesh.root.rotation.y.toFixed(2)]);
+export function ownedStates(): [number, number, number, number, string, number, string?][] {
+  return enemies.filter((e) => e.owner === coop.me && e.state !== "dead").map((e) => {
+    const row: [number, number, number, number, string, number, string?] = [e.idx, +e.pos.x.toFixed(2), +e.pos.z.toFixed(2), Math.round(e.hp), e.state, +e.mesh.root.rotation.y.toFixed(2)];
+    if (e.boss?.pattern && e.state === "windup") row.push(e.boss.pattern);
+    return row;
+  });
 }
 export function releaseAll() { for (const e of enemies) { e.owner = null; e.mirror = null; e.claimSent = false; } }
 
@@ -369,6 +374,16 @@ export function updateEnemies(dt: number) {
         e.hp = mr.hp; e.state = mr.st;
         let d = mr.ry - yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); yaw += d * k;
         if (e.state === "windup") m.body.scale.y = 0.8 - Math.min(1, e.t / e.def.windup) * 0.25; else m.body.scale.y = THREE.MathUtils.lerp(m.body.scale.y, 1, dt * 8);
+        if (e.boss) { // 담당이 아닌 쪽에서도 내려찍기 전조 링이 보인다
+          if (e.state === "windup" && mr.pat === "slam") {
+            const params = patternParams(e.id as BossId, "slam", e.boss.phase), need = params.windup, k = Math.min(1, e.t / need);
+            e.boss.ring.visible = true;
+            e.boss.ring.position.set(e.pos.x, e.pos.y + 0.08, e.pos.z);
+            e.boss.ring.scale.setScalar(Math.max(0.1, params.radius! * k));
+            (e.boss.ring.material as THREE.MeshBasicMaterial).opacity = 0.25 + 0.35 * k;
+          } else e.boss.ring.visible = false;
+          e.boss.phase = phaseOf(e.hp, e.def.hp, e.id as BossId);
+        }
       }
     } else if (e.boss) yaw = updateBossState(e, dt, dist, dirTo, yaw);
     else switch (e.state) {

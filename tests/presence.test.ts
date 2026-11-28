@@ -128,6 +128,11 @@ describe("접속자 공유", () => {
     const es = await b.until((m) => m.t === "es");
     expect(es.list).toEqual([[7, 4.5, -2, 80, "chase", 1]]);
     expect(a.got.some((m) => m.t === "es")).toBe(false);
+    // 보스 패턴(7번째 칸)은 소문자 이름만 통과
+    a.ws.send(JSON.stringify({ t: "es", list: [[7, 4.6, -2, 80, "windup", 1, "slam"]] }));
+    expect((await b.until((m) => m.t === "es" && m.list[0][4] === "windup")).list[0][6]).toBe("slam");
+    a.ws.send(JSON.stringify({ t: "es", list: [[7, 4.6, -2, 80, "windup", 1, "DROP TABLE"]] }));
+    expect((await b.until((m) => m.t === "es" && m.list[0][4] === "windup" && m.list[0].length === 6)).list[0]).toHaveLength(6);
     // 피격 전달
     a.ws.send(JSON.stringify({ t: "phit", to: "담당나", amount: 12, enemy: "ashCrawler" }));
     expect(await b.until((m) => m.t === "phit")).toMatchObject({ amount: 12 });

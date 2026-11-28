@@ -71,11 +71,12 @@ export function attachPresence(httpServer, opts = {}) {
         if (!Array.isArray(m.list) || m.list.length > 60) return;
         const list = [];
         for (const e of m.list) {
-          if (!Array.isArray(e) || e.length !== 6 || !isIdx(e[0]) || owners.get(e[0]) !== name) continue;
+          if (!Array.isArray(e) || (e.length !== 6 && e.length !== 7) || !isIdx(e[0]) || owners.get(e[0]) !== name) continue;
           const [i, x, z, hp, st, ry] = e;
           const nx = num(x), nz = num(z), nh = num(hp, 1e6), nr = num(ry, 7);
           if (nx === null || nz === null || nh === null || typeof st !== "string" || st.length > 10) continue;
-          list.push([i, nx, nz, nh, st, nr ?? 0]);
+          const pat = typeof e[6] === "string" && /^[a-z]{1,10}$/.test(e[6]) ? e[6] : null; // 보스 패턴(전조 표시용)
+          list.push(pat ? [i, nx, nz, nh, st, nr ?? 0, pat] : [i, nx, nz, nh, st, nr ?? 0]);
         }
         if (list.length) broadcast({ t: "es", list }, name);
       } else if (m.t === "hit") { // 담당이 아닌 사람의 공격 → 담당자에게 전달
