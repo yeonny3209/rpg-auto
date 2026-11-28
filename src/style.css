@@ -158,3 +158,4 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1218; fon
 .cell.item { position: relative; }
 .cell .ico { width: 70%; height: 70%; }
 .cell .plus { position: absolute; right: 2px; bottom: 1px; font-size: 10px; font-style: normal; color: #ffd37a; text-shadow: 0 0 3px #000; }
+.shop-row.soldout { opacity: .4; cursor: default; text-decoration: line-through; }

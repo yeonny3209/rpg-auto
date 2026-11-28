@@ -42,10 +42,15 @@ function rewardText(q: NonNullable<Dialog["quest"]>): string {
   return out.join(" · ");
 }
 
+// 품절: 레벨별 재고가 한 번씩만 팔린다(레벨이 오르면 새 재고). 세션 한정, 저장하지 않음.
+const soldOut = new Set<string>();
+const soldKey = (lv: number, i: number) => `${lv}:${i}`;
+
 function renderShop() {
   const stock = makeStock(shopLevel);
   const cell = (it: any, act: string, i: number, price: number) => {
     const c = rarityOf(it.rarity).color;
+    if (act === "buy" && soldOut.has(soldKey(shopLevel, i))) return `<div class="shop-row soldout" data-act="soldout" data-i="${i}"><span>${it.name}</span><span class="sp">품절</span></div>`;
     return `<div class="shop-row" data-act="${act}" data-i="${i}" style="border-color:${c}"><span style="color:${c}">${it.name}</span><span class="sp">◆ ${price}</span></div>`;
   };
   $("dialog").innerHTML = `<div class="dn">${current!.def.name} <span class="dr">거래 · 보유 ◆ ${player.gold}</span></div>
@@ -84,7 +89,7 @@ function renderShop() {
       if (buying) {
         const r = tryBuy(player.gold, player.inventory, it, ITEM_CFG.inventorySize);
         if (!r.ok) return toast(r.reason === "gold" ? "골드가 부족하다" : "가방이 가득 찼다");
-        player.gold = r.gold; player.inventory = r.inv; sfx.pickup(); toast(`구매 — ${it.name}`);
+        player.gold = r.gold; player.inventory = r.inv; soldOut.add(soldKey(shopLevel, i)); sfx.pickup(); toast(`구매 — ${it.name}`);
       } else {
         const r = trySell(player.gold, player.inventory, i);
         if (!r.ok) return;
