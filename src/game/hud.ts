@@ -110,6 +110,7 @@ export function updateHud() {
     const boss = enemies.find((x) => x.boss && x.state !== "dead" && x.state !== "wander");
     const bb = $("bossBar");
     bb.style.display = boss ? "block" : "none";
+    $("zoneTag").style.visibility = boss ? "hidden" : "visible"; // 보스 체력바와 겹치지 않게
     if (boss) {
       $("bossName").textContent = `${boss.def.name}${boss.boss!.phase === 2 ? "  — 분노" : ""}`;
       $("bossFill").style.width = `${Math.max(0, boss.hp / boss.def.hp) * 100}%`;

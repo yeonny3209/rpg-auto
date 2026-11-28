@@ -526,6 +526,18 @@ try {
   });
   console.log("shards:", JSON.stringify(shards));
   await shot(page, "35-desert-shards.png");
+  const desertOut = await page.evaluate(async () => {
+    const g = window.__game; g.player.pos.set(999, 0, 0); await new Promise((r) => setTimeout(r, 300));
+    const lim = { x: Math.round(g.player.pos.x), z: Math.round(g.player.pos.z) };
+    const gc = g.enemies.find((e) => e.id === "glassColossus");
+    const kinds = [...new Set(g.enemies.filter((e) => e.pos.x > 258 && !e.boss).map((e) => e.id))];
+    g.player.hp = g.player.maxHp = 1500; g.enemies.forEach((e) => (e.attackCd = 99));
+    g.player.pos.set(gc.pos.x - 9, 0, gc.pos.z); g.cam.yaw = Math.PI / 2; g.cam.dist = 20; g.cam.height = 12;
+    await new Promise((r) => setTimeout(r, 2500));
+    return { lim, kinds, boss: gc && { hp: gc.hp, state: gc.state, x: Math.round(gc.pos.x), z: Math.round(gc.pos.z) } };
+  });
+  console.log("desert:", JSON.stringify(desertOut));
+  await shot(page, "36-desert-boss.png");
   // 빠른이동: 숲 어귀 봉화 점화 → T → 마지막 등불로
   const trav = await page.evaluate(async () => {
     const g = window.__game, b = g.beacons.find((x) => x.def.id === "bridgeLamp"), home = g.beacons.find((x) => x.def.id === "lastLight");
