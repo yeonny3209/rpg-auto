@@ -50,7 +50,7 @@ addEventListener("pagehide", () => { // 창을 닫을 때 마지막 저장을 �
   try { fetch(base() + "/api/save", { method: "PUT", keepalive: true, headers: { "content-type": "application/json", authorization: `Bearer ${tok}` }, body: JSON.stringify({ save: pending }) }); } catch { /* 무시 */ }
 });
 
-function forgetLogin() { set(K.token, null); set(K.name, null); refreshButton(); }
+function forgetLogin() { set(K.token, null); set(K.name, null); refreshButton(); announce(); }
 
 // ---------- 로그인 후 처리 ----------
 /** 토큰을 받은 뒤: 서버 세이브가 있으면 그것으로 교체하고 새로고침, 없으면 지금 진행을 올린다. */
@@ -72,7 +72,7 @@ async function enter(token: string, name: string): Promise<string | null> {
     const up = await api("/api/save", { method: "PUT", body: JSON.stringify({ save: local }) });
     if (!up.ok) return up.body?.error ?? "세이브를 올리지 못했다";
   }
-  refreshButton(); render();
+  refreshButton(); render(); announce();
   toast(`${name}(으)로 로그인 — 진행이 서버에 저장돼`);
   return null;
 }
@@ -151,6 +151,8 @@ async function init() {
     if (me.status === 401) forgetLogin();
   }
   refreshButton();
+  announce();
 }
+function announce() { dispatchEvent(new CustomEvent("ember-auth", { detail: { online, token: get(K.token), base: base() } })); }
 init();
 void $;

@@ -16,6 +16,7 @@ import "./game/panels";
 import "./game/classSelect";
 import "./game/dialog";
 import "./game/account";
+import { updateRemotes, remoteInfo, onlineCount } from "./game/net";
 import { tutorialState } from "./game/tutorial";
 import { updateNpcs, npcs } from "./game/npcs";
 import { renderQuestLog } from "./game/questflow";
@@ -44,6 +45,7 @@ function frame() {
   updateBeacons(beacons, t, realDt);
   updateTrace(dt, t);
   updateNpcs(dt, t);
+  updateRemotes(dt);
   fx.update(realDt);
   updateCamera(realDt);
   updateOcclusion();
@@ -87,6 +89,7 @@ if (loaded) toast(`이어하기 — Lv ${player.lv.level}`);
   spawnLoot: (rarity: string, baseId?: string) => spawnLoot(generateItem(Math.random, player.lv.level, { rarity: rarity as any, baseId }), player.pos.clone().add(new THREE.Vector3(1.2, 0, 1.2))),
   spendPoint,
   save: saveGame,
+  net: { remoteInfo, onlineCount },
   beacons,
   env,
   scene,

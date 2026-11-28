@@ -174,3 +174,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0e1218; fon
 .am-row button { flex: 1; background: #2a2418; color: #e8d9b0; border: 1px solid #5a5040; border-radius: 5px; padding: 8px 4px; cursor: pointer; font-size: 13px; }
 .am-row button:hover:not(:disabled) { border-color: #ffb347; }
 .am-row button:disabled { opacity: .5; cursor: default; }
+#chatLog { position: fixed; left: 12px; bottom: 50px; width: 340px; z-index: 12; pointer-events: none; display: flex; flex-direction: column; gap: 2px; }
+#chatLog .cl { font-size: 13px; color: #e8e2d0; text-shadow: 0 0 4px #000, 0 0 2px #000; background: #0008; padding: 2px 8px; border-radius: 4px; transition: opacity 1.5s; word-break: break-all; }
+#chatLog .cl.sys { color: #ffb347; font-size: 12px; }
+#chatLog .cl.old { opacity: 0; }
+#chatInput { position: fixed; left: 12px; bottom: 14px; width: 340px; z-index: 30; display: none; background: #0e0d11ee; border: 1px solid #ffb347; border-radius: 5px; color: #fff; padding: 6px 10px; font-size: 14px; }
+#chatInput.open { display: block; }

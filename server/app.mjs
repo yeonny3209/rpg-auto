@@ -1,4 +1,4 @@
-// 잔불의 대지 서버 (M8-1): 계정 + 서버 세이브 + 정적 파일. 의존성 없음(Node 내장만).
+// 잔불의 대지 서버 (M8-1): 계정 + 서버 세이브 + 정적 파일. (실시간 접속은 presence.mjs)
 // 저장소는 JSON 파일 하나(DATA_DIR/accounts.json). 무료 클라우드의 임시 디스크는 재배포 때 지워질 수 있으니 영구 볼륨을 붙일 것(docs/MULTIPLAYER.md).
 import http from "node:http";
 import fs from "node:fs";
@@ -141,6 +141,7 @@ export function createApp(opts = {}) {
       if (!res.headersSent) send(res, code, { error: code === 500 ? "서버 오류" : String(e.message) });
     }
   });
+  server.authName = (token) => { const se = db.sessions[token]; return se && se.exp > now() ? db.accounts[se.name]?.name ?? null : null; };
   server.flush = () => new Promise((r) => { const t = setInterval(() => { if (!writing) { clearInterval(t); r(); } }, 5); });
   return server;
 }

@@ -24,11 +24,13 @@
   },
   "homepage": "https://github.com/yeonny3209/rpg-auto#readme",
   "dependencies": {
-    "three": "^0.187.0"
+    "three": "^0.187.0",
+    "ws": "^8.23.1"
   },
   "devDependencies": {
     "@types/node": "^26.6.11",
     "@types/three": "^0.187.0",
+    "@types/ws": "^8.18.2",
     "playwright": "^1.65.1",
     "typescript": "^7.0.2",
     "vite": "^8.4.0",

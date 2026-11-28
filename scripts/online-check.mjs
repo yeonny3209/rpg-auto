@@ -43,6 +43,23 @@ try {
   report.buttonText = await a.textContent("#acct");
   await a.screenshot({ path: join(outDir, "41-online.png") });
 
+  // 1.5) 실시간: 두 번째 계정이 같은 서버에 접속 → A가 움직이면 B에 보이고, 채팅이 오간다
+  const c = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+  c.on("pageerror", (e) => errors.push(String(e)));
+  await c.goto(url + "?class=tracker&fresh");
+  await c.waitForSelector("#acct", { state: "visible", timeout: 30000 });
+  await c.click("#acct"); await c.fill("#amName", "친구"); await c.fill("#amPw", "pw12345");
+  await c.click('button[data-a="register"]');
+  await c.waitForFunction(() => window.__game.net.onlineCount() >= 2, null, { timeout: 20000 });
+  await a.evaluate(() => window.__game.player.pos.set(20, 0, 14));
+  await c.waitForFunction(() => window.__game.net.remoteInfo().some((r) => r.name === "테스터" && Math.abs(r.x - 20) < 1), null, { timeout: 15000 });
+  report.seenByFriend = await c.evaluate(() => window.__game.net.remoteInfo());
+  await a.keyboard.press("Enter"); await a.keyboard.type("안녕 친구야"); await a.keyboard.press("Enter");
+  await c.waitForFunction(() => [...document.querySelectorAll("#chatLog .cl")].some((e) => e.textContent.includes("테스터: 안녕 친구야")), null, { timeout: 10000 });
+  report.chat = "ok";
+  await c.screenshot({ path: join(outDir, "43-friend-view.png") });
+  await c.close();
+
   // 2) 기기 B(새 브라우저): 틀린 비밀번호 → 로그인 → 이어하기
   const b = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
   b.on("pageerror", (e) => errors.push(String(e)));
