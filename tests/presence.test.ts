@@ -136,6 +136,10 @@ describe("접속자 공유", () => {
     a.ws.send(JSON.stringify({ t: "kill", i: 7, by: ["담당가", "담당나", "없는사람"] }));
     const k = await c.until((m) => m.t === "kill");
     expect(k.by).toEqual(["담당가", "담당나"]);
+    // 늦게 들어온 사람은 hello로 처치 횟수를 받는다(리스폰 시드 맞춤)
+    const late = connect(await account("늦은사람"));
+    expect((await late.until((m) => m.t === "hello")).kills).toEqual({ "7": 1 });
+    late.ws.close();
     // 처치 뒤에는 다시 맡을 수 있다
     c.ws.send(JSON.stringify({ t: "claim", i: 7 }));
     await a.until((m) => m.t === "own" && m.by === "담당다");

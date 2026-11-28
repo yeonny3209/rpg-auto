@@ -109,7 +109,7 @@ function connect() {
   };
   sock.onmessage = (ev) => {
     let m: any; try { m = JSON.parse(ev.data); } catch { return; }
-    if (m.t === "hello") { me = m.you; coop.me = me; coop.connected = true; for (const [i, by] of Object.entries(m.owners ?? {})) setOwner(+i, by as string); applyPlayers(m.players); applyLit(m.lit ?? []); for (const b of beacons) if (b.lit) reportBeaconLit(b.def.id); addChat("", `접속자 ${m.players.length}명 — Enter로 채팅`); }
+    if (m.t === "hello") { me = m.you; coop.me = me; coop.connected = true; for (const [i, n] of Object.entries(m.kills ?? {})) { const en = enemies[+i]; if (en) en.kills = Math.max(en.kills, n as number); } for (const [i, by] of Object.entries(m.owners ?? {})) setOwner(+i, by as string); applyPlayers(m.players); applyLit(m.lit ?? []); for (const b of beacons) if (b.lit) reportBeaconLit(b.def.id); addChat("", `접속자 ${m.players.length}명 — Enter로 채팅`); }
     else if (m.t === "snap") applyPlayers(m.players);
     else if (m.t === "beacon") applyLit([m.id], m.by);
     else if (m.t === "own") setOwner(m.i, m.by);

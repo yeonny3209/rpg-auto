@@ -21,6 +21,7 @@ export function attachPresence(httpServer, opts = {}) {
   const lit = new Set();
   /** 적 담당자: 적 번호(0~999) -> 담당 접속자 이름. 담당자가 그 적의 AI를 돌리고 상태를 스트리밍한다. */
   const owners = new Map();
+  const kills = new Map(); // 적 인덱스 → 처치 횟수(늦게 들어온 사람의 리스폰 시드 맞춤)
   const isIdx = (i) => Number.isInteger(i) && i >= 0 && i < 1000;
   if (opts.worldFile && fs.existsSync(opts.worldFile)) { try { for (const id of JSON.parse(fs.readFileSync(opts.worldFile, "utf8")).lit ?? []) lit.add(String(id)); } catch { /* 깨졌으면 비움 */ } }
   const saveWorld = () => { if (opts.worldFile) fs.writeFile(opts.worldFile, JSON.stringify({ lit: [...lit] }), () => {}); };
@@ -46,7 +47,7 @@ export function attachPresence(httpServer, opts = {}) {
     if (players.size >= MAX_PLAYERS) { send(ws, { t: "full" }); return ws.close(); }
     const c = { ws, p: { name, x: 0, z: 0, ry: 0, cls: "", lv: 1, hp: 1 }, lastChat: 0, dirty: true };
     players.set(name, c);
-    send(ws, { t: "hello", you: name, players: [...players.values()].map((o) => o.p), lit: [...lit], owners: Object.fromEntries(owners) });
+    send(ws, { t: "hello", you: name, players: [...players.values()].map((o) => o.p), lit: [...lit], owners: Object.fromEntries(owners), kills: Object.fromEntries(kills) });
     sys(`${name}님이 들어왔다`);
     ws.on("message", (raw) => {
       let m; try { m = JSON.parse(raw.toString()); } catch { return; }
@@ -84,7 +85,7 @@ export function attachPresence(httpServer, opts = {}) {
         if (oc) send(oc.ws, { t: "hit", i: m.i, amount: Math.round(amount), broke: !!m.broke, by: name });
       } else if (m.t === "kill") { // 담당자가 처치를 알림 → 전원에게. by = 보상을 받을 기여자들
         if (!isIdx(m.i) || owners.get(m.i) !== name || !Array.isArray(m.by)) return;
-        owners.delete(m.i);
+        owners.delete(m.i); kills.set(m.i, (kills.get(m.i) ?? 0) + 1);
         broadcast({ t: "kill", i: m.i, by: m.by.filter((n) => typeof n === "string" && players.has(n)).slice(0, MAX_PLAYERS) });
       } else if (m.t === "phit") { // 담당자의 적이 다른 접속자를 때림 → 맞은 사람에게 전달(회피 판정은 맞은 쪽에서)
         const amount = num(m.amount, 5000), target = typeof m.to === "string" ? players.get(m.to) : null;
