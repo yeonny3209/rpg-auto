@@ -108,13 +108,13 @@ export interface Projectile { mesh: THREE.Mesh; vel: THREE.Vector3; life: number
 export const projectiles: Projectile[] = [];
 export const projGeo = new THREE.SphereGeometry(0.22, 10, 8);
 export const projMat = new THREE.MeshStandardMaterial({ color: "#9cff6c", emissive: "#6cff3c", emissiveIntensity: 2 });
-export function fireProjectile(e: Enemy) {
+export function fireProjectile(e: Enemy, at?: THREE.Vector3, dmgOverride?: number) {
   const mesh = new THREE.Mesh(projGeo, projMat);
   mesh.position.copy(e.pos).setY(e.pos.y + 1.0);
-  const target = player.pos.clone().setY(player.pos.y + (1.0));
+  const target = (at ?? player.pos).clone().setY((at ?? player.pos).y + 1.0);
   const vel = target.sub(mesh.position).normalize().multiplyScalar(e.def.projectileSpeed ?? 8);
   scene.add(mesh);
-  projectiles.push({ mesh, vel, life: 2.5, dmg: computeDamage({ atk: e.def.atk, def: player.def }).amount });
+  projectiles.push({ mesh, vel, life: 2.5, dmg: dmgOverride ?? computeDamage({ atk: e.def.atk, def: player.def }).amount });
   sfx.spit();
 }
 export function updateProjectiles(dt: number) {
@@ -124,7 +124,7 @@ export function updateProjectiles(dt: number) {
     p.mesh.position.addScaledVector(p.vel, dt);
     let gone = p.life <= 0;
     const dx = p.mesh.position.x - player.pos.x, dz = p.mesh.position.z - player.pos.z;
-    if (!gone && !player.dead && dx * dx + dz * dz < 0.55 * 0.55) {
+    if (!gone && p.dmg > 0 && !player.dead && dx * dx + dz * dz < 0.55 * 0.55) { // dmg 0 = 다른 접속자를 겨눈 연출용 탄
       if (playerInvulnerable()) floater(player.pos.clone().setY(player.pos.y + (2)), "회피!", "exp");
       else hurtPlayer(p.dmg);
       gone = true;
@@ -409,7 +409,11 @@ export function updateEnemies(dt: number) {
             if (!tDead && dist < e.def.attackRange + 0.5) hurtTarget(e, tname, computeDamage({ atk: e.def.atk, def: player.def }).amount);
             e.state = "recover";
           } else if (e.def.ai === "ranged") {
-            fireProjectile(e);
+            if (tname !== null) { // 다른 접속자를 겨냥: 탄은 연출만, 도착 시각에 맞춰 맞은 쪽에서 회피 판정
+              const amt = computeDamage({ atk: e.def.atk, def: player.def }).amount;
+              fireProjectile(e, tgt.pos, 0);
+              window.setTimeout(() => { if (coop.connected && e.state !== "dead") coop.send({ t: "phit", to: tname, amount: amt, enemy: e.id }); }, (dist / (e.def.projectileSpeed ?? 8)) * 1000);
+            } else fireProjectile(e);
             e.state = "recover";
           } else {
             e.chargeDir.copy(dirTo);
