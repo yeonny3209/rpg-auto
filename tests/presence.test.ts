@@ -112,6 +112,38 @@ describe("접속자 공유", () => {
     expect([...p3.lit]).toContain("savedOne");
     p3.close(); fs.rmSync(f);
   });
+  it("적 담당: 먼저 맡은 사람이 담당, 타인의 공격은 담당자에게만 전달, 처치는 기여자 목록과 함께 전원에게", async () => {
+    const a = connect(await account("담당가")), b = connect(await account("담당나")), c = connect(await account("담당다"));
+    await Promise.all([a.open, b.open, c.open]);
+    a.ws.send(JSON.stringify({ t: "claim", i: 7 }));
+    await b.until((m) => m.t === "own" && m.i === 7 && m.by === "담당가");
+    b.ws.send(JSON.stringify({ t: "claim", i: 7 })); // 이미 담당 중 → 무시
+    b.ws.send(JSON.stringify({ t: "hit", i: 7, amount: 33, broke: true }));
+    const h = await a.until((m) => m.t === "hit");
+    expect(h).toMatchObject({ i: 7, amount: 33, broke: true, by: "담당나" });
+    expect(c.got.some((m) => m.t === "hit")).toBe(false);
+    // 담당자가 아니면 상태 스트림은 무시, 담당자 것은 나머지에게 전달
+    b.ws.send(JSON.stringify({ t: "es", list: [[7, 1, 1, 5, "chase", 0]] }));
+    a.ws.send(JSON.stringify({ t: "es", list: [[7, 4.5, -2, 80, "chase", 1], [8, 9, 9, 1, "chase", 0]] }));
+    const es = await b.until((m) => m.t === "es");
+    expect(es.list).toEqual([[7, 4.5, -2, 80, "chase", 1]]);
+    expect(a.got.some((m) => m.t === "es")).toBe(false);
+    // 피격 전달
+    a.ws.send(JSON.stringify({ t: "phit", to: "담당나", amount: 12, enemy: "ashCrawler" }));
+    expect(await b.until((m) => m.t === "phit")).toMatchObject({ amount: 12 });
+    // 처치
+    b.ws.send(JSON.stringify({ t: "kill", i: 7, by: ["담당나"] })); // 담당자가 아니므로 무시
+    a.ws.send(JSON.stringify({ t: "kill", i: 7, by: ["담당가", "담당나", "없는사람"] }));
+    const k = await c.until((m) => m.t === "kill");
+    expect(k.by).toEqual(["담당가", "담당나"]);
+    // 처치 뒤에는 다시 맡을 수 있다
+    c.ws.send(JSON.stringify({ t: "claim", i: 7 }));
+    await a.until((m) => m.t === "own" && m.by === "담당다");
+    // 담당자가 나가면 풀린다
+    c.ws.close();
+    await a.until((m) => m.t === "free" && m.i === 7);
+    a.ws.close(); b.ws.close();
+  });
   it("cleanText", () => {
     expect(cleanText("")).toBeNull(); expect(cleanText(5)).toBeNull(); expect(cleanText(" a\u0001b ")).toBe("a b");
   });
