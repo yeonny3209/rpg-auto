@@ -363,7 +363,7 @@ try {
   await page.keyboard.press("Escape");
 
   // 제작 + 물약: 대장장이 → 제작(물약, 단조 무기) → H로 마시기
-  await page.evaluate(() => { const p = window.__game.player; p.bag = { ashLump: 20, emberCore: 2 }; p.gold = 1000; });
+  await page.evaluate(() => { const p = window.__game.player; p.bag = { ashLump: 20, emberCore: 2, mireSap: 12, mireHeart: 1 }; p.gold = 1000; });
   await near("smith");
   await page.waitForTimeout(400);
   await page.keyboard.press("KeyF");
@@ -378,6 +378,9 @@ try {
   const craftAfter = await page.evaluate(() => ({ inv: window.__game.player.inventory.length, bag: { ...window.__game.player.bag }, gold: window.__game.player.gold }));
   console.log("craft:", JSON.stringify({ craftBefore, craftAfter }));
   await shot(page, "26-craft.png");
+  await page.evaluate(() => { const c = document.querySelector("#dialog .shop-cols"); if (c) c.scrollTop = 99999; for (const el of document.querySelectorAll("#dialog *")) if (el.scrollHeight > el.clientHeight + 20) el.scrollTop = 99999; });
+  await page.waitForTimeout(150);
+  await shot(page, "26b-craft-forest.png");
   await page.keyboard.press("Escape");
   await page.evaluate(() => { const p = window.__game.player; p.hp = Math.floor(p.maxHp * 0.3); });
   const hpBefore = await page.evaluate(() => window.__game.player.hp);
